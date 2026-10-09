@@ -8,15 +8,12 @@
 """
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Any
 
 from ..base import (
     BaseTool,
     ExecutionContext,
     RiskLevel,
-    ToolExecutionError,
     ToolResult,
     ValidationResult,
 )
@@ -221,7 +218,7 @@ class FileWriteTool(BaseTool):
                 }
             )
 
-        except (OSError, IOError) as e:
+        except OSError as e:
             return ToolResult(
                 success=False,
                 output=None,

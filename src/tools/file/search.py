@@ -9,13 +9,11 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any
 
 from ..base import (
     BaseTool,
     ExecutionContext,
     RiskLevel,
-    ToolExecutionError,
     ToolResult,
     ValidationResult,
 )
@@ -330,7 +328,7 @@ class FileSearchTool(BaseTool):
                 pattern,
                 0 if case_sensitive else re.IGNORECASE,
             )
-        except re.error as e:
+        except re.error:
             return results  # 返回空结果如果正则不有效
 
         for file_path in root.rglob("*"):
@@ -353,7 +351,7 @@ class FileSearchTool(BaseTool):
 
             # 尝试读取文件内容
             try:
-                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                with open(file_path, encoding="utf-8", errors="ignore") as f:
                     matches = []
                     for line_num, line in enumerate(f, 1):
                         if regex.search(line):
@@ -371,7 +369,7 @@ class FileSearchTool(BaseTool):
                         }
                         results.append(result)
 
-            except (OSError, IOError):
+            except OSError:
                 continue  # 跳过无法读取的文件
 
         return results
