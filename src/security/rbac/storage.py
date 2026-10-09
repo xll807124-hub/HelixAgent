@@ -5,13 +5,10 @@ RBAC 权限存储接口。
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, Set, Dict
+
 from src.security.rbac.models import (
-    Subject,
-    Resource,
     Role,
     RoleType,
-    AuthorizationDecision,
 )
 
 
@@ -22,7 +19,7 @@ class AuthorizationStorage(ABC):
     """
     
     @abstractmethod
-    async def get_subject_roles(self, subject_id: str) -> Set[RoleType]:
+    async def get_subject_roles(self, subject_id: str) -> set[RoleType]:
         """获取主体的角色集合。
         
         Args:
@@ -34,7 +31,7 @@ class AuthorizationStorage(ABC):
         ...
     
     @abstractmethod
-    async def get_role_definition(self, role_type: RoleType) -> Optional[Role]:
+    async def get_role_definition(self, role_type: RoleType) -> Role | None:
         """获取角色定义。
         
         Args:
@@ -72,7 +69,7 @@ class AuthorizationStorage(ABC):
         ...
     
     @abstractmethod
-    async def get_resource_denials(self, resource_id: str) -> Set[tuple[str, str]]:
+    async def get_resource_denials(self, resource_id: str) -> set[tuple[str, str]]:
         """获取资源上的显式拒绝规则。
         
         Returns:
@@ -101,24 +98,24 @@ class InMemoryAuthorizationStorage(AuthorizationStorage):
     用于测试和开发环境。
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化内存存储."""
         # subject_id -> Set[RoleType]
-        self._subject_roles: Dict[str, Set[RoleType]] = {}
+        self._subject_roles: dict[str, set[RoleType]] = {}
         
         # role_type -> Role
-        self._role_definitions: Dict[RoleType, Role] = self._init_default_roles()
+        self._role_definitions: dict[RoleType, Role] = self._init_default_roles()
         
         # resource_id -> Set[(subject_id, operation)]
-        self._resource_denials: Dict[str, Set[tuple[str, str]]] = {}
+        self._resource_denials: dict[str, set[tuple[str, str]]] = {}
     
-    def _init_default_roles(self) -> Dict[RoleType, Role]:
+    def _init_default_roles(self) -> dict[RoleType, Role]:
         """初始化默认角色定义."""
         from src.security.rbac.models import (
-            RoleType,
-            ResourceType,
             Operation,
+            ResourceType,
             Role,
+            RoleType,
         )
         
         return {
@@ -175,11 +172,11 @@ class InMemoryAuthorizationStorage(AuthorizationStorage):
             ),
         }
     
-    async def get_subject_roles(self, subject_id: str) -> Set[RoleType]:
+    async def get_subject_roles(self, subject_id: str) -> set[RoleType]:
         """获取主体的角色集合."""
         return self._subject_roles.get(subject_id, set()).copy()
     
-    async def get_role_definition(self, role_type: RoleType) -> Optional[Role]:
+    async def get_role_definition(self, role_type: RoleType) -> Role | None:
         """获取角色定义."""
         return self._role_definitions.get(role_type)
     
@@ -197,7 +194,7 @@ class InMemoryAuthorizationStorage(AuthorizationStorage):
             return True
         return False
     
-    async def get_resource_denials(self, resource_id: str) -> Set[tuple[str, str]]:
+    async def get_resource_denials(self, resource_id: str) -> set[tuple[str, str]]:
         """获取资源上的显式拒绝规则."""
         return self._resource_denials.get(resource_id, set()).copy()
     

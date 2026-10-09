@@ -13,7 +13,7 @@
 - 指数退避计算符合 REQ-RT-007 §6.2 要求
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import pytest
 

@@ -4,20 +4,23 @@ RBAC 单元测试。
 测试 RBAC 评估引擎的各项功能。
 """
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, timedelta, timezone
+from pydantic import ValidationError
+
+from src.security.rbac.evaluator import RBACEvaluator, RBACManager
 from src.security.rbac.models import (
-    SubjectType,
-    ResourceType,
-    Operation,
-    RoleType,
     AuthorizationDecision,
-    Subject,
-    Resource,
     AuthorizationRequest,
+    Operation,
+    Resource,
+    ResourceType,
+    RoleType,
+    Subject,
+    SubjectType,
 )
 from src.security.rbac.storage import InMemoryAuthorizationStorage
-from src.security.rbac.evaluator import RBACEvaluator, RBACManager
 
 
 @pytest.fixture
@@ -63,7 +66,7 @@ class TestRBACModels:
             organization_id="org_001",
         )
         
-        with pytest.raises(Exception):  # frozen=True 会抛出异常
+        with pytest.raises(ValidationError):  # frozen=True 会抛出异常
             subject.subject_id = "user_002"
     
     def test_resource_creation(self):
@@ -271,7 +274,7 @@ class TestRBACEvaluator:
     @pytest.mark.asyncio
     async def test_expired_subject(self, evaluator):
         """测试已过期的主体拒绝."""
-        expired_time = datetime.now(timezone.utc) - timedelta(hours=1)
+        expired_time = datetime.now(UTC) - timedelta(hours=1)
         
         subject = Subject(
             subject_id="user_001",

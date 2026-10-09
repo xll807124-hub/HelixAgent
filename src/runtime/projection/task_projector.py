@@ -12,7 +12,7 @@ Task 投影器实现（REQ-RT-004）
 - WorkflowAttached
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from ..entities.task import TaskStatus
@@ -77,7 +77,7 @@ class TaskProjector(BaseProjector[TaskProjection]):
                 last_event_type=event_type,
                 projection_version=self.PROJECTION_VERSION,
                 created_at=datetime.fromisoformat(payload["created_at"]),
-                updated_at=datetime.utcnow(),
+                updated_at=datetime.now(UTC),
             )
 
         # 后续事件需要已有投影
@@ -140,7 +140,7 @@ class TaskProjector(BaseProjector[TaskProjection]):
         projection.last_event_id = event_id
         projection.last_sequence = sequence
         projection.last_event_type = event_type
-        projection.updated_at = datetime.utcnow()
+        projection.updated_at = datetime.now(UTC)
 
         return projection
 

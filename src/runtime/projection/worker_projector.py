@@ -15,7 +15,7 @@ Worker 投影器实现（REQ-RT-004）
 - ActionFailed (更新计数)
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from .models import WorkerProjection
@@ -64,7 +64,7 @@ class WorkerProjector(BaseProjector[WorkerProjection]):
                 last_sequence=sequence,
                 projection_version=self.PROJECTION_VERSION,
                 created_at=datetime.fromisoformat(payload["created_at"]),
-                updated_at=datetime.utcnow(),
+                updated_at=datetime.now(UTC),
             )
 
         if projection is None:
@@ -121,7 +121,7 @@ class WorkerProjector(BaseProjector[WorkerProjection]):
         # 更新追溯字段
         projection.last_event_id = event_id
         projection.last_sequence = sequence
-        projection.updated_at = datetime.utcnow()
+        projection.updated_at = datetime.now(UTC)
 
         return projection
 

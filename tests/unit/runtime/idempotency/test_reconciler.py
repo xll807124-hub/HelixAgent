@@ -13,7 +13,6 @@
 - 3次重试后仍未知时返回 STILL_UNKNOWN
 """
 
-import pytest
 
 from src.runtime.idempotency.models import IdempotencyKey
 from src.runtime.idempotency.reconciler import IdempotencyReconciler
@@ -48,13 +47,13 @@ class TestIdempotencyReconciler:
         """冒烟：对账 OUTCOME_UNKNOWN 状态的键"""
         storage = InMemoryIdempotencyStorage()
         reconciler = IdempotencyReconciler(storage)
-        
+
         key = create_test_key(status=IdempotencyStatus.OUTCOME_UNKNOWN)
         storage.reserve(key)
-        
+
         # 执行对账（模拟查询外部系统）
         outcome = reconciler.reconcile("idem-001")
-        
+
         # MVP: 模拟查询，结果是随机的
         assert outcome in ("CONFIRMED_SUCCESS", "CONFIRMED_NOT_EXECUTED", "STILL_UNKNOWN")
 
@@ -62,65 +61,65 @@ class TestIdempotencyReconciler:
         """冒烟：对账 EXECUTING 状态的键返回 STILL_UNKNOWN"""
         storage = InMemoryIdempotencyStorage()
         reconciler = IdempotencyReconciler(storage)
-        
+
         key = create_test_key(status=IdempotencyStatus.EXECUTING)
         storage.reserve(key)
-        
+
         outcome = reconciler.reconcile("idem-001")
-        
+
         assert outcome == "STILL_UNKNOWN"
 
     def test_smoke_reconcile_succeeded(self) -> None:
         """冒烟：对账 SUCCEEDED 状态的键返回 CONFIRMED_SUCCESS"""
         storage = InMemoryIdempotencyStorage()
         reconciler = IdempotencyReconciler(storage)
-        
+
         key = create_test_key(status=IdempotencyStatus.SUCCEEDED)
         storage.reserve(key)
-        
+
         outcome = reconciler.reconcile("idem-001")
-        
+
         assert outcome == "CONFIRMED_SUCCESS"
 
     def test_smoke_reconcile_failed(self) -> None:
         """冒烟：对账 FAILED_FINAL 状态的键返回 CONFIRMED_NOT_EXECUTED"""
         storage = InMemoryIdempotencyStorage()
         reconciler = IdempotencyReconciler(storage)
-        
+
         key = create_test_key(status=IdempotencyStatus.FAILED_FINAL)
         storage.reserve(key)
-        
+
         outcome = reconciler.reconcile("idem-001")
-        
+
         assert outcome == "CONFIRMED_NOT_EXECUTED"
 
     def test_boundary_reconcile_nonexistent_key(self) -> None:
         """边界：对账不存在的键返回 STILL_UNKNOWN"""
         storage = InMemoryIdempotencyStorage()
         reconciler = IdempotencyReconciler(storage)
-        
+
         outcome = reconciler.reconcile("nonexistent")
-        
+
         assert outcome == "STILL_UNKNOWN"
 
     def test_smoke_reconcile_with_retry(self) -> None:
         """冒烟：带重试的对账"""
         storage = InMemoryIdempotencyStorage()
         reconciler = IdempotencyReconciler(storage)
-        
+
         key = create_test_key(status=IdempotencyStatus.OUTCOME_UNKNOWN)
         storage.reserve(key)
-        
+
         # 执行带重试的对账
         # MVP: 模拟查询，结果是随机的，可能需要重试
         outcome = reconciler.reconcile_with_retry("idem-001")
-        
+
         assert outcome in ("CONFIRMED_SUCCESS", "CONFIRMED_NOT_EXECUTED", "STILL_UNKNOWN")
 
     def test_boundary_reconcile_max_retries(self) -> None:
         """边界：对账最多重试3次"""
         storage = InMemoryIdempotencyStorage()
         reconciler = IdempotencyReconciler(storage)
-        
+
         # 确保对账器最多重试3次
         assert reconciler.MAX_RETRIES == 3

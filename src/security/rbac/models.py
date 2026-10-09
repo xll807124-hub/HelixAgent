@@ -4,9 +4,10 @@ RBAC 数据模型。
 定义主体、资源、角色、操作和授权决策的核心数据结构。
 """
 
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional, Set, FrozenSet
-from datetime import datetime, timezone
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -99,8 +100,8 @@ class Subject(BaseModel):
     subject_id: str            # 主体唯一标识
     subject_type: SubjectType  # 主体类型
     organization_id: str       # 所属组织 (Agent/Service 的有机组织)
-    roles: FrozenSet[RoleType] = frozenset()  # 主体拥有的角色
-    effective_until: Optional[datetime] = None  # 权限有效期
+    roles: frozenset[RoleType] = frozenset()  # 主体拥有的角色
+    effective_until: datetime | None = None  # 权限有效期
 
 
 class Resource(BaseModel):
@@ -113,10 +114,10 @@ class Resource(BaseModel):
     
     resource_id: str           # 资源唯一标识
     resource_type: ResourceType  # 资源类型
-    organization_id: Optional[str] = None  # 所属组织 (只对 ORGANIZATION 以下)
-    project_id: Optional[str] = None       # 所属项目
-    repository_id: Optional[str] = None    # 所属仓库
-    path: Optional[str] = None             # 路径 (用于 PATH 类型)
+    organization_id: str | None = None  # 所属组织 (只对 ORGANIZATION 以下)
+    project_id: str | None = None       # 所属项目
+    repository_id: str | None = None    # 所属仓库
+    path: str | None = None             # 路径 (用于 PATH 类型)
     sensitivity_level: int = 1  # 敏感度等级 (1=公开, 5=极密)
     is_sensitive: bool = False  # 是否敏感资源
 
@@ -129,13 +130,12 @@ class Role(BaseModel):
     
     model_config = ConfigDict(frozen=True, json_encoders={
         frozenset: lambda v: list(v),
-        FrozenSet: lambda v: list(v),
     })
     
     role_type: RoleType        # 角色类型
     display_name: str          # 显示名称
     description: str           # 角色描述
-    permissions: FrozenSet[tuple[ResourceType, Operation]] = frozenset()  # 权限集合
+    permissions: frozenset[tuple[ResourceType, Operation]] = frozenset()  # 权限集合
 
 
 class AuthorizationRequest(BaseModel):
@@ -150,13 +150,13 @@ class AuthorizationRequest(BaseModel):
     subject: Subject           # 发起主体
     resource: Resource         # 目标资源
     operation: Operation       # 请求的操作
-    context: Optional[dict] = None  # 额外上下文信息
-    timestamp: datetime = None
+    context: dict | None = None  # 额外上下文信息
+    timestamp: datetime = None  # type: ignore
     
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         """初始化授权请求."""
         if data.get("timestamp") is None:
-            data["timestamp"] = datetime.now(timezone.utc)
+            data["timestamp"] = datetime.now(UTC)
         super().__init__(**data)
 
 
@@ -173,12 +173,12 @@ class AuthorizationResult(BaseModel):
     subject: Subject           # 评估主体
     resource: Resource         # 评估资源
     operation: Operation       # 评估操作
-    reason: Optional[str] = None  # 决策原因 (拒绝时必填)
-    effective_until: Optional[datetime] = None  # 决策有效期
-    timestamp: datetime = None
+    reason: str | None = None  # 决策原因 (拒绝时必填)
+    effective_until: datetime | None = None  # 决策有效期
+    timestamp: datetime = None  # type: ignore
     
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         """初始化结果."""
         if data.get("timestamp") is None:
-            data["timestamp"] = datetime.now(timezone.utc)
+            data["timestamp"] = datetime.now(UTC)
         super().__init__(**data)

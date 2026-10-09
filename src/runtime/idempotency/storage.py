@@ -36,7 +36,7 @@ class IdempotencyStorage(Protocol):
     - PostgreSQLIdempotencyStorage：生产 PostgreSQL 实现（待实现）
     - RedisIdempotencyStorage：热缓存优化（待实现）
     """
-    
+
     def reserve(self, key: IdempotencyKey) -> bool:
         """预留幂等键（原子插入，唯一约束）
         
@@ -47,7 +47,7 @@ class IdempotencyStorage(Protocol):
             是否成功预留（False 表示键已存在）
         """
         ...
-    
+
     def get(self, key_id: str) -> IdempotencyKey | None:
         """获取幂等键
         
@@ -58,7 +58,7 @@ class IdempotencyStorage(Protocol):
             幂等键对象，不存在返回 None
         """
         ...
-    
+
     def update_status(
         self,
         key_id: str,
@@ -76,7 +76,7 @@ class IdempotencyStorage(Protocol):
             是否成功更新（False 表示 CAS 失败或键不存在）
         """
         ...
-    
+
     def acquire_lease(
         self,
         key_id: str,
@@ -94,7 +94,7 @@ class IdempotencyStorage(Protocol):
             是否成功获取租约
         """
         ...
-    
+
     def release_lease(self, key_id: str, lease_token: str) -> bool:
         """释放租约
         
@@ -121,21 +121,21 @@ class InMemoryIdempotencyStorage:
     - 不支持跨进程共享数据
     - 不支持持久化
     """
-    
+
     def __init__(self) -> None:
         self._keys: dict[str, IdempotencyKey] = {}
         self._lock = threading.Lock()
-    
+
     def reserve(self, key: IdempotencyKey) -> bool:
         """预留幂等键（原子插入，唯一约束）"""
         with self._lock:
             if key.key_id in self._keys:
                 return False  # 键已存在，预留失败
-            
+
             # 插入新键
             self._keys[key.key_id] = key.model_copy(deep=True)
             return True
-    
+
     def get(self, key_id: str) -> IdempotencyKey | None:
         """获取幂等键"""
         with self._lock:
@@ -144,7 +144,7 @@ class InMemoryIdempotencyStorage:
                 return None
             # 返回副本，避免外部修改影响存储
             return key.model_copy(deep=True)
-    
+
     def update_status(
         self,
         key_id: str,
@@ -156,15 +156,15 @@ class InMemoryIdempotencyStorage:
             key = self._keys.get(key_id)
             if key is None:
                 return False  # 键不存在
-            
+
             # CAS 检查：如果指定了期望状态，必须匹配
             if expected_status is not None and key.status != expected_status:
                 return False  # CAS 失败
-            
+
             # 更新状态
             key.status = new_status
             return True
-    
+
     def acquire_lease(
         self,
         key_id: str,
@@ -176,32 +176,32 @@ class InMemoryIdempotencyStorage:
             key = self._keys.get(key_id)
             if key is None:
                 return False  # 键不存在
-            
+
             # 检查是否可以获取租约（委托给模型方法）
             if not key.can_acquire_lease(lease_token):
                 return False  # 租约被其他执行者持有
-            
+
             # 获取租约
             key.lease_token = lease_token
             key.lease_expires_at = lease_expires_at
             return True
-    
+
     def release_lease(self, key_id: str, lease_token: str) -> bool:
         """释放租约"""
         with self._lock:
             key = self._keys.get(key_id)
             if key is None:
                 return False  # 键不存在
-            
+
             # 检查租约令牌是否匹配
             if key.lease_token != lease_token:
                 return False  # 令牌不匹配，不能释放
-            
+
             # 释放租约
             key.lease_token = None
             key.lease_expires_at = None
             return True
-    
+
     def update(self, key: IdempotencyKey) -> bool:
         """更新整个幂等键对象
         
@@ -211,15 +211,15 @@ class InMemoryIdempotencyStorage:
         with self._lock:
             if key.key_id not in self._keys:
                 return False
-            
+
             self._keys[key.key_id] = key.model_copy(deep=True)
             return True
-    
+
     def clear(self) -> None:
         """清空所有数据（仅用于测试）"""
         with self._lock:
             self._keys.clear()
-    
+
     def count(self) -> int:
         """返回存储的键数量（仅用于测试）"""
         with self._lock:

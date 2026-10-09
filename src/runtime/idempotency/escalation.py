@@ -30,7 +30,7 @@ from .types import IdempotencyStatus
 
 class EscalationReason:
     """升级原因枚举"""
-    
+
     RECONCILIATION_EXHAUSTED = "RECONCILIATION_EXHAUSTED"  # 对账重试耗尽
     COMPENSATION_FAILED = "COMPENSATION_FAILED"            # 补偿失败
     MANUAL_REQUEST = "MANUAL_REQUEST"                      # 人工请求
@@ -56,7 +56,7 @@ class IdempotencyEscalationHandler:
             context={"attempts": 3, "last_outcome": "STILL_UNKNOWN"},
         )
     """
-    
+
     def __init__(self, storage: IdempotencyStorage) -> None:
         """初始化升级处理器
         
@@ -64,7 +64,7 @@ class IdempotencyEscalationHandler:
             storage: 幂等键存储
         """
         self.storage = storage
-    
+
     def escalate(
         self,
         key_id: str,
@@ -87,20 +87,20 @@ class IdempotencyEscalationHandler:
         key = self.storage.get(key_id)
         if key is None:
             return False
-        
+
         # 1. 更新状态为 ESCALATED
         updated = self.storage.update_status(key_id, IdempotencyStatus.ESCALATED)
         if not updated:
             return False
-        
+
         # 2. 记录升级事件
         self._record_escalation(key, reason, context)
-        
+
         # 3. 发送通知
         self._send_notification(key, reason, context)
-        
+
         return True
-    
+
     def _record_escalation(
         self,
         key: IdempotencyKey,
@@ -126,15 +126,15 @@ class IdempotencyEscalationHandler:
             "context": context or {},
             "escalated_at": utc_now().isoformat(),
         }
-        
+
         # MVP: 仅打印日志
         print(f"[ESCALATION] {escalation_event}")
-        
+
         # 生产环境需要：
         # 1. 持久化到事件存储
         # 2. 发送到消息队列
         # 3. 触发告警
-    
+
     def _send_notification(
         self,
         key: IdempotencyKey,
@@ -160,15 +160,15 @@ class IdempotencyEscalationHandler:
             "action_type": key.action_type,
             "context": context or {},
         }
-        
+
         # MVP: 仅打印通知
         print(f"[NOTIFICATION] {notification}")
-        
+
         # 生产环境需要：
         # 1. 发送告警（PagerDuty, Opsgenie）
         # 2. 创建工单（Jira, Linear）
         # 3. 发送邮件/Slack 通知
-    
+
     def can_retry(self, key_id: str) -> bool:
         """检查是否可以重试
         
@@ -183,21 +183,21 @@ class IdempotencyEscalationHandler:
         key = self.storage.get(key_id)
         if key is None:
             return False
-        
+
         # ESCALATED 状态不能自动重试
         if key.status == IdempotencyStatus.ESCALATED:
             return False
-        
+
         # FAILED_FINAL 状态不能重试
         if key.status == IdempotencyStatus.FAILED_FINAL:
             return False
-        
+
         # SUCCEEDED 状态不需要重试
         if key.status == IdempotencyStatus.SUCCEEDED:
             return False
-        
+
         return True
-    
+
     def resolve_manual(
         self,
         key_id: str,
@@ -217,21 +217,21 @@ class IdempotencyEscalationHandler:
         key = self.storage.get(key_id)
         if key is None:
             return False
-        
+
         # 只能解决 ESCALATED 状态的键
         if key.status != IdempotencyStatus.ESCALATED:
             return False
-        
+
         # 更新状态
         updated = self.storage.update_status(
             key_id,
             resolution,
             expected_status=IdempotencyStatus.ESCALATED,
         )
-        
+
         if not updated:
             return False
-        
+
         # 记录解决事件
         resolution_event = {
             "event_type": "IDEMPOTENCY_RESOLVED",
@@ -240,7 +240,7 @@ class IdempotencyEscalationHandler:
             "notes": notes,
             "resolved_at": utc_now().isoformat(),
         }
-        
+
         print(f"[RESOLUTION] {resolution_event}")
-        
+
         return True

@@ -11,18 +11,19 @@ Event Envelope 单元测试
 - 生产者引用验证
 """
 
-import pytest
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from src.runtime.common.types import ActorRef, generate_entity_id, ensure_utc
+import pytest
+
+from src.runtime.common.types import ensure_utc
 from src.runtime.event_store import (
-    EventEnvelope,
-    EventCategory,
-    CausationType,
     CausationRef,
-    ProducerRef,
+    CausationType,
     ContentRef,
     DataSensitivity,
+    EventCategory,
+    EventEnvelope,
+    ProducerRef,
 )
 
 
@@ -36,7 +37,7 @@ class TestEventEnvelope:
             payload_schema="TaskCreated.v1",
             payload={"name": "test-task"},
         )
-        
+
         assert event.event_id is not None
         assert event.event_type == "TaskCreated"
         assert event.payload_schema == "TaskCreated.v1"
@@ -52,7 +53,7 @@ class TestEventEnvelope:
             payload_schema="TestEvent.v1",
             payload={},
         )
-        
+
         assert event.event_id is not None
         assert event.task_id is not None
         assert event.organization_id is not None
@@ -122,21 +123,21 @@ class TestEventEnvelope:
             payload_schema="Test.v1",
             payload={"key": "value"},
             task_id="660e8400-e29b-41d4-a716-446655440000",
-            occurred_at=ensure_utc(datetime(2026, 10, 8, 12, 0, 0, tzinfo=timezone.utc)),
+            occurred_at=ensure_utc(datetime(2026, 10, 8, 12, 0, 0, tzinfo=UTC)),
         )
-        
+
         event2 = EventEnvelope(
             event_id="550e8400-e29b-41d4-a716-446655440000",
             event_type="TestEvent",
             payload_schema="Test.v1",
             payload={"key": "value"},
             task_id="660e8400-e29b-41d4-a716-446655440000",
-            occurred_at=ensure_utc(datetime(2026, 10, 8, 12, 0, 0, tzinfo=timezone.utc)),
+            occurred_at=ensure_utc(datetime(2026, 10, 8, 12, 0, 0, tzinfo=UTC)),
         )
-        
+
         hash1 = event1.compute_content_hash()
         hash2 = event2.compute_content_hash()
-        
+
         assert hash1 == hash2
         assert len(hash1) == 64  # SHA-256 hex
 
@@ -147,16 +148,16 @@ class TestEventEnvelope:
             payload_schema="Test.v1",
             payload={"key": "value1"},
         )
-        
+
         event2 = EventEnvelope(
             event_type="TestEvent",
             payload_schema="Test.v1",
             payload={"key": "value2"},
         )
-        
+
         hash1 = event1.compute_content_hash()
         hash2 = event2.compute_content_hash()
-        
+
         assert hash1 != hash2
 
     def test_to_dict_includes_all_fields(self):
@@ -170,9 +171,9 @@ class TestEventEnvelope:
             action_id="action-789",
             idempotency_key="idem-key-123",
         )
-        
+
         data = event.to_dict()
-        
+
         assert data["event_type"] == "TestEvent"
         assert data["payload_schema"] == "Test.v1"
         assert data["payload"] == {"test": "data"}
@@ -192,10 +193,10 @@ class TestEventEnvelope:
             event_category=EventCategory.LIFECYCLE,
             idempotency_key="test-key",
         )
-        
+
         data = original.to_dict()
         reconstructed = EventEnvelope.from_dict(data)
-        
+
         assert reconstructed.event_id == original.event_id
         assert reconstructed.event_type == original.event_type
         assert reconstructed.payload_schema == original.payload_schema
@@ -212,10 +213,10 @@ class TestEventEnvelope:
             event_category=EventCategory.AUDIT,
             data_classification=DataSensitivity.CONFIDENTIAL,
         )
-        
+
         data = original.to_dict()
         reconstructed = EventEnvelope.from_dict(data)
-        
+
         assert reconstructed.compute_content_hash() == original.compute_content_hash()
 
 
@@ -230,7 +231,7 @@ class TestCausationRef:
             parent_event_id="parent-id",
             root_event_id="root-id",
         )
-        
+
         assert ref.causation_type == CausationType.EVENT
         assert ref.causation_id == "parent-event-123"
         assert ref.parent_event_id == "parent-id"
@@ -255,7 +256,7 @@ class TestProducerRef:
             producer_id="coder-worker",
             producer_version="v1.2.3",
         )
-        
+
         assert ref.producer_type == "WORKER"
         assert ref.producer_id == "coder-worker"
         assert ref.producer_version == "v1.2.3"
@@ -299,7 +300,7 @@ class TestContentRef:
             content_hash="abc123",
             size_bytes=1024,
         )
-        
+
         assert ref.content_type == "DIFF"
         assert ref.storage_url == "s3://bucket/diff-123.txt"
         assert ref.content_hash == "abc123"

@@ -235,10 +235,10 @@ class InMemoryEventStore(EventStore):
             if event.idempotency_key in self._idempotency_keys:
                 existing_id = self._idempotency_keys[event.idempotency_key]
                 existing = self._events[existing_id]
-                
+
                 new_hash = event.compute_content_hash()
                 existing_hash = existing.compute_content_hash()
-                
+
                 if new_hash != existing_hash:
                     return AppendResult(
                         status=AppendStatus.CONFLICT,
@@ -248,7 +248,7 @@ class InMemoryEventStore(EventStore):
                         conflict_event_id=existing_id,
                         error_message="Idempotency key conflict with different content",
                     )
-                
+
                 # 内容相同，返回已存在的事件
                 return AppendResult(
                     status=AppendStatus.DUPLICATE,
@@ -260,7 +260,7 @@ class InMemoryEventStore(EventStore):
         # 分配序列号
         if event.task_id not in self._next_sequence:
             self._next_sequence[event.task_id] = 1
-        
+
         sequence = self._next_sequence[event.task_id]
         self._next_sequence[event.task_id] += 1
 
@@ -271,11 +271,11 @@ class InMemoryEventStore(EventStore):
 
         # 保存
         self._events[event.event_id] = event
-        
+
         if event.task_id not in self._task_sequences:
             self._task_sequences[event.task_id] = []
         self._task_sequences[event.task_id].append(event)
-        
+
         if event.idempotency_key:
             self._idempotency_keys[event.idempotency_key] = event.event_id
 
@@ -300,18 +300,18 @@ class InMemoryEventStore(EventStore):
     ) -> list[EventEnvelope]:
         """查询事件流"""
         events = self._task_sequences.get(task_id, [])
-        
+
         # 过滤序列范围
         filtered = [
             e for e in events
             if e.sequence >= from_sequence
             and (to_sequence is None or e.sequence <= to_sequence)
         ]
-        
+
         # 过滤事件类型
         if event_types:
             filtered = [e for e in filtered if e.event_type in event_types]
-        
+
         # 排序并限制数量
         filtered.sort(key=lambda e: e.sequence)
         return filtered[:limit]
@@ -330,10 +330,10 @@ class InMemoryEventStore(EventStore):
             events = self._task_sequences.get(task_id, [])
         else:
             events = list(self._events.values())
-        
+
         if event_types:
             events = [e for e in events if e.event_type in event_types]
-        
+
         return len(events)
 
     async def health_check(self) -> bool:

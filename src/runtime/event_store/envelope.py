@@ -135,44 +135,44 @@ class EventEnvelope:
     - 同一task_id内sequence单调递增
     - payload必须符合payload_schema
     """
-    
+
     # === 元数据 ===
     schema_version: str = "runtime.event-envelope.v1"
     event_id: EventId = field(default_factory=generate_entity_id)
     event_type: str = ""
     event_type_version: str = "v1"
     event_category: EventCategory = EventCategory.DOMAIN
-    
+
     # === 业务坐标（必填） ===
     task_id: TaskId = field(default_factory=generate_entity_id)
     organization_id: EntityId = field(default_factory=generate_entity_id)
     project_id: EntityId = field(default_factory=generate_entity_id)
     repository_id: EntityId = field(default_factory=generate_entity_id)
-    
+
     # === 业务坐标（可选，按层级） ===
     workflow_id: WorkflowId | None = None
     worker_id: WorkerId | None = None
     action_id: ActionId | None = None
     step_id: str | None = None
     attempt: int = 1
-    
+
     # === 追踪 ===
     trace_id: TraceId = field(default_factory=generate_entity_id)
     span_id: SpanId | None = None
     parent_span_id: SpanId | None = None
     source_revision: str | None = None
-    
+
     # === 执行者 ===
     actor: ActorRef = field(default_factory=lambda: ActorRef(
         actor_type="SYSTEM",
         actor_id="runtime"
     ))
-    
+
     # === 时序 ===
     occurred_at: datetime = field(default_factory=lambda: ensure_utc(datetime.now(UTC)))
     recorded_at: datetime | None = None  # 由存储层设置
     sequence: int = 0  # 由存储层分配
-    
+
     # === 因果 ===
     causation: CausationRef = field(default_factory=lambda: CausationRef(
         causation_type=CausationType.COMMAND,
@@ -180,23 +180,23 @@ class EventEnvelope:
     ))
     correlation_id: str = field(default_factory=generate_entity_id)
     idempotency_key: str | None = None
-    
+
     # === 载荷 ===
     payload_schema: str = ""
     payload: dict[str, Any] = field(default_factory=dict)
-    
+
     # === 安全 ===
     data_classification: DataSensitivity = DataSensitivity.INTERNAL
     content_refs: list[ContentRef] = field(default_factory=list)
     redaction_applied: bool = False
-    
+
     # === 生产者 ===
     producer: ProducerRef = field(default_factory=lambda: ProducerRef(
         producer_type="SYSTEM",
         producer_id="runtime",
         producer_version="v0.1.0"
     ))
-    
+
     # === 扩展元数据 ===
     extensions: dict[str, Any] = field(default_factory=dict)
 
@@ -207,17 +207,17 @@ class EventEnvelope:
             raise ValueError("event_type cannot be empty")
         if not self.payload_schema or not self.payload_schema.strip():
             raise ValueError("payload_schema cannot be empty")
-        
+
         # 验证时间
         if not isinstance(self.occurred_at, datetime):
             raise ValueError("occurred_at must be datetime")
         if self.occurred_at.tzinfo is None:
             raise ValueError("occurred_at must be timezone-aware (UTC)")
-        
+
         # 验证attempt
         if self.attempt < 1:
             raise ValueError("attempt must be >= 1")
-        
+
         # 验证sequence（存储前为0）
         if self.sequence < 0:
             raise ValueError("sequence must be non-negative")
@@ -240,10 +240,10 @@ class EventEnvelope:
             "occurred_at": self.occurred_at.isoformat(),
             "payload": self.payload,
         }
-        
+
         # 规范化JSON（排序key）
         canonical_json = json.dumps(content, sort_keys=True, ensure_ascii=False)
-        
+
         # 计算SHA-256
         return hashlib.sha256(canonical_json.encode('utf-8')).hexdigest()
 
@@ -333,7 +333,7 @@ class EventEnvelope:
         recorded_at = (
             datetime.fromisoformat(data["recorded_at"]) if data.get("recorded_at") else None
         )
-        
+
         # 解析因果
         causation_data = data["causation"]
         causation = CausationRef(
@@ -342,7 +342,7 @@ class EventEnvelope:
             parent_event_id=causation_data.get("parent_event_id"),
             root_event_id=causation_data.get("root_event_id"),
         )
-        
+
         # 解析生产者
         producer_data = data["producer"]
         producer = ProducerRef(
@@ -350,7 +350,7 @@ class EventEnvelope:
             producer_id=producer_data["producer_id"],
             producer_version=producer_data["producer_version"],
         )
-        
+
         # 解析内容引用
         content_refs = [
             ContentRef(
@@ -361,14 +361,14 @@ class EventEnvelope:
             )
             for ref in data.get("content_refs", [])
         ]
-        
+
         # 解析执行者
         actor_data = data["actor"]
         actor = ActorRef(
             actor_type=actor_data["actor_type"],
             actor_id=actor_data["actor_id"],
         )
-        
+
         return cls(
             schema_version=data.get("schema_version", "runtime.event-envelope.v1"),
             event_id=data["event_id"],

@@ -67,7 +67,7 @@ class IdempotencyManager:
             # 重复提交，返回既有结果
             print(f"Duplicate: {result.cached_result_ref}")
     """
-    
+
     def __init__(
         self,
         storage: IdempotencyStorage | None = None,
@@ -81,7 +81,7 @@ class IdempotencyManager:
         """
         self.storage = storage or InMemoryIdempotencyStorage()
         self.generator = generator or IdempotencyKeyGenerator()
-    
+
     def reserve(
         self,
         key_id: str,
@@ -115,11 +115,11 @@ class IdempotencyManager:
         """
         # 1. 检查是否已存在
         existing_key = self.storage.get(key_id)
-        
+
         if existing_key is not None:
             # 键已存在，检查是否重复提交
             return self.check_duplicate(existing_key, request_digest)
-        
+
         # 2. 创建新键
         new_key = IdempotencyKey(
             key_id=key_id,
@@ -137,10 +137,10 @@ class IdempotencyManager:
             action_id=action_ref,
             created_by="system",  # MVP: 默认值
         )
-        
+
         # 3. 原子插入（唯一约束）
         reserved = self.storage.reserve(new_key)
-        
+
         if not reserved:
             # 插入失败（并发竞争），重新读取并检查
             existing_key = self.storage.get(key_id)
@@ -153,9 +153,9 @@ class IdempotencyManager:
                     should_execute=False,
                     conflict_reason="Concurrent insertion conflict",
                 )
-            
+
             return self.check_duplicate(existing_key, request_digest)
-        
+
         # 4. 成功预留
         return IdempotencyResult(
             key_id=key_id,
@@ -163,7 +163,7 @@ class IdempotencyManager:
             is_duplicate=False,
             should_execute=True,
         )
-    
+
     def check_duplicate(
         self,
         existing_key: IdempotencyKey,
@@ -190,7 +190,7 @@ class IdempotencyManager:
                 should_execute=False,
                 conflict_reason="Same key with different request digest",
             )
-        
+
         # 2. 同键同摘要，返回既有结果
         cached_result = (
             {"result_ref": existing_key.result_ref}
@@ -204,7 +204,7 @@ class IdempotencyManager:
             should_execute=False,
             cached_result=cached_result,
         )
-    
+
     def acquire_lease(
         self,
         key_id: str,
@@ -227,13 +227,13 @@ class IdempotencyManager:
         """
         # 1. 读取幂等键
         key = self.storage.get(key_id)
-        
+
         if key is None:
             return {
                 "acquired": False,
                 "reason": "KEY_NOT_FOUND",
             }
-        
+
         # 2. 检查是否可以获取租约
         if not key.can_acquire_lease(executor_id):
             return {
@@ -242,27 +242,27 @@ class IdempotencyManager:
                 "current_holder": key.lease_token,
                 "lease_expires_at": key.lease_expires_at,
             }
-        
+
         # 3. 生成租约令牌和过期时间
         lease_token = executor_id  # 简化实现：使用 executor_id 作为令牌
         lease_expires_at = utc_now() + timedelta(seconds=lease_duration_seconds)
-        
+
         # 4. 原子获取租约
         acquired = self.storage.acquire_lease(key_id, lease_token, lease_expires_at)
-        
+
         if not acquired:
             return {
                 "acquired": False,
                 "reason": "ACQUIRE_FAILED",
             }
-        
+
         # 5. 成功获取租约
         return {
             "acquired": True,
             "lease_token": lease_token,
             "lease_expires_at": lease_expires_at,
         }
-    
+
     def release_lease(self, key_id: str, lease_token: str) -> bool:
         """释放租约
         
@@ -274,7 +274,7 @@ class IdempotencyManager:
             是否成功释放
         """
         return self.storage.release_lease(key_id, lease_token)
-    
+
     def update_status(
         self,
         key_id: str,
@@ -295,19 +295,19 @@ class IdempotencyManager:
         """
         # 1. 更新状态
         updated = self.storage.update_status(key_id, new_status, expected_status)
-        
+
         if not updated:
             return False
-        
+
         # 2. 如果提供了结果引用，更新结果引用
         if result_ref is not None:
             key = self.storage.get(key_id)
             if key is not None:
                 key.result_ref = result_ref
                 self.storage.update(key)  # type: ignore
-        
+
         return True
-    
+
     def get_status(self, key_id: str) -> IdempotencyStatus | None:
         """查询状态
         
@@ -319,7 +319,7 @@ class IdempotencyManager:
         """
         key = self.storage.get(key_id)
         return key.status if key is not None else None
-    
+
     def get_key(self, key_id: str) -> IdempotencyKey | None:
         """获取幂等键完整信息
         

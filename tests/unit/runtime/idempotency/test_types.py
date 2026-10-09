@@ -11,7 +11,6 @@
 - 辅助方法逻辑正确（is_terminal, is_retryable, requires_reconciliation）
 """
 
-import pytest
 
 from src.runtime.idempotency.types import (
     IdempotencyScope,

@@ -44,10 +44,10 @@ class IdempotencyKeyGenerator:
         )
         # key_id: "idem-019401c2-5c3f-7890-abcd-ef1234567890"
     """
-    
+
     def __init__(self) -> None:
         self.digest_calculator = RequestDigestCalculator()
-    
+
     def generate_key(
         self,
         organization_id: str,
@@ -81,10 +81,10 @@ class IdempotencyKeyGenerator:
         # 使用 UUID v7 生成高熵键（时间有序，但不依赖时间顺序做业务判断）
         # 逻辑身份由账本中的作用域字段确定，不由键本身编码
         key_id = generate_entity_id()
-        
+
         # 添加前缀标识这是幂等键
         return f"idem-{key_id}"
-    
+
     def generate_request_digest(self, request: dict) -> str:
         """生成请求摘要（用于冲突检测）
         
@@ -95,7 +95,7 @@ class IdempotencyKeyGenerator:
             摘要字符串，格式为 "sha256:{hex_digest}"
         """
         return self.digest_calculator.calculate(request)
-    
+
     def verify_scope_consistency(
         self,
         scope: IdempotencyScope,
@@ -121,9 +121,9 @@ class IdempotencyKeyGenerator:
         if scope == IdempotencyScope.STEP_SCOPE:
             # STEP_SCOPE 必须有 step_id 和 intent_instance_id
             return bool(step_id and intent_instance_id)
-        
+
         if scope == IdempotencyScope.TASK_SCOPE:
             # TASK_SCOPE 必须有 workflow_id
             return bool(workflow_id)
-        
+
         return False

@@ -15,7 +15,7 @@
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from .checkpoint import ProjectionCheckpoint, ProjectionStatus
@@ -66,7 +66,7 @@ class ProjectionRebuilder:
         """
         self.projector = projector
         self.event_store = event_store
-        self.rebuild_id = rebuild_id or f"rebuild_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        self.rebuild_id = rebuild_id or f"rebuild_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
 
     def rebuild_from_scratch(
         self,
@@ -101,7 +101,7 @@ class ProjectionRebuilder:
             events_applied=0,
             events_skipped=0,
             events_failed=0,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
         )
 
         logger.info(
@@ -142,7 +142,7 @@ class ProjectionRebuilder:
                     )
 
             result.status = "COMPLETED"
-            result.completed_at = datetime.utcnow()
+            result.completed_at = datetime.now(UTC)
 
             logger.info(
                 f"重建完成: 处理={result.events_processed}, "
@@ -154,7 +154,7 @@ class ProjectionRebuilder:
         except Exception as e:
             result.status = "FAILED"
             result.error_message = str(e)
-            result.completed_at = datetime.utcnow()
+            result.completed_at = datetime.now(UTC)
             logger.error(f"重建失败: {str(e)}")
 
         return result
@@ -192,7 +192,7 @@ class ProjectionRebuilder:
             events_applied=0,
             events_skipped=0,
             events_failed=0,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
         )
 
         logger.info(
@@ -233,12 +233,12 @@ class ProjectionRebuilder:
                     logger.error(f"事件处理异常: seq={event['sequence']}, error={str(e)}")
 
             result.status = "COMPLETED"
-            result.completed_at = datetime.utcnow()
+            result.completed_at = datetime.now(UTC)
 
         except Exception as e:
             result.status = "FAILED"
             result.error_message = str(e)
-            result.completed_at = datetime.utcnow()
+            result.completed_at = datetime.now(UTC)
             logger.error(f"增量重建失败: {str(e)}")
 
         return result

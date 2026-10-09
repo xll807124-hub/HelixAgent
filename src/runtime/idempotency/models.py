@@ -36,150 +36,150 @@ class IdempotencyKey(BaseModel):
     - result_ref：结果引用（SUCCEEDED 状态下的可复用结果）
     - created_at/updated_at：时间戳（UTC）
     """
-    
+
     model_config = ConfigDict(extra="forbid")
-    
+
     # === 幂等键身份 ===
-    
+
     key_id: str = Field(
         ...,
         description="幂等键唯一标识（高熵不可猜测，UUID v7 格式）",
     )
-    
+
     scope: IdempotencyScope = Field(
         default=IdempotencyScope.STEP_SCOPE,
         description="幂等作用域（默认 STEP_SCOPE）",
     )
-    
+
     # === 租户与资源定位 ===
-    
+
     organization_id: str = Field(..., description="组织 ID（租户隔离）")
     project_id: str = Field(..., description="项目 ID")
     repository_id: str = Field(..., description="仓库 ID")
     task_id: str = Field(..., description="任务 ID")
     workflow_id: str = Field(..., description="工作流 ID")
     step_id: str = Field(..., description="步骤 ID（稳定标识，不依赖执行顺序）")
-    
+
     intent_instance_id: str = Field(
         ...,
         description="意图实例 ID（同一步骤内不同独立意图的区分标识）",
     )
-    
+
     # === 操作元数据 ===
-    
+
     action_type: str = Field(..., description="动作类型（如 TOOL_CALL, FILE_WRITE, PR_CREATE）")
     action_id: str | None = Field(
         default=None,
         description="关联的 Action ID（来自 REQ-RT-001）",
     )
-    
+
     request_digest: str = Field(
         ...,
         description="请求摘要（SHA256，规范化参数的哈希，用于冲突检测）",
     )
-    
+
     # === 状态与租约 ===
-    
+
     status: IdempotencyStatus = Field(
         default=IdempotencyStatus.RESERVED,
         description="操作状态（12种状态）",
     )
-    
+
     lease_token: str | None = Field(
         default=None,
         description="执行租约令牌（持有租约的执行者标识）",
     )
-    
+
     lease_expires_at: datetime | None = Field(
         default=None,
         description="租约过期时间（UTC）",
     )
-    
+
     # === 结果与引用 ===
-    
+
     result_ref: str | None = Field(
         default=None,
         description="结果引用（SUCCEEDED 状态下指向 Artifact/Evidence）",
     )
-    
+
     downstream_id: str | None = Field(
         default=None,
         description="下游业务标识（如 PR number, commit SHA, issue ID）",
     )
-    
+
     error_code: str | None = Field(
         default=None,
         description="错误码（失败状态下的错误分类）",
     )
-    
+
     error_message: str | None = Field(
         default=None,
         description="错误消息（不含敏感信息）",
     )
-    
+
     # === 对账与重试 ===
-    
+
     reconciliation_attempts: int = Field(
         default=0,
         ge=0,
         description="对账尝试次数（最多3次）",
     )
-    
+
     last_reconciliation_at: datetime | None = Field(
         default=None,
         description="最后对账时间（UTC）",
     )
-    
+
     retry_count: int = Field(
         default=0,
         ge=0,
         description="重试次数（用于审计和统计）",
     )
-    
+
     # === 审计与关联 ===
-    
+
     trace_id: str | None = Field(
         default=None,
         description="Trace ID（关联到 REQ-RT-006）",
     )
-    
+
     approval_ref: str | None = Field(
         default=None,
         description="审批引用（关联到 Policy Gateway 决策）",
     )
-    
+
     created_by: str = Field(..., description="创建者（Actor ID）")
-    
+
     created_at: datetime = Field(
         default_factory=utc_now,
         description="创建时间（UTC）",
     )
-    
+
     updated_at: datetime = Field(
         default_factory=utc_now,
         description="更新时间（UTC）",
     )
-    
+
     # === 业务方法 ===
-    
+
     def is_lease_valid(self) -> bool:
         """检查租约是否有效（未过期且有 lease_token）"""
         if not self.lease_token or not self.lease_expires_at:
             return False
         return utc_now() < self.lease_expires_at
-    
+
     def is_terminal(self) -> bool:
         """检查是否为终态（不再变化的状态）"""
         return IdempotencyStatus.is_terminal(self.status)
-    
+
     def is_retryable(self) -> bool:
         """检查是否可重试（可复用原键重试的状态）"""
         return IdempotencyStatus.is_retryable(self.status)
-    
+
     def requires_reconciliation(self) -> bool:
         """检查是否需要对账（结果未知需要查询确认）"""
         return IdempotencyStatus.requires_reconciliation(self.status)
-    
+
     def can_acquire_lease(self, executor_id: str) -> bool:
         """检查是否可以获取租约
         
@@ -193,15 +193,15 @@ class IdempotencyKey(BaseModel):
         # 无租约，可以获取
         if not self.lease_token:
             return True
-        
+
         # 当前持有者续约
         if self.lease_token == executor_id:
             return True
-        
+
         # 租约已过期，可以接管（但调用者需先核查状态）
         if self.lease_expires_at and utc_now() >= self.lease_expires_at:
             return True
-        
+
         return False
 
 
@@ -214,38 +214,38 @@ class IdempotencyResult(BaseModel):
     - cached_result：缓存的结果（SUCCEEDED 状态下）
     - conflict_reason：冲突原因（CONFLICT 状态下）
     """
-    
+
     model_config = ConfigDict(extra="forbid")
-    
+
     key_id: str = Field(..., description="幂等键 ID")
-    
+
     status: IdempotencyStatus = Field(..., description="当前状态")
-    
+
     is_duplicate: bool = Field(
         default=False,
         description="是否为重复提交（同键同摘要）",
     )
-    
+
     should_execute: bool = Field(
         default=True,
         description="是否应该执行操作（false 表示返回缓存结果）",
     )
-    
+
     cached_result: dict[str, Any] | None = Field(
         default=None,
         description="缓存的结果（SUCCEEDED 状态下）",
     )
-    
+
     conflict_reason: str | None = Field(
         default=None,
         description="冲突原因（CONFLICT 状态下：同键不同摘要）",
     )
-    
+
     requires_reconciliation: bool = Field(
         default=False,
         description="是否需要对账（结果未知）",
     )
-    
+
     escalated: bool = Field(
         default=False,
         description="是否已升级到人工处理",
@@ -261,21 +261,21 @@ class LeaseAcquisition(BaseModel):
     - lease_expires_at：租约过期时间（成功时）
     - conflict_holder：冲突持有者（失败时，另一个执行者持有租约）
     """
-    
+
     model_config = ConfigDict(extra="forbid")
-    
+
     acquired: bool = Field(..., description="是否成功获取租约")
-    
+
     lease_token: str | None = Field(
         default=None,
         description="租约令牌（成功时）",
     )
-    
+
     lease_expires_at: datetime | None = Field(
         default=None,
         description="租约过期时间（成功时）",
     )
-    
+
     conflict_holder: str | None = Field(
         default=None,
         description="冲突持有者（失败时，另一个执行者持有租约）",
@@ -292,36 +292,36 @@ class ReconciliationAttempt(BaseModel):
     - error_code：错误码（查询失败时）
     - next_retry_at：下次重试时间（失败时）
     """
-    
+
     model_config = ConfigDict(extra="forbid")
-    
+
     attempt_number: int = Field(..., ge=1, le=4, description="尝试次数（1-4）")
-    
+
     attempted_at: datetime = Field(
         default_factory=utc_now,
         description="尝试时间（UTC）",
     )
-    
+
     outcome: str = Field(
         ...,
         description="对账结果（CONFIRMED_SUCCESS/CONFIRMED_NOT_EXECUTED/STILL_UNKNOWN）",
     )
-    
+
     error_code: str | None = Field(
         default=None,
         description="错误码（查询失败时）",
     )
-    
+
     error_message: str | None = Field(
         default=None,
         description="错误消息（不含敏感信息）",
     )
-    
+
     next_retry_at: datetime | None = Field(
         default=None,
         description="下次重试时间（失败时，按指数退避计算）",
     )
-    
+
     @staticmethod
     def calculate_next_retry(attempt_number: int, base_delay_seconds: float = 1.0) -> datetime:
         """计算下次重试时间（有抖动的指数退避）
@@ -339,12 +339,12 @@ class ReconciliationAttempt(BaseModel):
             下次重试时间（UTC）
         """
         import random
-        
+
         # 指数退避：2^(attempt_number - 1) * base_delay
         delay = (2 ** (attempt_number - 1)) * base_delay_seconds
-        
+
         # 添加 ±25% 抖动
         jitter = random.uniform(-0.25, 0.25) * delay
         final_delay = delay + jitter
-        
+
         return utc_now() + timedelta(seconds=final_delay)

@@ -152,7 +152,7 @@ def can_transition_task(from_status: TaskStatus, to_status: TaskStatus) -> bool:
     # 幂等迁移：目标状态与当前状态相同，允许（支持幂等重试）
     if from_status == to_status:
         return True
-    
+
     allowed_targets = _TASK_TRANSITIONS.get(from_status, frozenset())
     return to_status in allowed_targets
 
@@ -219,7 +219,7 @@ def can_transition_workflow(
     # 幂等迁移：目标状态与当前状态相同，允许（支持幂等重试）
     if from_status == to_status:
         return True
-    
+
     allowed_targets = _WORKFLOW_TRANSITIONS.get(from_status, frozenset())
     return to_status in allowed_targets
 
@@ -284,7 +284,7 @@ def can_transition_worker(from_status: WorkerStatus, to_status: WorkerStatus) ->
     # 幂等迁移：目标状态与当前状态相同，允许（支持幂等重试）
     if from_status == to_status:
         return True
-    
+
     allowed_targets = _WORKER_TRANSITIONS.get(from_status, frozenset())
     return to_status in allowed_targets
 
@@ -339,7 +339,7 @@ def can_transition_action(from_status: ActionStatus, to_status: ActionStatus) ->
     # 幂等迁移：目标状态与当前状态相同，允许（支持幂等重试）
     if from_status == to_status:
         return True
-    
+
     allowed_targets = _ACTION_TRANSITIONS.get(from_status, frozenset())
     return to_status in allowed_targets
 

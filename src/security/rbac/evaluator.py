@@ -4,17 +4,17 @@ RBAC 评估引擎。
 实现权限评估逻辑，包括拒绝优先、层级继承等规则。
 """
 
-from typing import Optional
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from src.security.rbac.models import (
-    Subject,
-    Resource,
-    ResourceType,
-    Operation,
+    AuthorizationDecision,
     AuthorizationRequest,
     AuthorizationResult,
-    AuthorizationDecision,
+    Operation,
+    Resource,
+    ResourceType,
     RoleType,
+    Subject,
 )
 from src.security.rbac.storage import AuthorizationStorage
 
@@ -61,7 +61,9 @@ class RBACEvaluator:
             )
         
         # 2. 检查显式拒绝 (deny override)
-        if await self._has_denial(request.resource.resource_id, request.subject.subject_id, request.operation):
+        if await self._has_denial(
+            request.resource.resource_id, request.subject.subject_id, request.operation
+        ):
             return AuthorizationResult(
                 request_id=request.request_id,
                 decision=AuthorizationDecision.DENY,
@@ -114,7 +116,7 @@ class RBACEvaluator:
         """
         # 检查主体是否已过期
         if subject.effective_until is not None:
-            if datetime.now(timezone.utc) > subject.effective_until:
+            if datetime.now(UTC) > subject.effective_until:
                 return False
         
         return True
@@ -306,7 +308,7 @@ class RBACManager:
         subject: Subject,
         resource: Resource,
         operation: Operation,
-        request_id: str = None,
+        request_id: str | None = None,
     ) -> AuthorizationResult:
         """检查权限（快速接口）。
         

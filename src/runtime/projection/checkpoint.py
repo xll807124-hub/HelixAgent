@@ -9,7 +9,7 @@ ProjectionCheckpoint: 投影消费者进度记录
 注意：这不是 REQ-RT-005 的业务恢复 Checkpoint，只是消费进度记录。
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -132,7 +132,7 @@ class ProjectionCheckpoint(BaseModel):
         self.pending_gap_from = from_seq
         self.pending_gap_to = to_seq
         self.status = ProjectionStatus.BLOCKED
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def clear_gap(self) -> None:
         """清除序列缺口标记"""
@@ -140,7 +140,7 @@ class ProjectionCheckpoint(BaseModel):
         self.pending_gap_to = None
         if self.status == ProjectionStatus.BLOCKED:
             self.status = ProjectionStatus.HEALTHY
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def advance(
         self,
@@ -164,7 +164,7 @@ class ProjectionCheckpoint(BaseModel):
         self.last_applied_sequence = sequence
         self.last_applied_event_id = event_id
         self.last_applied_event_hash = event_hash
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
         # 如果填补了缺口，清除缺口标记
         if self.pending_gap_from and sequence >= self.pending_gap_to:  # type: ignore
@@ -174,12 +174,12 @@ class ProjectionCheckpoint(BaseModel):
         """标记投影失败"""
         self.status = ProjectionStatus.FAILED
         self.failure_ref = failure_ref
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def mark_rebuilding(self) -> None:
         """标记正在重建"""
         self.status = ProjectionStatus.REBUILDING
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def calculate_lag(self, latest_sequence: int) -> int:
         """

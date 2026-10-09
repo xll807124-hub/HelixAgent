@@ -20,7 +20,7 @@ Workflow 投影器实现（REQ-RT-004）
 - WorkerFailed (更新计数)
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from .models import WorkflowProjection
@@ -72,7 +72,7 @@ class WorkflowProjector(BaseProjector[WorkflowProjection]):
                 last_sequence=sequence,
                 projection_version=self.PROJECTION_VERSION,
                 created_at=datetime.fromisoformat(payload["created_at"]),
-                updated_at=datetime.utcnow(),
+                updated_at=datetime.now(UTC),
             )
 
         if projection is None:
@@ -137,7 +137,7 @@ class WorkflowProjector(BaseProjector[WorkflowProjection]):
         # 更新追溯字段
         projection.last_event_id = event_id
         projection.last_sequence = sequence
-        projection.updated_at = datetime.utcnow()
+        projection.updated_at = datetime.now(UTC)
 
         return projection
 

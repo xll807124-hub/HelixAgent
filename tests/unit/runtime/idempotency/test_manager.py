@@ -17,11 +17,7 @@
 
 import threading
 
-import pytest
-
-from src.runtime.idempotency.generator import IdempotencyKeyGenerator
 from src.runtime.idempotency.manager import IdempotencyManager
-from src.runtime.idempotency.storage import InMemoryIdempotencyStorage
 from src.runtime.idempotency.types import IdempotencyScope, IdempotencyStatus
 
 
@@ -33,7 +29,7 @@ class TestIdempotencyManager:
         manager = IdempotencyManager()
         key_id = "idem-001"
         request_digest = "sha256:abc123"
-        
+
         result = manager.reserve(
             key_id=key_id,
             request_digest=request_digest,
@@ -45,7 +41,7 @@ class TestIdempotencyManager:
             intent_instance_id="intent-001",
             action_type="TOOL_CALL",
         )
-        
+
         assert result.is_duplicate is False
         assert result.should_execute is True
         assert result.status == IdempotencyStatus.RESERVED
@@ -55,7 +51,7 @@ class TestIdempotencyManager:
         manager = IdempotencyManager()
         key_id = "idem-001"
         request_digest = "sha256:abc123"
-        
+
         # 第一次预留
         result1 = manager.reserve(
             key_id=key_id,
@@ -69,7 +65,7 @@ class TestIdempotencyManager:
             action_type="TOOL_CALL",
         )
         assert result1.should_execute is True
-        
+
         # 第二次预留（同键同摘要）
         result2 = manager.reserve(
             key_id=key_id,
@@ -82,7 +78,7 @@ class TestIdempotencyManager:
             intent_instance_id="intent-001",
             action_type="TOOL_CALL",
         )
-        
+
         assert result2.is_duplicate is True
         assert result2.should_execute is False
 
@@ -90,7 +86,7 @@ class TestIdempotencyManager:
         """边界：冲突（同键不同摘要）拒绝"""
         manager = IdempotencyManager()
         key_id = "idem-001"
-        
+
         # 第一次预留
         result1 = manager.reserve(
             key_id=key_id,
@@ -104,7 +100,7 @@ class TestIdempotencyManager:
             action_type="TOOL_CALL",
         )
         assert result1.should_execute is True
-        
+
         # 第二次预留（同键不同摘要）
         result2 = manager.reserve(
             key_id=key_id,
@@ -117,7 +113,7 @@ class TestIdempotencyManager:
             intent_instance_id="intent-001",
             action_type="TOOL_CALL",
         )
-        
+
         assert result2.is_duplicate is False
         assert result2.should_execute is False
         assert result2.status == IdempotencyStatus.CONFLICT
@@ -126,7 +122,7 @@ class TestIdempotencyManager:
         """冒烟：获取租约"""
         manager = IdempotencyManager()
         key_id = "idem-001"
-        
+
         # 预留操作
         manager.reserve(
             key_id=key_id,
@@ -139,10 +135,10 @@ class TestIdempotencyManager:
             intent_instance_id="intent-001",
             action_type="TOOL_CALL",
         )
-        
+
         # 获取租约
         lease = manager.acquire_lease(key_id, executor_id="worker-001")
-        
+
         assert lease["acquired"] is True
         assert lease["lease_token"] == "worker-001"
         assert "lease_expires_at" in lease
@@ -151,7 +147,7 @@ class TestIdempotencyManager:
         """边界：租约被其他执行者持有时不能获取"""
         manager = IdempotencyManager()
         key_id = "idem-001"
-        
+
         # 预留操作
         manager.reserve(
             key_id=key_id,
@@ -164,14 +160,14 @@ class TestIdempotencyManager:
             intent_instance_id="intent-001",
             action_type="TOOL_CALL",
         )
-        
+
         # worker-001 获取租约
         lease1 = manager.acquire_lease(key_id, executor_id="worker-001")
         assert lease1["acquired"] is True
-        
+
         # worker-002 尝试获取租约
         lease2 = manager.acquire_lease(key_id, executor_id="worker-002")
-        
+
         assert lease2["acquired"] is False
         assert lease2["reason"] == "LEASE_HELD_BY_ANOTHER"
 
@@ -179,7 +175,7 @@ class TestIdempotencyManager:
         """冒烟：释放租约"""
         manager = IdempotencyManager()
         key_id = "idem-001"
-        
+
         # 预留操作
         manager.reserve(
             key_id=key_id,
@@ -192,21 +188,21 @@ class TestIdempotencyManager:
             intent_instance_id="intent-001",
             action_type="TOOL_CALL",
         )
-        
+
         # 获取租约
         lease = manager.acquire_lease(key_id, executor_id="worker-001")
         assert lease["acquired"] is True
-        
+
         # 释放租约
         released = manager.release_lease(key_id, lease_token="worker-001")
-        
+
         assert released is True
 
     def test_smoke_update_status(self) -> None:
         """冒烟：更新状态"""
         manager = IdempotencyManager()
         key_id = "idem-001"
-        
+
         # 预留操作
         manager.reserve(
             key_id=key_id,
@@ -219,10 +215,10 @@ class TestIdempotencyManager:
             intent_instance_id="intent-001",
             action_type="TOOL_CALL",
         )
-        
+
         # 更新状态
         updated = manager.update_status(key_id, IdempotencyStatus.SUCCEEDED)
-        
+
         assert updated is True
         status = manager.get_status(key_id)
         assert status == IdempotencyStatus.SUCCEEDED
@@ -231,7 +227,7 @@ class TestIdempotencyManager:
         """边界：CAS 更新状态"""
         manager = IdempotencyManager()
         key_id = "idem-001"
-        
+
         # 预留操作
         manager.reserve(
             key_id=key_id,
@@ -244,14 +240,14 @@ class TestIdempotencyManager:
             intent_instance_id="intent-001",
             action_type="TOOL_CALL",
         )
-        
+
         # CAS 更新：RESERVED → SUCCEEDED
         updated = manager.update_status(
             key_id,
             IdempotencyStatus.SUCCEEDED,
             expected_status=IdempotencyStatus.RESERVED,
         )
-        
+
         assert updated is True
         status = manager.get_status(key_id)
         assert status == IdempotencyStatus.SUCCEEDED
@@ -260,7 +256,7 @@ class TestIdempotencyManager:
         """边界：CAS 更新失败（期望状态不匹配）"""
         manager = IdempotencyManager()
         key_id = "idem-001"
-        
+
         # 预留操作
         manager.reserve(
             key_id=key_id,
@@ -273,14 +269,14 @@ class TestIdempotencyManager:
             intent_instance_id="intent-001",
             action_type="TOOL_CALL",
         )
-        
+
         # CAS 更新：期望 SUCCEEDED（实际是 RESERVED）
         updated = manager.update_status(
             key_id,
             IdempotencyStatus.FAILED_FINAL,
             expected_status=IdempotencyStatus.SUCCEEDED,
         )
-        
+
         assert updated is False
         status = manager.get_status(key_id)
         assert status == IdempotencyStatus.RESERVED  # 状态未变
@@ -289,7 +285,7 @@ class TestIdempotencyManager:
         """冒烟：查询状态"""
         manager = IdempotencyManager()
         key_id = "idem-001"
-        
+
         # 预留操作
         manager.reserve(
             key_id=key_id,
@@ -302,24 +298,24 @@ class TestIdempotencyManager:
             intent_instance_id="intent-001",
             action_type="TOOL_CALL",
         )
-        
+
         status = manager.get_status(key_id)
-        
+
         assert status == IdempotencyStatus.RESERVED
 
     def test_boundary_get_status_nonexistent_key(self) -> None:
         """边界：查询不存在的键返回 None"""
         manager = IdempotencyManager()
-        
+
         status = manager.get_status("nonexistent")
-        
+
         assert status is None
 
     def test_smoke_get_key(self) -> None:
         """冒烟：获取完整幂等键信息"""
         manager = IdempotencyManager()
         key_id = "idem-001"
-        
+
         # 预留操作
         manager.reserve(
             key_id=key_id,
@@ -332,9 +328,9 @@ class TestIdempotencyManager:
             intent_instance_id="intent-001",
             action_type="TOOL_CALL",
         )
-        
+
         key = manager.get_key(key_id)
-        
+
         assert key is not None
         assert key.key_id == key_id
         assert key.request_digest == "sha256:abc123"
@@ -346,7 +342,7 @@ class TestIdempotencyManager:
         key_id = "idem-001"
         request_digest = "sha256:abc123"
         results = []
-        
+
         def reserve() -> None:
             result = manager.reserve(
                 key_id=key_id,
@@ -360,17 +356,17 @@ class TestIdempotencyManager:
                 action_type="TOOL_CALL",
             )
             results.append(result)
-        
+
         # 创建10个线程同时预留
         threads = [threading.Thread(target=reserve) for _ in range(10)]
         for t in threads:
             t.start()
         for t in threads:
             t.join()
-        
+
         # 只有一个应该执行，其余都是重复
         should_execute_count = sum(1 for r in results if r.should_execute)
         duplicate_count = sum(1 for r in results if r.is_duplicate)
-        
+
         assert should_execute_count == 1
         assert duplicate_count == 9

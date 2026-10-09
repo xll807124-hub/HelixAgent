@@ -32,7 +32,7 @@ class RequestDigestCalculator:
         digest = calculator.calculate({"file": "test.py", "content": "print('hello')"})
         # digest: "sha256:abc123..."
     """
-    
+
     # 敏感字段列表（这些字段的值在日志/审计中会被脱敏，但仍参与摘要计算）
     SENSITIVE_FIELDS = {
         "password",
@@ -43,7 +43,7 @@ class RequestDigestCalculator:
         "credential",
         "authorization",
     }
-    
+
     def calculate(self, request: dict[str, Any]) -> str:
         """计算请求摘要
         
@@ -55,16 +55,16 @@ class RequestDigestCalculator:
         """
         # 规范化参数
         normalized = self._normalize(request)
-        
+
         # 序列化为 JSON（确保键排序）
         json_str = json.dumps(normalized, sort_keys=True, ensure_ascii=False)
-        
+
         # 计算 SHA256 哈希
         hash_obj = hashlib.sha256(json_str.encode("utf-8"))
         hex_digest = hash_obj.hexdigest()
-        
+
         return f"sha256:{hex_digest}"
-    
+
     def _normalize(self, value: Any) -> Any:
         """递归规范化值
         
@@ -76,7 +76,7 @@ class RequestDigestCalculator:
         """
         if value is None:
             return None
-        
+
         if isinstance(value, dict):
             # 递归规范化字典，移除 None 值，排序
             normalized = {}
@@ -85,14 +85,14 @@ class RequestDigestCalculator:
                 if normalized_v is not None:  # 移除 None 值
                     normalized[k] = normalized_v
             return normalized
-        
+
         if isinstance(value, list):
             # 递归规范化列表
             return [self._normalize(item) for item in value]
-        
+
         # 其他类型（str, int, bool, float）保持原样
         return value
-    
+
     def is_sensitive_field(self, field_name: str) -> bool:
         """判断字段是否敏感（用于日志脱敏）
         
