@@ -142,7 +142,7 @@ class FileSearchTool(BaseTool):
     def risk_level(self) -> RiskLevel:
         return RiskLevel.LOW  # 只读操作
 
-    async def validate_input(
+    def validate_input(
         self,
         params: dict,
         context: ExecutionContext,

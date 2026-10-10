@@ -56,6 +56,7 @@ def tool():
 class TestFileSearchToolByFilename:
     """按文件名搜索测试"""
 
+    @pytest.mark.asyncio
     async def test_search_by_filename_pattern(self, tool, execution_context, temp_workspace):
         """测试文件名模式搜索"""
         result = await tool.execute(
@@ -71,6 +72,7 @@ class TestFileSearchToolByFilename:
         py_files = [r for r in result.output["results"] if r["path"].endswith(".py")]
         assert len(py_files) >= 2  # main.py, utils.py, test_main.py
 
+    @pytest.mark.asyncio
     async def test_search_by_filename_substring(self, tool, execution_context, temp_workspace):
         """测试文件名子串搜索"""
         result = await tool.execute(
@@ -85,6 +87,7 @@ class TestFileSearchToolByFilename:
         results = result.output["results"]
         assert any("main" in r["path"] for r in results)
 
+    @pytest.mark.asyncio
     async def test_search_with_extension_filter(self, tool, execution_context, temp_workspace):
         """测试扩展名过滤"""
         result = await tool.execute(
@@ -100,6 +103,7 @@ class TestFileSearchToolByFilename:
         for r in result.output["results"]:
             assert r["path"].endswith(".py")
 
+    @pytest.mark.asyncio
     async def test_search_max_results_limit(self, tool, execution_context, temp_workspace):
         """测试结果数量限制"""
         result = await tool.execute(
@@ -115,6 +119,7 @@ class TestFileSearchToolByFilename:
         assert len(result.output["results"]) <= 2
         assert result.output["truncated"] == (len(result.output["results"]) >= 2)
 
+    @pytest.mark.asyncio
     async def test_search_excludes_sensitive_files(self, tool, execution_context, temp_workspace):
         """测试敏感文件过滤"""
         result = await tool.execute(
@@ -130,6 +135,7 @@ class TestFileSearchToolByFilename:
         # .env 应该被过滤
         assert not any(".env" in p for p in paths)
 
+    @pytest.mark.asyncio
     async def test_search_excludes_system_dirs(self, tool, execution_context, temp_workspace):
         """测试系统目录过滤"""
         result = await tool.execute(
@@ -150,6 +156,7 @@ class TestFileSearchToolByFilename:
 class TestFileSearchToolByContent:
     """按内容搜索测试"""
 
+    @pytest.mark.asyncio
     async def test_search_by_content_simple(self, tool, execution_context, temp_workspace):
         """测试简单内容搜索"""
         result = await tool.execute(
@@ -164,6 +171,7 @@ class TestFileSearchToolByContent:
         assert len(result.output["results"]) > 0
         assert any("matches" in r for r in result.output["results"])
 
+    @pytest.mark.asyncio
     async def test_search_by_content_regex(self, tool, execution_context, temp_workspace):
         """测试正则表达式搜索"""
         result = await tool.execute(
@@ -178,6 +186,7 @@ class TestFileSearchToolByContent:
         # 应该找到函数定义
         assert len(result.output["results"]) > 0
 
+    @pytest.mark.asyncio
     async def test_search_case_sensitive(self, tool, execution_context, temp_workspace):
         """测试大小写敏感搜索"""
         result_sensitive = await tool.execute(
@@ -205,6 +214,7 @@ class TestFileSearchToolByContent:
         # 不区分大小写应该找到更多结果
         assert len(result_insensitive.output["results"]) >= len(result_sensitive.output["results"])
 
+    @pytest.mark.asyncio
     async def test_search_content_with_extension_filter(self, tool, execution_context, temp_workspace):
         """测试内容搜索 + 扩展名过滤"""
         result = await tool.execute(
@@ -224,25 +234,25 @@ class TestFileSearchToolByContent:
 class TestFileSearchToolValidation:
     """输入验证测试"""
 
-    async def test_validate_missing_search_path(self, tool, execution_context):
+    def test_validate_missing_search_path(self, tool, execution_context):
         """测试缺失搜索路径"""
-        result = await tool.validate_input(
+        result = tool.validate_input(
             {"pattern": "test"},
             execution_context
         )
         assert not result.valid
 
-    async def test_validate_missing_pattern(self, tool, execution_context, temp_workspace):
+    def test_validate_missing_pattern(self, tool, execution_context, temp_workspace):
         """测试缺失模式"""
-        result = await tool.validate_input(
+        result = tool.validate_input(
             {"search_path": temp_workspace},
             execution_context
         )
         assert not result.valid
 
-    async def test_validate_nonexistent_path(self, tool, execution_context):
+    def test_validate_nonexistent_path(self, tool, execution_context):
         """测试不存在的路径"""
-        result = await tool.validate_input(
+        result = tool.validate_input(
             {
                 "search_path": "/nonexistent/path",
                 "pattern": "test",
@@ -251,9 +261,9 @@ class TestFileSearchToolValidation:
         )
         assert not result.valid
 
-    async def test_validate_path_traversal(self, tool, execution_context):
+    def test_validate_path_traversal(self, tool, execution_context):
         """测试路径穿越检查"""
-        result = await tool.validate_input(
+        result = tool.validate_input(
             {
                 "search_path": "../../etc/",
                 "pattern": "test",
@@ -262,14 +272,14 @@ class TestFileSearchToolValidation:
         )
         assert not result.valid
 
-    async def test_validate_outside_allowed_paths(self, tool):
+    def test_validate_outside_allowed_paths(self, tool):
         """测试权限外路径"""
         ctx = ExecutionContext(
             trace_id="", action_id="", user_id="", organization_id="",
             project_id="", task_id="",
             allowed_paths=["/safe/path"],
         )
-        result = await tool.validate_input(
+        result = tool.validate_input(
             {
                 "search_path": "/unsafe/path",
                 "pattern": "test",
@@ -282,6 +292,7 @@ class TestFileSearchToolValidation:
 class TestFileSearchToolEdgeCases:
     """边界情况测试"""
 
+    @pytest.mark.asyncio
     async def test_search_empty_directory(self, tool, execution_context):
         """测试空目录搜索"""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -301,6 +312,7 @@ class TestFileSearchToolEdgeCases:
             assert result.success
             assert len(result.output["results"]) == 0
 
+    @pytest.mark.asyncio
     async def test_search_no_matches(self, tool, execution_context, temp_workspace):
         """测试无匹配结果"""
         result = await tool.execute(
@@ -314,6 +326,7 @@ class TestFileSearchToolEdgeCases:
         assert result.success
         assert len(result.output["results"]) == 0
 
+    @pytest.mark.asyncio
     async def test_search_result_contains_metadata(self, tool, execution_context, temp_workspace):
         """测试结果元数据"""
         result = await tool.execute(

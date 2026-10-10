@@ -106,7 +106,7 @@ class FileWriteTool(BaseTool):
     def risk_level(self) -> RiskLevel:
         return RiskLevel.HIGH  # 写入文件是高风险操作
 
-    async def validate_input(self, params: dict, context: ExecutionContext) -> ValidationResult:
+    def validate_input(self, params: dict, context: ExecutionContext) -> ValidationResult:
         """验证输入参数"""
         errors = []
 

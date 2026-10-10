@@ -1,21 +1,36 @@
 """
 Git Commit 工具
 
-功能：提交代码变更
+对齐设计文档：
+- REQ-HAR-003 Tool Adapter
+- REQ-SEC-002 身份验证
 """
 from __future__ import annotations
 
+import asyncio
+from pathlib import Path
+from typing import Any
+
 from ..base import (
+    BaseTool,
     ExecutionContext,
     RiskLevel,
+    ToolExecutionError,
     ToolResult,
     ValidationResult,
 )
-from .base import BaseGitTool
 
 
-class GitCommitTool(BaseGitTool):
-    """Git Commit 工具：暂存和提交变更"""
+class GitCommitTool(BaseTool):
+    """
+    Git Commit 工具
+    
+    功能：
+    1. 暂存文件
+    2. 提交变更
+    3. 支持自定义消息
+    4. 作者信息来自 ExecutionContext
+    """
 
     @property
     def name(self) -> str:
@@ -23,155 +38,296 @@ class GitCommitTool(BaseGitTool):
 
     @property
     def description(self) -> str:
-        return "Stage and commit changes to Git"
+        return "Commit changes to a Git repository"
 
     @property
-    def input_schema(self) -> dict:
+    def input_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
-                "repo_path": {"type": "string", "description": "Repository path"},
-                "message": {"type": "string", "description": "Commit message"},
+                "repo_path": {
+                    "type": "string",
+                    "description": "Path to the Git repository",
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Commit message",
+                },
                 "files": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "default": ["."],
-                    "description": "Files to stage (. for all)"
+                    "description": "Files to commit (default: all staged)",
                 },
-                "author_name": {"type": "string", "description": "Author name"},
-                "author_email": {"type": "string", "description": "Author email"},
-                "allow_empty": {
+                "all": {
                     "type": "boolean",
+                    "description": "Stage all modified files before committing",
                     "default": False,
-                    "description": "Allow empty commit"
                 },
             },
-            "required": ["repo_path", "message", "author_name", "author_email"],
+            "required": ["repo_path", "message"],
         }
 
     @property
-    def output_schema(self) -> dict:
+    def output_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
-                "commit_sha": {"type": "string"},
-                "message": {"type": "string"},
-                "changed_files": {"type": "integer"},
+                "commit_hash": {
+                    "type": "string",
+                    "description": "Commit hash (SHA-1)",
+                },
+                "author": {
+                    "type": "string",
+                    "description": "Commit author",
+                },
+                "timestamp": {
+                    "type": "string",
+                    "description": "Commit timestamp",
+                },
+                "files_changed": {
+                    "type": "integer",
+                    "description": "Number of files changed",
+                },
             },
         }
 
     @property
     def risk_level(self) -> RiskLevel:
-        return RiskLevel.HIGH  # 修改版本历史
+        return RiskLevel.HIGH  # 修改 Git 历史
 
-    async def validate_input(
-        self,
-        params: dict,
-        context: ExecutionContext,
-    ) -> ValidationResult:
+    @property
+    def timeout_seconds(self) -> int:
+        return 20
+
+    @property
+    def capabilities(self) -> list[str]:
+        return ["git", "commit", "modify"]
+
+    def validate_input(self, params: dict[str, Any]) -> ValidationResult:
         """验证输入参数"""
-        errors = []
+        result = super().validate_input(params)
+        if not result.valid:
+            return result
 
-        for field in ["repo_path", "message", "author_name", "author_email"]:
-            if field not in params:
-                errors.append(f"Missing required parameter: {field}")
+        errors: list[str] = []
+        message = params.get("message", "")
 
-        if errors:
-            return ValidationResult(valid=False, errors=errors)
+        if not message or len(message) < 3:
+            errors.append("Commit message must be at least 3 characters")
 
-        # 路径安全检查
-        valid, error = self._validate_repo_path(params.get("repo_path"), context)
-        if not valid:
-            errors.append(error)
+        if len(message) > 1000:
+            errors.append("Commit message must not exceed 1000 characters")
 
-        # 邮箱格式检查
-        email = params.get("author_email", "")
-        if "@" not in email:
-            errors.append("Invalid author email format")
-
-        return ValidationResult(valid=not bool(errors), errors=errors)
+        return ValidationResult(valid=len(errors) == 0, errors=result.errors + errors)
 
     async def execute(
         self,
-        params: dict,
+        params: dict[str, Any],
         context: ExecutionContext,
     ) -> ToolResult:
-        """执行 Git Commit"""
+        """执行提交"""
+        repo_path = params["repo_path"]
+        message = params["message"]
+        files = params.get("files", [])
+        all_modified = params.get("all", False)
+
         try:
-            repo_path = params.get("repo_path")
-            message = params.get("message")
-            files = params.get("files", ["."])
-            author_name = params.get("author_name")
-            author_email = params.get("author_email")
-            allow_empty = params.get("allow_empty", False)
+            repo = Path(repo_path).resolve()
+            if not (repo / ".git").exists():
+                raise ToolExecutionError(f"Not a git repository: {repo_path}")
 
-            # 验证是否是 Git 仓库
-            is_repo, error = self._validate_git_repo(repo_path)
-            if not is_repo:
-                return ToolResult(success=False, output=None, error=error)
+            # 配置提交人信息
+            author_name = context.user_id or "Agent"
+            author_email = f"{author_name}@ai-agent.local"
 
-            # 配置 Git 用户（如果需要）
-            for cmd in [
-                ["config", "user.name", author_name],
-                ["config", "user.email", author_email],
-            ]:
-                self._run_git_command(repo_path, cmd)
+            # 设置 git 配置
+            await self._set_git_config(repo, author_name, author_email)
 
             # 暂存文件
-            success, _, stderr = self._run_git_command(
-                repo_path,
-                ["add"] + files
-            )
-            if not success:
-                return ToolResult(
-                    success=False,
-                    output=None,
-                    error=f"Failed to stage files: {stderr}"
-                )
+            if all_modified:
+                await self._stage_all(repo)
+            elif files:
+                await self._stage_files(repo, files)
 
-            # 获取 diff 统计
-            _, diff_stat, _ = self._run_git_command(
-                repo_path,
-                ["diff", "--cached", "--numstat"]
-            )
-            changed_files = len([l for l in diff_stat.split("\n") if l.strip()])
+            # 执行提交
+            commit_hash = await self._do_commit(repo, message)
 
-            # 提交
-            commit_args = ["commit", "-m", message]
-            if allow_empty:
-                commit_args.append("--allow-empty")
-
-            success, stdout, stderr = self._run_git_command(
-                repo_path,
-                commit_args
-            )
-
-            if not success:
-                return ToolResult(
-                    success=False,
-                    output=None,
-                    error=f"Failed to commit: {stderr}"
-                )
-
-            # 获取提交 SHA
-            _, commit_sha, _ = self._run_git_command(
-                repo_path,
-                ["rev-parse", "HEAD"]
-            )
+            # 获取提交信息
+            commit_info = await self._get_commit_info(repo, commit_hash)
 
             return ToolResult(
                 success=True,
                 output={
-                    "commit_sha": commit_sha.strip(),
-                    "message": message,
-                    "changed_files": changed_files,
+                    "commit_hash": commit_hash,
+                    "author": f"{author_name} <{author_email}>",
+                    "timestamp": commit_info.get("timestamp", ""),
+                    "files_changed": commit_info.get("files_changed", 0),
                 },
-                metadata={"author": f"{author_name} <{author_email}>"}
+                metadata={
+                    "message": message,
+                },
             )
 
-        except Exception as e:
-            return ToolResult(
-                success=False,
-                output=None,
-                error=f"Commit failed: {e}",
+        except ToolExecutionError:
+            raise
+        except asyncio.TimeoutError:
+            raise ToolExecutionError(
+                f"Git commit timeout after {self.timeout_seconds}s"
             )
+        except Exception as e:
+            raise ToolExecutionError(f"Unexpected error: {e}")
+
+    async def _set_git_config(self, repo: Path, name: str, email: str) -> None:
+        """设置本地 git 配置"""
+        for key, value in [("user.name", name), ("user.email", email)]:
+            process = await asyncio.create_subprocess_exec(
+                "git",
+                "-C",
+                str(repo),
+                "config",
+                key,
+                value,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+
+            await asyncio.wait_for(
+                process.communicate(),
+                timeout=5,
+            )
+
+    async def _stage_all(self, repo: Path) -> None:
+        """暂存所有修改"""
+        process = await asyncio.create_subprocess_exec(
+            "git",
+            "-C",
+            str(repo),
+            "add",
+            "-A",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        _, stderr = await asyncio.wait_for(
+            process.communicate(),
+            timeout=10,
+        )
+
+        if process.returncode != 0:
+            error_msg = stderr.decode() if stderr else "Unknown error"
+            raise ToolExecutionError(f"Failed to stage files: {error_msg}")
+
+    async def _stage_files(self, repo: Path, files: list[str]) -> None:
+        """暂存指定文件"""
+        cmd = ["git", "-C", str(repo), "add"]
+        cmd.extend(files)
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        _, stderr = await asyncio.wait_for(
+            process.communicate(),
+            timeout=10,
+        )
+
+        if process.returncode != 0:
+            error_msg = stderr.decode() if stderr else "Unknown error"
+            raise ToolExecutionError(f"Failed to stage files: {error_msg}")
+
+    async def _do_commit(self, repo: Path, message: str) -> str:
+        """执行提交"""
+        process = await asyncio.create_subprocess_exec(
+            "git",
+            "-C",
+            str(repo),
+            "commit",
+            "-m",
+            message,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        stdout, stderr = await asyncio.wait_for(
+            process.communicate(),
+            timeout=self.timeout_seconds,
+        )
+
+        if process.returncode != 0:
+            error_msg = stderr.decode() if stderr else "Unknown error"
+            raise ToolExecutionError(f"Failed to commit: {error_msg}")
+
+        # 获取提交的 hash
+        commit_hash = await self._get_head_hash(repo)
+        return commit_hash
+
+    async def _get_head_hash(self, repo: Path) -> str:
+        """获取 HEAD commit 的 hash"""
+        process = await asyncio.create_subprocess_exec(
+            "git",
+            "-C",
+            str(repo),
+            "rev-parse",
+            "HEAD",
+            stdout=asyncio.subprocess.PIPE,
+        )
+
+        stdout, _ = await asyncio.wait_for(
+            process.communicate(),
+            timeout=5,
+        )
+
+        return stdout.decode().strip()
+
+    async def _get_commit_info(self, repo: Path, commit_hash: str) -> dict[str, Any]:
+        """获取提交信息"""
+        try:
+            # 获取时间戳
+            process = await asyncio.create_subprocess_exec(
+                "git",
+                "-C",
+                str(repo),
+                "log",
+                "-1",
+                "--format=%ai",
+                commit_hash,
+                stdout=asyncio.subprocess.PIPE,
+            )
+
+            stdout, _ = await asyncio.wait_for(
+                process.communicate(),
+                timeout=5,
+            )
+
+            timestamp = stdout.decode().strip()
+
+            # 获取修改的文件数
+            process = await asyncio.create_subprocess_exec(
+                "git",
+                "-C",
+                str(repo),
+                "log",
+                "-1",
+                "--oneline",
+                "--stat",
+                commit_hash,
+                stdout=asyncio.subprocess.PIPE,
+            )
+
+            stdout, _ = await asyncio.wait_for(
+                process.communicate(),
+                timeout=5,
+            )
+
+            # 简单计数（最后一行包含 "X files changed"）
+            lines = stdout.decode().split("\n")
+            files_changed = len(lines) - 2  # 估算
+
+            return {
+                "timestamp": timestamp,
+                "files_changed": max(files_changed, 0),
+            }
+        except Exception:
+            return {"timestamp": "", "files_changed": 0}

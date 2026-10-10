@@ -1,18 +1,34 @@
-"""
-凭据代理模块
-
-对齐设计文档：REQ-SEC-005 凭据代理
-"""
-from .github_proxy import (
-    CredentialToken,
-    GitHubAppConfig,
-    GitHubCredentialProxy,
-    TokenType,
+"""凭据代理系统"""
+from .pdp_cdp import (
+    CapabilityTokenRequest,
+    CapabilityTokenResponse,
+    CapabilityTokenType,
+    CredentialAuditAction,
+    CredentialAuditEvent,
+    CredentialCDP,
+    CredentialPDP,
+    CredentialRental,
+)
+from .revocation import (
+    RevocationBroker,
+    RevocationCache,
+    RevocationCoordinator,
+    RevocationEvent,
 )
 
 __all__ = [
-    "GitHubCredentialProxy",
-    "GitHubAppConfig",
-    "CredentialToken",
-    "TokenType",
+    # PDP/CDP
+    "CapabilityTokenRequest",
+    "CapabilityTokenResponse",
+    "CapabilityTokenType",
+    "CredentialAuditAction",
+    "CredentialAuditEvent",
+    "CredentialCDP",
+    "CredentialPDP",
+    "CredentialRental",
+    # Revocation
+    "RevocationBroker",
+    "RevocationCache",
+    "RevocationCoordinator",
+    "RevocationEvent",
 ]

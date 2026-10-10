@@ -1,21 +1,35 @@
 """
 Git Branch 工具
 
-功能：创建、删除、切换分支
+对齐设计文档：
+- REQ-HAR-003 Tool Adapter
 """
 from __future__ import annotations
 
+import asyncio
+from pathlib import Path
+from typing import Any
+
 from ..base import (
+    BaseTool,
     ExecutionContext,
     RiskLevel,
+    ToolExecutionError,
     ToolResult,
     ValidationResult,
 )
-from .base import BaseGitTool
 
 
-class GitBranchTool(BaseGitTool):
-    """Git Branch 工具：创建、删除、切换分支"""
+class GitBranchTool(BaseTool):
+    """
+    Git Branch 工具
+    
+    功能：
+    1. 创建分支
+    2. 切换分支
+    3. 删除分支
+    4. 列出分支
+    """
 
     @property
     def name(self) -> str:
@@ -23,161 +37,260 @@ class GitBranchTool(BaseGitTool):
 
     @property
     def description(self) -> str:
-        return "Create, delete, or switch Git branches"
+        return "Manage Git branches (create, switch, delete, list)"
 
     @property
-    def input_schema(self) -> dict:
+    def input_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
-                "repo_path": {"type": "string", "description": "Repository path"},
+                "repo_path": {
+                    "type": "string",
+                    "description": "Path to the Git repository",
+                },
                 "action": {
                     "type": "string",
-                    "enum": ["create", "delete", "switch", "list"],
-                    "description": "Branch action"
+                    "enum": ["create", "switch", "delete", "list"],
+                    "description": "Branch action to perform",
                 },
-                "branch_name": {"type": "string", "description": "Branch name"},
+                "branch_name": {
+                    "type": "string",
+                    "description": "Branch name (required for create/switch/delete)",
+                },
                 "from_branch": {
                     "type": "string",
-                    "default": "main",
-                    "description": "Create from branch (for create action)"
+                    "description": "Source branch for create action (default: current)",
+                },
+                "force": {
+                    "type": "boolean",
+                    "description": "Force delete branch (only for delete action)",
+                    "default": False,
                 },
             },
             "required": ["repo_path", "action"],
         }
 
     @property
-    def output_schema(self) -> dict:
+    def output_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
-                "current_branch": {"type": "string"},
-                "branches": {"type": "array", "items": {"type": "string"}},
-                "action": {"type": "string"},
+                "success": {
+                    "type": "boolean",
+                },
+                "current_branch": {
+                    "type": "string",
+                    "description": "Current branch after operation",
+                },
+                "all_branches": {
+                    "type": "array",
+                    "description": "List of all branches",
+                },
+                "message": {
+                    "type": "string",
+                },
             },
         }
 
     @property
     def risk_level(self) -> RiskLevel:
-        return RiskLevel.MEDIUM  # 分支操作有副作用但可逆
+        return RiskLevel.MEDIUM  # 修改仓库状态
 
-    async def validate_input(
-        self,
-        params: dict,
-        context: ExecutionContext,
-    ) -> ValidationResult:
+    @property
+    def timeout_seconds(self) -> int:
+        return 10
+
+    @property
+    def capabilities(self) -> list[str]:
+        return ["git", "branch", "manage"]
+
+    def validate_input(self, params: dict[str, Any]) -> ValidationResult:
         """验证输入参数"""
-        errors = []
+        result = super().validate_input(params)
+        if not result.valid:
+            return result
 
-        if "repo_path" not in params or "action" not in params:
-            errors.append("Missing required parameters: repo_path, action")
-            return ValidationResult(valid=False, errors=errors)
+        errors: list[str] = []
+        action = params.get("action", "")
+        branch_name = params.get("branch_name", "")
 
-        action = params.get("action")
-        if action not in ["create", "delete", "switch", "list"]:
-            errors.append("Invalid action")
+        # 校验分支名称
+        if action in ["create", "switch", "delete"]:
+            if not branch_name:
+                errors.append(f"{action} action requires branch_name")
+            elif not self._is_valid_branch_name(branch_name):
+                errors.append(f"Invalid branch name: {branch_name}")
 
-        if action in ["create", "delete", "switch"] and "branch_name" not in params:
-            errors.append(f"branch_name required for {action} action")
-
-        # 路径安全检查
-        valid, error = self._validate_repo_path(params.get("repo_path"), context)
-        if not valid:
-            errors.append(error)
-
-        return ValidationResult(valid=not bool(errors), errors=errors)
+        return ValidationResult(valid=len(errors) == 0, errors=result.errors + errors)
 
     async def execute(
         self,
-        params: dict,
+        params: dict[str, Any],
         context: ExecutionContext,
     ) -> ToolResult:
         """执行分支操作"""
-        try:
-            repo_path = params.get("repo_path")
-            action = params.get("action")
-            branch_name = params.get("branch_name", "")
-            from_branch = params.get("from_branch", "main")
+        repo_path = params["repo_path"]
+        action = params["action"]
+        branch_name = params.get("branch_name", "")
+        from_branch = params.get("from_branch")
+        force = params.get("force", False)
 
-            # 验证是否是 Git 仓库
-            is_repo, error = self._validate_git_repo(repo_path)
-            if not is_repo:
-                return ToolResult(success=False, output=None, error=error)
+        try:
+            repo = Path(repo_path).resolve()
+            if not (repo / ".git").exists():
+                raise ToolExecutionError(f"Not a git repository: {repo_path}")
 
             if action == "create":
-                success, stdout, stderr = self._run_git_command(
-                    repo_path,
-                    ["checkout", "-b", branch_name, from_branch]
-                )
-                if not success:
-                    return ToolResult(
-                        success=False,
-                        output=None,
-                        error=f"Failed to create branch: {stderr}"
-                    )
-                msg = f"Created branch '{branch_name}' from '{from_branch}'"
-
-            elif action == "delete":
-                success, stdout, stderr = self._run_git_command(
-                    repo_path,
-                    ["branch", "-d", branch_name]
-                )
-                if not success:
-                    return ToolResult(
-                        success=False,
-                        output=None,
-                        error=f"Failed to delete branch: {stderr}"
-                    )
-                msg = f"Deleted branch '{branch_name}'"
-
+                await self._create_branch(repo, branch_name, from_branch)
             elif action == "switch":
-                success, stdout, stderr = self._run_git_command(
-                    repo_path,
-                    ["checkout", branch_name]
-                )
-                if not success:
-                    return ToolResult(
-                        success=False,
-                        output=None,
-                        error=f"Failed to switch branch: {stderr}"
-                    )
-                msg = f"Switched to branch '{branch_name}'"
-
+                await self._switch_branch(repo, branch_name)
+            elif action == "delete":
+                await self._delete_branch(repo, branch_name, force)
             elif action == "list":
-                success, stdout, stderr = self._run_git_command(
-                    repo_path,
-                    ["branch", "-a"]
-                )
-                if not success:
-                    return ToolResult(
-                        success=False,
-                        output=None,
-                        error=f"Failed to list branches: {stderr}"
-                    )
-                branches = [b.strip() for b in stdout.split("\n") if b.strip()]
-                return ToolResult(
-                    success=True,
-                    output={"branches": branches, "action": "list"},
-                )
+                pass  # 无需执行，在下面获取列表
 
-            # 获取当前分支
-            _, current, _ = self._run_git_command(
-                repo_path,
-                ["rev-parse", "--abbrev-ref", "HEAD"]
-            )
+            current_branch = await self._get_current_branch(repo)
+            all_branches = await self._list_branches(repo)
 
             return ToolResult(
                 success=True,
                 output={
-                    "current_branch": current.strip(),
-                    "action": action,
-                    "message": msg,
+                    "success": True,
+                    "current_branch": current_branch,
+                    "all_branches": all_branches,
+                    "message": f"Branch {action} completed",
                 },
             )
 
-        except Exception as e:
-            return ToolResult(
-                success=False,
-                output=None,
-                error=f"Branch operation failed: {e}",
+        except ToolExecutionError:
+            raise
+        except asyncio.TimeoutError:
+            raise ToolExecutionError(
+                f"Git branch operation timeout after {self.timeout_seconds}s"
             )
+        except Exception as e:
+            raise ToolExecutionError(f"Unexpected error: {e}")
+
+    async def _create_branch(
+        self, repo: Path, branch_name: str, from_branch: str | None = None
+    ) -> None:
+        """创建分支"""
+        cmd = ["git", "-C", str(repo), "branch", branch_name]
+        if from_branch:
+            cmd.append(from_branch)
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        _, stderr = await asyncio.wait_for(
+            process.communicate(),
+            timeout=self.timeout_seconds,
+        )
+
+        if process.returncode != 0:
+            error_msg = stderr.decode() if stderr else "Unknown error"
+            raise ToolExecutionError(f"Failed to create branch: {error_msg}")
+
+    async def _switch_branch(self, repo: Path, branch_name: str) -> None:
+        """切换分支"""
+        cmd = ["git", "-C", str(repo), "checkout", branch_name]
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        _, stderr = await asyncio.wait_for(
+            process.communicate(),
+            timeout=self.timeout_seconds,
+        )
+
+        if process.returncode != 0:
+            error_msg = stderr.decode() if stderr else "Unknown error"
+            raise ToolExecutionError(f"Failed to switch branch: {error_msg}")
+
+    async def _delete_branch(self, repo: Path, branch_name: str, force: bool) -> None:
+        """删除分支"""
+        cmd = ["git", "-C", str(repo), "branch"]
+        if force:
+            cmd.append("-D")
+        else:
+            cmd.append("-d")
+        cmd.append(branch_name)
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        _, stderr = await asyncio.wait_for(
+            process.communicate(),
+            timeout=self.timeout_seconds,
+        )
+
+        if process.returncode != 0:
+            error_msg = stderr.decode() if stderr else "Unknown error"
+            raise ToolExecutionError(f"Failed to delete branch: {error_msg}")
+
+    async def _get_current_branch(self, repo: Path) -> str:
+        """获取当前分支"""
+        try:
+            process = await asyncio.create_subprocess_exec(
+                "git",
+                "-C",
+                str(repo),
+                "rev-parse",
+                "--abbrev-ref",
+                "HEAD",
+                stdout=asyncio.subprocess.PIPE,
+            )
+
+            stdout, _ = await asyncio.wait_for(
+                process.communicate(),
+                timeout=5,
+            )
+
+            return stdout.decode().strip()
+        except Exception:
+            return "unknown"
+
+    async def _list_branches(self, repo: Path) -> list[str]:
+        """列出所有分支"""
+        try:
+            process = await asyncio.create_subprocess_exec(
+                "git",
+                "-C",
+                str(repo),
+                "branch",
+                "-a",
+                stdout=asyncio.subprocess.PIPE,
+            )
+
+            stdout, _ = await asyncio.wait_for(
+                process.communicate(),
+                timeout=5,
+            )
+
+            lines = stdout.decode().split("\n")
+            branches = [line.strip("* ").strip() for line in lines if line.strip()]
+            return branches
+        except Exception:
+            return []
+
+    def _is_valid_branch_name(self, name: str) -> bool:
+        """验证分支名称的有效性"""
+        # 简单的验证规则
+        if not name:
+            return False
+        if name.startswith("-"):
+            return False
+        if name.endswith(".lock"):
+            return False
+        if any(c in name for c in ["...", " ", "\t", "\n"]):
+            return False
+        return True

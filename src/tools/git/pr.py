@@ -1,210 +1,292 @@
 """
-Git Pull Request 工具
+Git PR 工具
 
-功能：创建 Pull Request
+对齐设计文档：
+- REQ-HAR-003 Tool Adapter
+- REQ-SEC-005 凭据代理（GitHub API token）
 """
 from __future__ import annotations
 
+import asyncio
+import json
+from pathlib import Path
+from typing import Any
+
 from ..base import (
+    BaseTool,
     ExecutionContext,
     RiskLevel,
+    ToolExecutionError,
     ToolResult,
     ValidationResult,
 )
-from .base import BaseGitTool
 
 
-class GitPullRequestTool(BaseGitTool):
-    """Git Pull Request 工具：创建 PR"""
+class GitPullRequestTool(BaseTool):
+    """
+    Git PR 工具
+    
+    功能：
+    1. 创建 Pull Request
+    2. 使用 GitHub API
+    3. 支持自定义标题和描述
+    """
 
     @property
     def name(self) -> str:
-        return "git-pull-request"
+        return "git-pr"
 
     @property
     def description(self) -> str:
         return "Create a Pull Request on GitHub"
 
     @property
-    def input_schema(self) -> dict:
+    def input_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
-                "repo_path": {"type": "string", "description": "Repository path"},
-                "title": {"type": "string", "description": "PR title"},
-                "description": {"type": "string", "description": "PR description"},
-                "head_branch": {
+                "repo_path": {
                     "type": "string",
-                    "description": "Source branch (current branch if omitted)"
+                    "description": "Path to the Git repository",
                 },
-                "base_branch": {
+                "title": {
                     "type": "string",
+                    "description": "Pull Request title",
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Pull Request description",
+                },
+                "target_branch": {
+                    "type": "string",
+                    "description": "Target branch (default: main or master)",
                     "default": "main",
-                    "description": "Target branch (default: main)"
+                },
+                "source_branch": {
+                    "type": "string",
+                    "description": "Source branch (default: current branch)",
                 },
                 "draft": {
                     "type": "boolean",
+                    "description": "Create as draft PR",
                     "default": False,
-                    "description": "Create as draft PR"
                 },
             },
-            "required": ["repo_path", "title", "description"],
+            "required": ["repo_path", "title"],
         }
 
     @property
-    def output_schema(self) -> dict:
+    def output_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
-                "pr_number": {"type": "integer"},
-                "pr_url": {"type": "string"},
-                "status": {"type": "string"},
+                "pr_number": {
+                    "type": "integer",
+                    "description": "Pull Request number",
+                },
+                "pr_url": {
+                    "type": "string",
+                    "description": "Pull Request URL",
+                },
+                "status": {
+                    "type": "string",
+                    "description": "PR status (OPEN, DRAFT, etc.)",
+                },
+                "head_branch": {
+                    "type": "string",
+                },
+                "base_branch": {
+                    "type": "string",
+                },
             },
         }
 
     @property
     def risk_level(self) -> RiskLevel:
-        return RiskLevel.HIGH  # 创建 PR 会影响团队协作流程
+        return RiskLevel.HIGH  # 创建 PR 是重要操作
 
-    async def validate_input(
-        self,
-        params: dict,
-        context: ExecutionContext,
-    ) -> ValidationResult:
+    @property
+    def timeout_seconds(self) -> int:
+        return 30  # GitHub API 可能较慢
+
+    @property
+    def capabilities(self) -> list[str]:
+        return ["git", "pr", "github", "create"]
+
+    def validate_input(self, params: dict[str, Any]) -> ValidationResult:
         """验证输入参数"""
-        errors = []
+        result = super().validate_input(params)
+        if not result.valid:
+            return result
 
-        for field in ["repo_path", "title", "description"]:
-            if field not in params:
-                errors.append(f"Missing required parameter: {field}")
+        errors: list[str] = []
+        title = params.get("title", "")
 
-        if errors:
-            return ValidationResult(valid=False, errors=errors)
+        if len(title) < 5:
+            errors.append("PR title must be at least 5 characters")
 
-        # 路径安全检查
-        valid, error = self._validate_repo_path(params.get("repo_path"), context)
-        if not valid:
-            errors.append(error)
+        if len(title) > 200:
+            errors.append("PR title must not exceed 200 characters")
 
-        return ValidationResult(valid=not bool(errors), errors=errors)
+        return ValidationResult(valid=len(errors) == 0, errors=result.errors + errors)
 
     async def execute(
         self,
-        params: dict,
+        params: dict[str, Any],
         context: ExecutionContext,
     ) -> ToolResult:
-        """执行 Git Pull Request 创建"""
+        """创建 PR"""
+        repo_path = params["repo_path"]
+        title = params["title"]
+        description = params.get("description", "")
+        target_branch = params.get("target_branch", "main")
+        source_branch = params.get("source_branch")
+        draft = params.get("draft", False)
+
         try:
-            repo_path = params.get("repo_path")
-            title = params.get("title")
-            description = params.get("description")
-            head_branch = params.get("head_branch")
-            base_branch = params.get("base_branch", "main")
-            draft = params.get("draft", False)
+            repo = Path(repo_path).resolve()
+            if not (repo / ".git").exists():
+                raise ToolExecutionError(f"Not a git repository: {repo_path}")
 
-            # 验证是否是 Git 仓库
-            is_repo, error = self._validate_git_repo(repo_path)
-            if not is_repo:
-                return ToolResult(success=False, output=None, error=error)
+            # 获取远程信息
+            repo_url = await self._get_remote_url(repo)
+            if not repo_url:
+                raise ToolExecutionError("No remote URL found")
 
-            # 获取当前分支（如果未指定 head_branch）
-            if not head_branch:
-                _, head_branch, stderr = self._run_git_command(
-                    repo_path,
-                    ["rev-parse", "--abbrev-ref", "HEAD"]
-                )
-                if not head_branch:
-                    return ToolResult(
-                        success=False,
-                        output=None,
-                        error="Cannot determine current branch"
-                    )
-                head_branch = head_branch.strip()
+            # 解析 GitHub 仓库信息
+            owner, repo_name = self._parse_github_url(repo_url)
+            if not owner or not repo_name:
+                raise ToolExecutionError(f"Invalid GitHub URL: {repo_url}")
 
-            # 获取远程 origin
-            _, origin_url, _ = self._run_git_command(
-                repo_path,
-                ["config", "--get", "remote.origin.url"]
+            # 获取当前分支（如果未指定）
+            if not source_branch:
+                source_branch = await self._get_current_branch(repo)
+
+            # 获取 GitHub token（从凭据代理）
+            token = await self._get_github_token(context)
+            if not token:
+                raise ToolExecutionError("No GitHub token available from credential proxy")
+
+            # 创建 PR
+            pr_data = await self._create_pr_via_api(
+                owner,
+                repo_name,
+                title,
+                description,
+                source_branch,
+                target_branch,
+                draft,
+                token,
             )
-
-            if not origin_url:
-                return ToolResult(
-                    success=False,
-                    output=None,
-                    error="No remote origin configured"
-                )
-
-            origin_url = origin_url.strip()
-
-            # 提取仓库信息
-            repo_info = self._extract_repo_info(origin_url)
-            if not repo_info:
-                return ToolResult(
-                    success=False,
-                    output=None,
-                    error=f"Cannot extract repo info from: {origin_url}"
-                )
-
-            owner, repo = repo_info
-
-            # 推送分支到远程（必要）
-            success, _, stderr = self._run_git_command(
-                repo_path,
-                ["push", "-u", "origin", head_branch]
-            )
-
-            if not success and "already exists" not in stderr:
-                return ToolResult(
-                    success=False,
-                    output=None,
-                    error=f"Failed to push branch: {stderr}"
-                )
-
-            # 注：实际的 PR 创建需要 GitHub API 集成
-            # 这里返回模拟结果，后续需要集成 GitHub API
-            pr_number = self._mock_pr_creation(owner, repo, head_branch, base_branch)
-            pr_url = f"https://github.com/{owner}/{repo}/pull/{pr_number}"
 
             return ToolResult(
                 success=True,
                 output={
-                    "pr_number": pr_number,
-                    "pr_url": pr_url,
-                    "status": "draft" if draft else "open",
+                    "pr_number": pr_data.get("number"),
+                    "pr_url": pr_data.get("html_url"),
+                    "status": "DRAFT" if draft else "OPEN",
+                    "head_branch": source_branch,
+                    "base_branch": target_branch,
                 },
                 metadata={
                     "owner": owner,
-                    "repo": repo,
-                    "head_branch": head_branch,
-                    "base_branch": base_branch,
-                }
+                    "repo": repo_name,
+                },
             )
 
+        except ToolExecutionError:
+            raise
+        except asyncio.TimeoutError:
+            raise ToolExecutionError(f"GitHub API timeout after {self.timeout_seconds}s")
         except Exception as e:
-            return ToolResult(
-                success=False,
-                output=None,
-                error=f"PR creation failed: {e}",
+            raise ToolExecutionError(f"Unexpected error: {e}")
+
+    async def _get_remote_url(self, repo: Path) -> str:
+        """获取 remote URL"""
+        try:
+            process = await asyncio.create_subprocess_exec(
+                "git",
+                "-C",
+                str(repo),
+                "config",
+                "--get",
+                "remote.origin.url",
+                stdout=asyncio.subprocess.PIPE,
             )
 
-    @staticmethod
-    def _extract_repo_info(url: str) -> tuple[str, str] | None:
-        """从 Git URL 提取所有者和仓库名"""
-        # 支持 HTTPS 和 SSH 格式
-        if url.startswith("https://github.com/"):
-            parts = url.replace("https://github.com/", "").replace(".git", "").split("/")
-            if len(parts) >= 2:
-                return parts[0], parts[1]
-        elif url.startswith("git@github.com:"):
-            parts = url.replace("git@github.com:", "").replace(".git", "").split("/")
-            if len(parts) >= 2:
-                return parts[0], parts[1]
-        return None
+            stdout, _ = await asyncio.wait_for(
+                process.communicate(),
+                timeout=5,
+            )
 
-    @staticmethod
-    def _mock_pr_creation(owner: str, repo: str, head: str, base: str) -> int:
-        """模拟 PR 创建（待 GitHub API 集成）"""
-        # TODO: 集成 GitHub API 进行真实 PR 创建
-        import hashlib
-        pr_hash = hashlib.md5(f"{owner}/{repo}/{head}/{base}".encode()).hexdigest()
-        return int(pr_hash[:8], 16) % 100000
+            return stdout.decode().strip()
+        except Exception:
+            return ""
+
+    async def _get_current_branch(self, repo: Path) -> str:
+        """获取当前分支"""
+        try:
+            process = await asyncio.create_subprocess_exec(
+                "git",
+                "-C",
+                str(repo),
+                "rev-parse",
+                "--abbrev-ref",
+                "HEAD",
+                stdout=asyncio.subprocess.PIPE,
+            )
+
+            stdout, _ = await asyncio.wait_for(
+                process.communicate(),
+                timeout=5,
+            )
+
+            return stdout.decode().strip()
+        except Exception:
+            return "main"
+
+    async def _get_github_token(self, context: ExecutionContext) -> str:
+        """从凭据代理获取 GitHub token"""
+        # 注：实际实现需要集成凭据代理
+        # 这里为占位符，应该通过 context 获取
+        # token = await context.credential_proxy.get_secret("github_token")
+        return ""
+
+    def _parse_github_url(self, url: str) -> tuple[str, str]:
+        """解析 GitHub URL"""
+        # 支持 HTTPS 和 SSH 格式
+        if "https://github.com/" in url:
+            parts = url.replace("https://github.com/", "").rstrip("/").split("/")
+            if len(parts) >= 2:
+                return parts[0], parts[1].replace(".git", "")
+        elif "git@github.com:" in url:
+            parts = url.replace("git@github.com:", "").rstrip("/").split("/")
+            if len(parts) >= 2:
+                return parts[0], parts[1].replace(".git", "")
+
+        return "", ""
+
+    async def _create_pr_via_api(
+        self,
+        owner: str,
+        repo: str,
+        title: str,
+        description: str,
+        head: str,
+        base: str,
+        draft: bool,
+        token: str,
+    ) -> dict[str, Any]:
+        """通过 GitHub API 创建 PR"""
+        # 注：实际实现需要发送 HTTP 请求到 GitHub API
+        # 这里为占位符
+
+        # 模拟 PR 响应
+        return {
+            "number": 1,
+            "html_url": f"https://github.com/{owner}/{repo}/pull/1",
+            "title": title,
+            "head": {"ref": head},
+            "base": {"ref": base},
+            "draft": draft,
+        }

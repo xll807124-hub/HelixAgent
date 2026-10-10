@@ -1,18 +1,20 @@
 """
-Git 工具集
+Git 工具模块导出
 
-对齐设计文档：REQ-HAR-003 Tool Adapter
+包含所有 Git 操作工具
 """
-from .base import BaseGitTool
 from .branch import GitBranchTool
 from .clone import GitCloneTool
 from .commit import GitCommitTool
+from .diff import GitDiffTool
 from .pr import GitPullRequestTool
+from .status import GitStatusTool
 
 __all__ = [
-    "BaseGitTool",
     "GitCloneTool",
+    "GitStatusTool",
     "GitBranchTool",
     "GitCommitTool",
+    "GitDiffTool",
     "GitPullRequestTool",
 ]

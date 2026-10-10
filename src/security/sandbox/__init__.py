@@ -1,20 +1,51 @@
-"""
-沙箱隔离模块
-
-对齐设计文档：REQ-SEC-004 沙箱隔离
-"""
-from .docker_sandbox import (
-    ContainerConfig,
-    ContainerResult,
-    ContainerState,
-    DockerSandbox,
-    NetworkPolicy,
+"""沙箱隔离系统"""
+from .contracts import (
+    AuditCapability,
+    FileSystemCapability,
+    IsolationLevel,
+    IsolationRequirement,
+    NetworkCapability,
+    ProcessCapability,
+    ResourceCapability,
+    RoutingDecision,
+    SandboxBackendCapabilities,
+    SandboxBackendRegistry,
+    SandboxExecutionContext,
+    SnapshotCapability,
+    TenantCapability,
 )
+from .connector_manager import (
+    ConnectorDeclaration,
+    ConnectorManager,
+    ConnectorRuntimeContext,
+    ConnectorStatus,
+    ConnectorVersion,
+    DataClassification,
+)
+from .router import SandboxRouter
 
 __all__ = [
-    "DockerSandbox",
-    "ContainerConfig",
-    "ContainerResult",
-    "ContainerState",
-    "NetworkPolicy",
+    # Contracts
+    "AuditCapability",
+    "FileSystemCapability",
+    "IsolationLevel",
+    "IsolationRequirement",
+    "NetworkCapability",
+    "ProcessCapability",
+    "ResourceCapability",
+    "RoutingDecision",
+    "SandboxBackendCapabilities",
+    "SandboxBackendRegistry",
+    "SandboxExecutionContext",
+    "SnapshotCapability",
+    "TenantCapability",
+    # Connector
+    "ConnectorDeclaration",
+    "ConnectorManager",
+    "ConnectorRuntimeContext",
+    "ConnectorStatus",
+    "ConnectorVersion",
+    "DataClassification",
+    # Router
+    "SandboxRouter",
 ]
