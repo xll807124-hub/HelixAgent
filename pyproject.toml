@@ -18,6 +18,16 @@ dependencies = [
     # - opentelemetry-sdk：Tracer Provider、采样器、导出器实现
     "opentelemetry-api==1.27.0",
     "opentelemetry-sdk==1.27.0",
+
+    # FastAPI：HTTP API 框架（src/api/ 层；对接前端 Web 控制台与外部集成）
+    # 锁 0.115.x 系列（兼容 pydantic 2.9.x 已装；2026-10 稳定线）
+    "fastapi==0.115.6",
+    # uvicorn：ASGI 服务器（运行 FastAPI；含 [standard] extras 提供 httptools/uvloop 加速）
+    "uvicorn[standard]==0.32.1",
+    # python-dotenv：加载 .env 文件（src/api/config.py 用 Pydantic Settings 读取环境变量）
+    "python-dotenv==1.0.1",
+    # pydantic-settings：Pydantic v2 配置管理（src/api/config.py 读取 AI_API_* 环境变量）
+    "pydantic-settings==2.6.1",
 ]
 
 [project.optional-dependencies]
@@ -33,6 +43,8 @@ dev = [
     "pre-commit==3.8.0",
     # nox：跨平台 Python 任务运行器（AGENTS.md §1 一键验证：nox -s lint/typecheck/test）
     "nox==2024.4.15",
+    # httpx：FastAPI TestClient 依赖（仅 dev；生产不需要）
+    "httpx==0.27.2",
 ]
 
 [tool.pytest.ini_options]
