@@ -26,6 +26,7 @@ from ..runtime.entities.evidence import (
     VerificationMethod,
     VerifierType,
 )
+from ..security.kill_switch import KillSwitchGate
 from ..security.policy_gateway import PolicyDecision, PolicyGateway
 from .base import ExecutionContext, ToolExecutionError, ToolResult
 from .registry import ToolRegistry
@@ -58,27 +59,31 @@ class ActionExecutor:
     
     执行流程（REQ-SEC-003 §6）：
     1. 加载 Action
-    2. Policy Gateway 前置校验
-    3. 执行工具
-    4. Policy Gateway 后置校验
-    5. 记录 Evidence
-    6. 更新 Action 状态
+    2. Kill Switch Gate 校验（SEC-009：紧急冻结）
+    3. Policy Gateway 前置校验
+    4. 执行工具
+    5. Policy Gateway 后置校验
+    6. 记录 Evidence
+    7. 更新 Action 状态
     """
 
     def __init__(
         self,
         tool_registry: ToolRegistry,
-        policy_gateway: PolicyGateway
+        policy_gateway: PolicyGateway,
+        kill_switch_gate: KillSwitchGate | None = None,
     ):
         """
         初始化执行器
-        
+
         Args:
             tool_registry: 工具注册表
             policy_gateway: 策略网关
+            kill_switch_gate: Kill Switch Gate（SEC-009 集成；可选，未传则不拦截）
         """
         self._tool_registry = tool_registry
         self._policy_gateway = policy_gateway
+        self._kill_switch_gate = kill_switch_gate
     
     def _create_evidence(
         self,
@@ -154,6 +159,31 @@ class ActionExecutor:
                     action=action,
                     error=f"Action must be in PROPOSED state, got {action.status_projection}"
                 )
+
+            # 步骤1.5: Kill Switch Gate 校验（SEC-009 集成；fail-open）
+            if self._kill_switch_gate is not None:
+                block = self._kill_switch_gate.is_blocked(
+                    organization_id=context.organization_id,
+                    project_id=context.project_id,
+                    repository_id=context.task_id,  # 简化：task 包含 repo 上下文
+                )
+                if block.blocked:
+                    failed_action = action.model_copy(
+                        update={
+                            "status_projection": ActionStatus.FAILED,
+                            "completed_at": datetime.now(UTC),
+                        }
+                    )
+                    return ActionExecutionResult(
+                        success=False,
+                        action=failed_action,
+                        error=(
+                            f"action blocked by kill switch "
+                            f"(state={block.current_state.value}, "
+                            f"scope={block.current_scope.value if block.current_scope else '?'}): "
+                            f"{block.reason}"
+                        ),
+                    )
 
             # 更新为 EXECUTING
             action = action.model_copy(
@@ -443,11 +473,11 @@ class ActionExecutor:
 
             return result
 
-        except TimeoutError:
+        except TimeoutError as err:
             raise ToolExecutionError(
                 f"Tool execution timeout after {timeout} seconds"
-            )
+            ) from err
         except ToolExecutionError:
             raise
         except Exception as e:
-            raise ToolExecutionError(f"Tool execution failed: {e}")
+            raise ToolExecutionError(f"Tool execution failed: {e}") from e

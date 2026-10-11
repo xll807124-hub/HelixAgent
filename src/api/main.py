@@ -23,12 +23,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.config import get_settings
 from src.api.endpoints import health_router, tasks_router, tools_router
+from src.api.endpoints.admin import kill_switch_router
 from src.api.middleware import (
     BearerTokenAuthMiddleware,
     TraceContextMiddleware,
     register_exception_handlers,
 )
 from src.api.repositories.task_repository import TaskRepository
+from src.security.kill_switch import KillSwitchGate, KillSwitchManager, TriggerRegistry
 from src.security.policy_gateway import SimplifiedPolicyGateway
 from src.tools.executor import ActionExecutor
 from src.tools.registry import ToolRegistry, get_global_registry, reset_global_registry
@@ -103,13 +105,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.policy_gateway = policy_gateway
     logger.info("policy gateway initialized: %s", type(policy_gateway).__name__)
 
-    # Action Executor（串联 Registry + Gateway）
+    # Action Executor（串联 Registry + Gateway + Kill Switch Gate）
+    kill_switch_manager = KillSwitchManager()
+    app.state.kill_switch_manager = kill_switch_manager
+    app.state.kill_switch_trigger_registry = TriggerRegistry(kill_switch_manager)
+    kill_switch_gate = KillSwitchGate(kill_switch_manager)
     executor = ActionExecutor(
         tool_registry=registry,
         policy_gateway=policy_gateway,
+        kill_switch_gate=kill_switch_gate,
     )
     app.state.action_executor = executor
-    logger.info("action executor initialized")
+    logger.info("action executor initialized with kill switch gate")
 
     # Task Repository（内存实现）
     task_repo = TaskRepository()
@@ -167,6 +174,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(tasks_router)
     app.include_router(tools_router)
+    app.include_router(kill_switch_router)
 
     return app
 

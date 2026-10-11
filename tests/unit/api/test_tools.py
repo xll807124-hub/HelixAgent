@@ -90,3 +90,47 @@ class TestInvokeTool:
         assert r.status_code in (200, 403, 409, 500)
         body = r.json()
         assert "data" in body or body.get("code", 0) != 0
+
+    def test_invoke_blocked_by_kill_switch(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        """当 Kill Switch TRIGGERED 时，工具调用应被 409 拒绝。
+
+        通过 admin token 触发 kill switch 后，验证 tools 端点拒绝。
+        """
+        import os
+
+        # 先触发 kill switch（admin 端点）
+        admin_token = os.environ.get("AI_API_ADMIN_TOKEN", "test-admin")
+        os.environ["AI_API_ADMIN_TOKEN"] = admin_token
+        trigger_r = client.post(
+            "/admin/kill-switch/trigger",
+            json={"scope": "GLOBAL", "reason": "test tools.py 409"},
+            headers={"X-Admin-Token": admin_token},
+        )
+        assert trigger_r.status_code == 200
+        try:
+            # 调用工具应被 409 拒绝
+            r = client.post(
+                "/api/v1/tools/file-read/invoke",
+                json={"params": {"file_path": "/tmp/x"}},
+                headers=auth_headers,
+            )
+            assert r.status_code == 409
+            body = r.json()
+            assert body["code"] == 40901  # APIErrorCode.STATE_CONFLICT
+            assert "kill switch" in body["message"].lower()
+        finally:
+            # 恢复（recover + confirm）
+            req = client.post(
+                "/admin/kill-switch/recover",
+                json={"reason": "cleanup"},
+                headers={"X-Admin-Token": admin_token},
+            )
+            assert req.status_code == 200
+            token = req.json()["data"]["confirm_token"]
+            client.post(
+                "/admin/kill-switch/recover/confirm",
+                json={"confirm_token": token},
+                headers={"X-Admin-Token": admin_token},
+            )

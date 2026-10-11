@@ -28,8 +28,13 @@ from src.api.middleware.error_handler import APIError
 from src.api.middleware.trace import get_trace_id
 from src.api.schemas.common import APIErrorCode, error_response
 
-# 无需鉴权的端点（探针 + OpenAPI）
-_PUBLIC_PATHS = frozenset({"/health", "/ready", "/docs", "/redoc", "/openapi.json"})
+# 无需普通 bearer 鉴权的端点（探针 + OpenAPI + Admin 走独立 X-Admin-Token）
+_PUBLIC_PATHS = frozenset(
+    {"/health", "/ready", "/docs", "/redoc", "/openapi.json"}
+)
+
+# 前缀白名单：这些 prefix 不要求普通 bearer token（各自有独立鉴权）
+_PUBLIC_PREFIXES: tuple[str, ...] = ("/admin/",)
 
 AUTH_HEADER = "Authorization"
 BEARER_PREFIX = "Bearer "
@@ -60,8 +65,14 @@ class BearerTokenAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(  # type: ignore[no-untyped-def, override]
         self, request: Request, call_next
     ):
-        if not self._enabled or request.url.path in _PUBLIC_PATHS:
-            # 关闭鉴权或探针路径：放行
+        if (
+            not self._enabled
+            or request.url.path in _PUBLIC_PATHS
+            or any(
+                request.url.path.startswith(prefix) for prefix in _PUBLIC_PREFIXES
+            )
+        ):
+            # 关闭鉴权或探针/admin 路径：放行
             return await call_next(request)
 
         raw = request.headers.get(AUTH_HEADER, "")

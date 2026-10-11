@@ -186,6 +186,19 @@ async def invoke_tool(
             message=result.error,
         )
 
+    # Kill Switch 拒绝 → 409 STATE_CONFLICT
+    if (
+        not result.success
+        and result.action.status_projection == ActionStatus.FAILED
+        and result.error
+        and "kill switch" in result.error.lower()
+    ):
+        raise APIError(
+            status_code=409,
+            code=APIErrorCode.STATE_CONFLICT,
+            message=result.error,
+        )
+
     # 需要审批 → 409
     if (
         not result.success
