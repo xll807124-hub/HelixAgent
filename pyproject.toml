@@ -2,7 +2,9 @@
 name = "ai-agent-platform"
 version = "0.1.0"
 description = "AI Agent 研发平台 - 后端运行时（Runtime Contract v1 实现起步）"
-requires-python = ">=3.11"
+# 升级到 Python 3.12 目标（mypy 1.13 需 3.12+ 解析器才能识别 PEP 695 type 语句；
+# 当前 .venv 是 3.13.15；2026-10-11 升目标以解决 deprecated 3.0.0 包引发的 mypy syntax 错）
+requires-python = ">=3.12"
 readme = "README.md"
 
 # 生产依赖：锁定精确版本（AGENTS.md 要求：新依赖必须说明理由，生产依赖锁版本）
@@ -27,29 +29,52 @@ dev = [
     "ruff==0.7.4",
     # mypy：类型检查（对应 AGENTS.md 适配区 typecheck 命令：mypy .）
     "mypy==1.13.0",
+    # pre-commit：本地 git 钩子框架（AGENTS.md §3 验证顺序自动化）
+    "pre-commit==3.8.0",
+    # nox：跨平台 Python 任务运行器（AGENTS.md §1 一键验证：nox -s lint/typecheck/test）
+    "nox==2024.4.15",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+# 与 pytest.ini 同源：避免双重配置漂移
+addopts = ["-ra", "--strict-markers"]
+markers = [
+    "unit: 单元测试",
+    "integration: 集成测试",
+    "e2e: 端到端测试",
+    "contract: Harness 契约测试（REQ-HAR-006）",
+]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
+# 非 Python 工程文件统一从 lint 中排除（pytest.ini 是 INI；YAML/JSON/MD 由专用工具处理）
+extend-exclude = [
+    "infra/**",
+    "docs/**",
+    "scripts/**",
+    ".vscode/**",
+    "*.md",
+    "*.ini",
+    "*.yaml",
+    "*.yml",
+    "*.json",
+    "Makefile",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.mypy]
-python_version = "3.11"
+# 与 pyproject [project].requires-python 和 .venv 实际 Python 3.13 保持一致：
+# mypy 1.13 在 python_version=3.12 下能解析 PEP 695 type 语句（`type` 关键字），
+# 这能消除 .venv 内 deprecated 3.0.0 包使用 type 语句引发的 syntax 错。
+python_version = "3.12"
 plugins = ["pydantic.mypy"]
 disallow_untyped_defs = true
 ignore_missing_imports = true
-exclude = ["deprecated"]
-
-[[tool.mypy.overrides]]
-module = "deprecated.*"
-ignore_errors = true
 
 [build-system]
 requires = ["setuptools>=68.0"]

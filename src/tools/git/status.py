@@ -170,10 +170,10 @@ class GitStatusTool(BaseTool):
 
         except ToolExecutionError:
             raise
-        except asyncio.TimeoutError:
-            raise ToolExecutionError(f"Git status timeout after {self.timeout_seconds}s")
+        except TimeoutError as err:
+            raise ToolExecutionError(f"Git status timeout after {self.timeout_seconds}s") from err
         except Exception as e:
-            raise ToolExecutionError(f"Unexpected error: {e}")
+            raise ToolExecutionError(f"Unexpected error: {e}") from e
 
     async def _get_branch(self, repo_path: Path) -> str:
         """获取当前分支"""
@@ -199,9 +199,9 @@ class GitStatusTool(BaseTool):
 
     def _parse_status(self, status_text: str) -> tuple[list[str], list[str], list[str]]:
         """解析 git status 输出"""
-        modified = []
-        untracked = []
-        staged = []
+        modified: list[str] = []
+        untracked: list[str] = []
+        staged: list[str] = []
 
         for line in status_text.split("\n"):
             if not line.strip():

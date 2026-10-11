@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+from typing import cast
 
 from ..base import (
     BaseTool,
@@ -91,7 +92,7 @@ class PytestRunnerTool(BaseTool):
     def risk_level(self) -> RiskLevel:
         return RiskLevel.MEDIUM  # 执行代码但不修改系统
 
-    async def validate_input(
+    async def validate_input(  # type: ignore[override]
         self,
         params: dict,
         context: ExecutionContext,
@@ -107,9 +108,12 @@ class PytestRunnerTool(BaseTool):
         if not isinstance(test_path, str):
             errors.append("test_path must be a string")
 
+        # isinstance 通过后 cast 收窄（mypy 不会自动 narrow 隐式 Any）
+        test_path_str = cast(str, test_path)
+
         # 检查路径是否存在
         try:
-            path = Path(test_path).resolve()
+            path = Path(test_path_str).resolve()
             if not path.exists():
                 errors.append(f"Test path does not exist: {test_path}")
         except (ValueError, RuntimeError) as e:
@@ -124,15 +128,16 @@ class PytestRunnerTool(BaseTool):
     ) -> ToolResult:
         """执行 Pytest"""
         try:
-            test_path = params.get("test_path")
-            pattern = params.get("pattern", "test_*.py")
-            keywords = params.get("keywords")
-            verbose = params.get("verbose", False)
-            coverage = params.get("coverage", False)
-            timeout = params.get("timeout", 300)
+            # validate_input 已保证以下字段类型正确
+            test_path = cast(str, params.get("test_path"))
+            keywords = cast(str | None, params.get("keywords"))
+            verbose = cast(bool, params.get("verbose", False))
+            coverage = cast(bool, params.get("coverage", False))
+            timeout_raw = params.get("timeout", 300)
+            timeout = cast(int, timeout_raw)
 
             # 构建 pytest 命令
-            cmd = ["python", "-m", "pytest", test_path]
+            cmd: list[str] = ["python", "-m", "pytest", test_path]
 
             if keywords:
                 cmd.extend(["-k", keywords])

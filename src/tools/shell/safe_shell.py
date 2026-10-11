@@ -101,7 +101,7 @@ class SafeShellTool(BaseTool):
     def risk_level(self) -> RiskLevel:
         return RiskLevel.HIGH  # 命令执行总是高风险
 
-    async def validate_input(
+    async def validate_input(  # type: ignore[override]
         self,
         params: dict,
         context: ExecutionContext,

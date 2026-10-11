@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 from ..base import (
     BaseTool,
@@ -106,7 +107,9 @@ class FileWriteTool(BaseTool):
     def risk_level(self) -> RiskLevel:
         return RiskLevel.HIGH  # 写入文件是高风险操作
 
-    def validate_input(self, params: dict, context: ExecutionContext) -> ValidationResult:
+    def validate_input(  # type: ignore[override]
+        self, params: dict, context: ExecutionContext
+    ) -> ValidationResult:
         """验证输入参数"""
         errors = []
 
@@ -138,14 +141,16 @@ class FileWriteTool(BaseTool):
         if errors:
             return ValidationResult(valid=False, errors=errors)
 
+        # isinstance 通过后 cast 收窄（mypy 不会自动 narrow 隐式 Any）
+        path_str = cast(str, path)
         try:
-            abs_path = Path(path).resolve()
+            abs_path = Path(path_str).resolve()
         except (ValueError, RuntimeError) as e:
             errors.append(f"Invalid path: {e}")
             return ValidationResult(valid=False, errors=errors)
 
         # 路径穿越检查
-        if ".." in path:
+        if ".." in path_str:
             errors.append("Path traversal (..) not allowed")
 
         # 权限检查：路径必须在 allowed_paths 范围内
@@ -173,9 +178,12 @@ class FileWriteTool(BaseTool):
             )
 
         # 文件大小限制
-        if len(content.encode(encoding)) > context.max_file_size_bytes:
+        content_str = cast(str, content)
+        encoding_str = cast(str, encoding)
+        if len(content_str.encode(encoding_str)) > context.max_file_size_bytes:
             errors.append(
-                f"Content exceeds max size: {len(content.encode(encoding))} > {context.max_file_size_bytes}"
+                f"Content exceeds max size: "
+                f"{len(content_str.encode(encoding_str))} > {context.max_file_size_bytes}"
             )
 
         return ValidationResult(valid=not bool(errors), errors=errors)
@@ -187,11 +195,12 @@ class FileWriteTool(BaseTool):
     ) -> ToolResult:
         """执行文件写入"""
         try:
-            path = params.get("path")
-            content = params.get("content")
-            create_dirs = params.get("create_dirs", True)
-            mode = params.get("mode", "write")
-            encoding = params.get("encoding", "utf-8")
+            # validate_input 已保证以下字段类型正确
+            path = cast(str, params.get("path"))
+            content = cast(str, params.get("content"))
+            create_dirs = cast(bool, params.get("create_dirs", True))
+            mode = cast(str, params.get("mode", "write"))
+            encoding = cast(str, params.get("encoding", "utf-8"))
 
             abs_path = Path(path).resolve()
 
@@ -233,5 +242,4 @@ class FileWriteTool(BaseTool):
 
     def _is_protected_file(self, path: Path) -> bool:
         """检查是否是受保护的文件"""
-        name = path.name
         return any(pattern in str(path) for pattern in self.PROTECTED_PATTERNS)

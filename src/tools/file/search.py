@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Any, cast
 
 from ..base import (
     BaseTool,
@@ -142,7 +143,7 @@ class FileSearchTool(BaseTool):
     def risk_level(self) -> RiskLevel:
         return RiskLevel.LOW  # 只读操作
 
-    def validate_input(
+    def validate_input(  # type: ignore[override]
         self,
         params: dict,
         context: ExecutionContext,
@@ -175,8 +176,10 @@ class FileSearchTool(BaseTool):
         if errors:
             return ValidationResult(valid=False, errors=errors)
 
+        # isinst检查通过后，search_path 实际是 str（mypy 不会自动 narrow 隐式 Any）
+        search_path_str = cast(str, search_path)
         try:
-            abs_path = Path(search_path).resolve()
+            abs_path = Path(search_path_str).resolve()
         except (ValueError, RuntimeError) as e:
             errors.append(f"Invalid search_path: {e}")
             return ValidationResult(valid=False, errors=errors)
@@ -199,7 +202,7 @@ class FileSearchTool(BaseTool):
                 )
 
         # 路径穿越检查
-        if ".." in search_path:
+        if ".." in search_path_str:
             errors.append("Path traversal (..) not allowed")
 
         return ValidationResult(valid=not bool(errors), errors=errors)
@@ -211,12 +214,17 @@ class FileSearchTool(BaseTool):
     ) -> ToolResult:
         """执行文件搜索"""
         try:
-            search_path = params.get("search_path")
-            pattern = params.get("pattern")
-            search_type = params.get("search_type", "filename")
-            max_results = params.get("max_results", 100)
-            file_extensions = params.get("file_extensions", [])
-            case_sensitive = params.get("case_sensitive", False)
+            # validate_input 已保证以下字段类型正确（params: dict 显式 cast）
+            search_path = cast(str, params.get("search_path"))
+            pattern = cast(str, params.get("pattern"))
+            search_type = cast(str, params.get("search_type", "filename"))
+            max_results_raw = params.get("max_results", 100)
+            file_extensions_raw = params.get("file_extensions", [])
+            case_sensitive_raw = params.get("case_sensitive", False)
+            # 标量收窄
+            max_results = cast(int, max_results_raw)
+            file_extensions = cast(list[str], file_extensions_raw)
+            case_sensitive = cast(bool, case_sensitive_raw)
 
             abs_path = Path(search_path).resolve()
 
@@ -234,8 +242,7 @@ class FileSearchTool(BaseTool):
                     error=f"Search path is not a directory: {abs_path}",
                 )
 
-            results = []
-            result_count = 0
+            results: list[dict[str, Any]] = []
 
             if search_type == "filename":
                 results = self._search_by_filename(
@@ -281,9 +288,9 @@ class FileSearchTool(BaseTool):
         pattern: str,
         extensions: list[str],
         max_results: int,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """按文件名搜索"""
-        results = []
+        results: list[dict[str, Any]] = []
 
         # 转换 glob 模式
         glob_pattern = f"**/*{pattern}*" if not pattern.startswith("*") else f"**/{pattern}"
@@ -319,9 +326,9 @@ class FileSearchTool(BaseTool):
         case_sensitive: bool,
         extensions: list[str],
         max_results: int,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """按内容搜索"""
-        results = []
+        results: list[dict[str, Any]] = []
 
         try:
             regex = re.compile(
