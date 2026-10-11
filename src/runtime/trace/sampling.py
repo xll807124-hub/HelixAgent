@@ -68,7 +68,7 @@ class SamplingStrategy:
             # 自定义采样率
             if not 0.0 <= custom_rate <= 1.0:
                 raise ValueError(f"采样率必须在 0.0-1.0 范围内，收到: {custom_rate}")
-            base_sampler = TraceIdRatioBased(custom_rate)
+            base_sampler: Sampler = TraceIdRatioBased(custom_rate)
         elif priority == SamplingPriority.HIGH:
             # 高优先级：100% 采样
             base_sampler = ALWAYS_ON

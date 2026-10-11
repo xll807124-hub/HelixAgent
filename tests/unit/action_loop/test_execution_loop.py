@@ -93,7 +93,7 @@ class TestActionExecutionLoop:
 
         # 顺序执行
         results = []
-        for i, file_path in enumerate(files):
+        for _i, file_path in enumerate(files):
             action = create_test_action(
                 tool_name="file-read",
                 parameters={"file_path": str(file_path)},

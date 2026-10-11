@@ -491,7 +491,9 @@ class TestParentChildConsistencyValidation:
         assert "RUNNING" in reason
 
     def test_validate_task_cancelled_workflow_completed_blocked(self):
-        """Task CANCELLED 阻止 Workflow COMPLETED（通过 can_workflow_continue_under_task 的失败路径）"""
+        """Task CANCELLED 阻止 Workflow COMPLETED
+        （通过 can_workflow_continue_under_task 的失败路径）
+        """
         allowed, reason = validate_parent_child_consistency(
             "task", TaskStatus.CANCELLED,
             "workflow", WorkflowStatus.COMPLETED
@@ -515,7 +517,9 @@ class TestParentChildConsistencyValidation:
         assert "RUNNING" in reason
 
     def test_validate_workflow_failed_worker_completed_blocked(self):
-        """Workflow FAILED 阻止 Worker COMPLETED（通过 can_worker_continue_under_workflow 的失败路径）"""
+        """Workflow FAILED 阻止 Worker COMPLETED
+        （通过 can_worker_continue_under_workflow 的失败路径）
+        """
         allowed, reason = validate_parent_child_consistency(
             "workflow", WorkflowStatus.FAILED,
             "worker", WorkerStatus.COMPLETED

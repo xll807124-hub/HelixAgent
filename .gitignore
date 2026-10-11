@@ -40,12 +40,17 @@ env/
 htmlcov/
 .tox/
 .nox/
+.ruff_cache/
+.mypy_cache/
 
 # Jupyter
 .ipynb_checkpoints
 
 # Environment variables
+# 规则：.env.example 提交；.env / .env.dev / .env.test / .env.*.local 一律忽略
 .env
+.env.dev
+.env.test
 .env.local
 .env.*.local
 

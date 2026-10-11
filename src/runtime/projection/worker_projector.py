@@ -18,6 +18,7 @@ Worker 投影器实现（REQ-RT-004）
 from datetime import UTC, datetime
 from typing import Any
 
+from .checkpoint import ProjectionCheckpoint
 from .models import WorkerProjection
 from .projector import BaseProjector
 
@@ -28,7 +29,7 @@ class WorkerProjector(BaseProjector[WorkerProjection]):
     PROJECTION_NAME = "worker_projection"
     PROJECTION_VERSION = "v1.0.0"
 
-    def __init__(self, storage):
+    def __init__(self, storage: Any) -> None:
         super().__init__()
         self.storage = storage
 
@@ -164,7 +165,7 @@ class WorkerProjector(BaseProjector[WorkerProjection]):
     def _save_projection_transaction(
         self,
         projection: WorkerProjection,
-        checkpoint,
+        checkpoint: Any,
         event_id: str,
         event_hash: str,
     ) -> None:
@@ -176,7 +177,7 @@ class WorkerProjector(BaseProjector[WorkerProjection]):
             event_hash=event_hash,
         )
 
-    def _load_checkpoint(self, partition_key: str):
+    def _load_checkpoint(self, partition_key: str) -> ProjectionCheckpoint:
         """加载 Checkpoint"""
         return self.storage.load_checkpoint(
             projection_name=self.PROJECTION_NAME,
@@ -187,7 +188,7 @@ class WorkerProjector(BaseProjector[WorkerProjection]):
         """加载 Worker 投影"""
         return self.storage.load_worker_projection(worker_id=entity_id)
 
-    def _extract_entity_id(self, event):
+    def _extract_entity_id(self, event: dict[str, Any]) -> str:
         """WorkerProjector 适配：Action/Artifact 子实体事件取 partition_key 的 worker_id
 
         Worker 生命周期事件（WorkerCreated/Started/Completed/Failed/...）的 entity_id

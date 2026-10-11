@@ -1,15 +1,15 @@
 """
 Docker 沙箱隔离单元测试
 """
+
 import pytest
-from datetime import datetime, timedelta
 
 from src.security.sandbox.docker_sandbox import (
     ContainerConfig,
     ContainerResult,
     ContainerState,
-    NetworkPolicy,
     DockerSandbox,
+    NetworkPolicy,
 )
 
 
@@ -116,7 +116,7 @@ class TestNetworkPolicy:
     def test_default_policy(self):
         """测试默认网络策略"""
         policy = NetworkPolicy()
-        assert policy.allow_outbound == False
+        assert policy.allow_outbound is False
         assert policy.allowed_hosts is None
         assert policy.allowed_ports is None
 
@@ -126,7 +126,7 @@ class TestNetworkPolicy:
             allow_outbound=True,
             allowed_hosts=["github.com", "api.github.com"],
         )
-        assert policy.allow_outbound == True
+        assert policy.allow_outbound is True
         assert len(policy.allowed_hosts) == 2
 
     def test_policy_with_allowed_ports(self):
@@ -194,8 +194,8 @@ class TestDockerSandboxBuildContainerKwargs:
 
     def test_build_basic_kwargs(self):
         """测试基础参数构建"""
-        sandbox = DockerSandbox()
-        config = ContainerConfig(
+        DockerSandbox()
+        ContainerConfig(
             image="python:3.11",
             name="test",
             command=["python", "app.py"],
@@ -234,7 +234,7 @@ class TestDockerSandboxEscapeDetection:
         sandbox = DockerSandbox()
         # TODO: 实现后期补充测试逻辑
         result = await sandbox.check_sandbox_escape("container-id")
-        assert result == False
+        assert result is False
 
 
 class TestDockerSandboxIntegration:

@@ -20,6 +20,7 @@ Action 投影器实现（REQ-RT-004）
 from datetime import UTC, datetime
 from typing import Any
 
+from .checkpoint import ProjectionCheckpoint
 from .models import ActionProjection
 from .projector import BaseProjector
 
@@ -30,7 +31,7 @@ class ActionProjector(BaseProjector[ActionProjection]):
     PROJECTION_NAME = "action_projection"
     PROJECTION_VERSION = "v1.0.0"
 
-    def __init__(self, storage):
+    def __init__(self, storage: Any) -> None:
         super().__init__()
         self.storage = storage
 
@@ -157,7 +158,7 @@ class ActionProjector(BaseProjector[ActionProjection]):
     def _save_projection_transaction(
         self,
         projection: ActionProjection,
-        checkpoint,
+        checkpoint: Any,
         event_id: str,
         event_hash: str,
     ) -> None:
@@ -169,7 +170,7 @@ class ActionProjector(BaseProjector[ActionProjection]):
             event_hash=event_hash,
         )
 
-    def _load_checkpoint(self, partition_key: str):
+    def _load_checkpoint(self, partition_key: str) -> ProjectionCheckpoint:
         """加载 Checkpoint"""
         return self.storage.load_checkpoint(
             projection_name=self.PROJECTION_NAME,
@@ -180,7 +181,7 @@ class ActionProjector(BaseProjector[ActionProjection]):
         """加载 Action 投影"""
         return self.storage.load_action_projection(action_id=entity_id)
 
-    def _extract_entity_id(self, event):
+    def _extract_entity_id(self, event: dict[str, Any]) -> str:
         """ActionProjector 适配：基类的子实体分支按 partition_key 兜底时需要回退到
         action_id 而非 workflow_id。Action 事件通常 payload 中携带 action_id（基类逻辑
         已优先处理），此处仅为兜底：当 payload 中没有 action_id 时，从 partition_key

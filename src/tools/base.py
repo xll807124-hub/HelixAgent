@@ -153,7 +153,7 @@ class BaseTool(ABC):
     def validate_input(self, params: dict[str, Any]) -> ValidationResult:
         """
         校验输入参数
-        
+
         默认实现：基于 input_schema 的基础校验
         子类可重写以添加业务逻辑校验
         """

@@ -170,12 +170,12 @@ class GitCommitTool(BaseTool):
 
         except ToolExecutionError:
             raise
-        except asyncio.TimeoutError:
+        except TimeoutError as err:
             raise ToolExecutionError(
                 f"Git commit timeout after {self.timeout_seconds}s"
-            )
+            ) from err
         except Exception as e:
-            raise ToolExecutionError(f"Unexpected error: {e}")
+            raise ToolExecutionError(f"Unexpected error: {e}") from e
 
     async def _set_git_config(self, repo: Path, name: str, email: str) -> None:
         """设置本地 git 配置"""

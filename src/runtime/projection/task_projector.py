@@ -16,6 +16,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from ..entities.task import TaskStatus
+from .checkpoint import ProjectionCheckpoint
 from .models import TaskProjection
 from .projector import BaseProjector
 
@@ -26,7 +27,7 @@ class TaskProjector(BaseProjector[TaskProjection]):
     PROJECTION_NAME = "task_projection"
     PROJECTION_VERSION = "v1.0.0"
 
-    def __init__(self, storage):
+    def __init__(self, storage: Any) -> None:
         """
         Args:
             storage: 投影存储接口（需实现 load/save 方法）
@@ -192,7 +193,7 @@ class TaskProjector(BaseProjector[TaskProjection]):
     def _save_projection_transaction(
         self,
         projection: TaskProjection,
-        checkpoint,
+        checkpoint: Any,
         event_id: str,
         event_hash: str,
     ) -> None:
@@ -208,7 +209,7 @@ class TaskProjector(BaseProjector[TaskProjection]):
             event_hash=event_hash,
         )
 
-    def _load_checkpoint(self, partition_key: str):
+    def _load_checkpoint(self, partition_key: str) -> ProjectionCheckpoint:
         """加载 Checkpoint"""
         return self.storage.load_checkpoint(
             projection_name=self.PROJECTION_NAME,

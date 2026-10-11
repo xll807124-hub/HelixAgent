@@ -11,9 +11,8 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, HttpUrl
@@ -77,7 +76,7 @@ class ConnectorDeclaration(BaseModel):
     
     # 有效期
     valid_from: datetime = Field(default_factory=datetime.utcnow, description="生效时间")
-    valid_until: Optional[datetime] = Field(default=None, description="过期时间")
+    valid_until: datetime | None = Field(default=None, description="过期时间")
     
     # 验证方式
     verification_method: str = Field(
@@ -110,8 +109,8 @@ class ConnectorVersion(BaseModel):
     
     # 状态
     status: ConnectorStatus = Field(default=ConnectorStatus.APPROVED)
-    revoked_at: Optional[datetime] = Field(default=None)
-    revoke_reason: Optional[str] = Field(default=None)
+    revoked_at: datetime | None = Field(default=None)
+    revoke_reason: str | None = Field(default=None)
     
     # 下发记录
     deployed_to_backends: list[str] = Field(
@@ -156,7 +155,7 @@ class ConnectorRuntimeContext(BaseModel):
     verification_method: str = Field(..., description="验证方式")
     
     # 生效期
-    valid_until: Optional[datetime] = Field(default=None, description="有效期")
+    valid_until: datetime | None = Field(default=None, description="有效期")
     
     # 审计
     bound_at: datetime = Field(default_factory=datetime.utcnow)
@@ -175,7 +174,7 @@ class ConnectorManager:
     5. 审计与可观测性
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化连接器管理器"""
         self._declarations: dict[str, ConnectorDeclaration] = {}
         self._versions: dict[str, ConnectorVersion] = {}
@@ -293,7 +292,7 @@ class ConnectorManager:
         logger.info(f"Connector approved: {connector_id} v{version_number}")
         return version.version_id
 
-    def get_active_version(self, connector_id: str) -> Optional[ConnectorVersion]:
+    def get_active_version(self, connector_id: str) -> ConnectorVersion | None:
         """获取连接器的活跃版本"""
         if connector_id not in self._active_versions:
             return None
@@ -404,7 +403,7 @@ class ConnectorManager:
         self,
         task_id: str,
         connector_id: str,
-    ) -> Optional[ConnectorRuntimeContext]:
+    ) -> ConnectorRuntimeContext | None:
         """获取运行时上下文"""
         context_id = f"{task_id}-{connector_id}"
         return self._runtime_contexts.get(context_id)

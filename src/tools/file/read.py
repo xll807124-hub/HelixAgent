@@ -232,9 +232,9 @@ class FileReadTool(BaseTool):
         except UnicodeDecodeError as e:
             raise ToolExecutionError(
                 f"Failed to decode file with encoding '{encoding}': {e}"
-            )
+            ) from e
         except Exception as e:
-            raise ToolExecutionError(f"Failed to read file: {e}")
+            raise ToolExecutionError(f"Failed to read file: {e}") from e
 
     def _resolve_path(self, file_path: str) -> Path:
         """

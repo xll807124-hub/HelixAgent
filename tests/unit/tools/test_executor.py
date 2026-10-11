@@ -199,7 +199,9 @@ class TestActionExecutor:
         assert result.action.completed_at >= result.action.started_at
 
     @pytest.mark.asyncio
-    async def test_execute_action_records_execution_time(self, executor, execution_context, tmp_path):
+    async def test_execute_action_records_execution_time(
+        self, executor, execution_context, tmp_path
+    ):
         """测试：记录执行时间"""
         test_file = tmp_path / "test.txt"
         test_file.write_text("test")
@@ -216,7 +218,9 @@ class TestActionExecutor:
         assert "execution_time_ms" in result.action.metadata.model_extra
 
     @pytest.mark.asyncio
-    async def test_execute_action_evidence_includes_trace_id(self, executor, execution_context, tmp_path):
+    async def test_execute_action_evidence_includes_trace_id(
+        self, executor, execution_context, tmp_path
+    ):
         """测试：Evidence 包含 Trace ID"""
         test_file = tmp_path / "test.txt"
         test_file.write_text("test")

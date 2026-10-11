@@ -632,7 +632,11 @@ class TestTerminalStateDetection:
 
     def test_workflow_terminal_state_blocks_transition_to_non_terminal(self):
         """Workflow 终态保护：终态不能迁移到非终态"""
-        terminal_states = [WorkflowStatus.COMPLETED, WorkflowStatus.CANCELLED, WorkflowStatus.FAILED]
+        terminal_states = [
+            WorkflowStatus.COMPLETED,
+            WorkflowStatus.CANCELLED,
+            WorkflowStatus.FAILED,
+        ]
         non_terminal_states = [
             WorkflowStatus.CREATED,
             WorkflowStatus.READY,

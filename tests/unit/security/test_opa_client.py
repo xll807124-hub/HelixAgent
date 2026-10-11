@@ -6,10 +6,10 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-# 跳过整个模块，因为 OPAClient 依赖 requests 库（未安装）
-pytest.skip("OPAClient requires requests library (not installed)", allow_module_level=True)
-
-from src.security.policy_gateway import OPAClient
+try:
+    from src.security.policy_gateway import OPAClient
+except ImportError:
+    pytest.skip("OPAClient requires requests library (not installed)", allow_module_level=True)
 
 
 class TestOPAClient:

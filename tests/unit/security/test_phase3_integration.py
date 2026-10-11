@@ -5,6 +5,17 @@ Phase 3 完整集成测试 - REQ-SEC-004 + REQ-SEC-005
 """
 import pytest
 from pydantic import HttpUrl
+
+from src.security.credential.pdp_cdp import (
+    CapabilityTokenRequest,
+    CredentialCDP,
+    CredentialPDP,
+)
+from src.security.sandbox.connector_manager import (
+    ConnectorDeclaration,
+    ConnectorManager,
+    DataClassification,
+)
 from src.security.sandbox.contracts import (
     FileSystemCapability,
     IsolationLevel,
@@ -12,17 +23,7 @@ from src.security.sandbox.contracts import (
     NetworkCapability,
     SandboxBackendCapabilities,
 )
-from src.security.sandbox.connector_manager import (
-    ConnectorDeclaration,
-    ConnectorManager,
-    DataClassification,
-)
 from src.security.sandbox.router import SandboxRouter
-from src.security.credential.pdp_cdp import (
-    CapabilityTokenRequest,
-    CredentialCDP,
-    CredentialPDP,
-)
 
 
 class TestPhase3Integration:
@@ -198,7 +199,10 @@ class TestPhase3Integration:
         print("=== Complete Phase 3 Workflow Succeeded ===")
         print(f"  Sandbox Router: {routing_decision.backend_id}")
         print(f"  Connector Version: {runtime_context.version_number}")
-        print(f"  Token TTL: {(token_response.expires_at - token_response.issued_at).total_seconds()}s")
+        print(
+            f"  Token TTL: "
+            f"{(token_response.expires_at - token_response.issued_at).total_seconds()}s"
+        )
         print(f"  Granted Scope: {final_scope}")
 
     def test_multitenancy_isolation(self):

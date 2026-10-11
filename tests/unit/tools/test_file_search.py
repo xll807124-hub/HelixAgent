@@ -1,12 +1,13 @@
 """
 文件搜索工具单元测试
 """
-import pytest
 import tempfile
 from pathlib import Path
 
-from src.tools.file.search import FileSearchTool
+import pytest
+
 from src.tools.base import ExecutionContext
+from src.tools.file.search import FileSearchTool
 
 
 @pytest.fixture
@@ -215,7 +216,9 @@ class TestFileSearchToolByContent:
         assert len(result_insensitive.output["results"]) >= len(result_sensitive.output["results"])
 
     @pytest.mark.asyncio
-    async def test_search_content_with_extension_filter(self, tool, execution_context, temp_workspace):
+    async def test_search_content_with_extension_filter(
+        self, tool, execution_context, temp_workspace
+    ):
         """测试内容搜索 + 扩展名过滤"""
         result = await tool.execute(
             {

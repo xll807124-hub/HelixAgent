@@ -434,13 +434,15 @@ class TestReconciliationAttempt:
             assert attempt.attempt_number == attempt_num
 
         # 无效范围（应该抛出验证错误）
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):  # Pydantic ValidationError
             ReconciliationAttempt(
                 attempt_number=0,  # 小于 1
                 outcome="STILL_UNKNOWN",
             )
 
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        with pytest.raises(ValidationError):  # Pydantic ValidationError
             ReconciliationAttempt(
                 attempt_number=5,  # 大于 4
                 outcome="STILL_UNKNOWN",

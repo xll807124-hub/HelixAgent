@@ -82,7 +82,7 @@ class DockerSandbox:
         self._containers: dict[str, dict] = {}
 
     @property
-    def client(self):
+    def client(self) -> Any:
         """延迟导入 Docker 客户端"""
         if self._client is None:
             try:
@@ -195,7 +195,7 @@ class DockerSandbox:
 
     async def _wait_for_completion(
         self,
-        container,
+        container: Any,
         timeout_seconds: int,
     ) -> dict[str, Any]:
         """等待容器完成执行"""
@@ -227,7 +227,7 @@ class DockerSandbox:
             "stderr": f"Container execution timed out after {timeout_seconds}s",
         }
 
-    async def _cleanup_container(self, container) -> None:
+    async def _cleanup_container(self, container: Any) -> None:
         """清理容器"""
         try:
             container.stop(timeout=5)

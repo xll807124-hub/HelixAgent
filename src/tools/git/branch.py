@@ -164,12 +164,12 @@ class GitBranchTool(BaseTool):
 
         except ToolExecutionError:
             raise
-        except asyncio.TimeoutError:
+        except TimeoutError as err:
             raise ToolExecutionError(
                 f"Git branch operation timeout after {self.timeout_seconds}s"
-            )
+            ) from err
         except Exception as e:
-            raise ToolExecutionError(f"Unexpected error: {e}")
+            raise ToolExecutionError(f"Unexpected error: {e}") from e
 
     async def _create_branch(
         self, repo: Path, branch_name: str, from_branch: str | None = None

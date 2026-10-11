@@ -267,7 +267,7 @@ class TestInMemoryEventStore:
         task_id = "task-123"
 
         # 追加10个事件
-        for i in range(10):
+        for _i in range(10):
             event = EventEnvelope(
                 event_type="Event",
                 payload_schema="Event.v1",
@@ -291,7 +291,7 @@ class TestInMemoryEventStore:
         assert seq == 0
 
         # 追加3个事件
-        for i in range(3):
+        for _i in range(3):
             event = EventEnvelope(
                 event_type="Event",
                 payload_schema="Event.v1",
@@ -309,7 +309,7 @@ class TestInMemoryEventStore:
         """统计：全部事件"""
         # 追加多个task的事件
         for task_id in ["task-1", "task-2"]:
-            for i in range(3):
+            for _i in range(3):
                 event = EventEnvelope(
                     event_type="Event",
                     payload_schema="Event.v1",
@@ -328,7 +328,7 @@ class TestInMemoryEventStore:
         task2_id = "task-2"
 
         # task1: 3个事件
-        for i in range(3):
+        for _i in range(3):
             event = EventEnvelope(
                 event_type="Event",
                 payload_schema="Event.v1",
@@ -338,7 +338,7 @@ class TestInMemoryEventStore:
             await store.append(event)
 
         # task2: 2个事件
-        for i in range(2):
+        for _i in range(2):
             event = EventEnvelope(
                 event_type="Event",
                 payload_schema="Event.v1",

@@ -9,7 +9,6 @@ Git Clone 工具
 from __future__ import annotations
 
 import asyncio
-import shutil
 from pathlib import Path
 from typing import Any
 
@@ -164,10 +163,10 @@ class GitCloneTool(BaseTool):
             # 步骤2: 权限检查 - 确保在允许的路径内
             try:
                 target_path.resolve().relative_to(workspace.resolve())
-            except ValueError:
+            except ValueError as err:
                 raise ToolExecutionError(
                     f"Target path must be within workspace: {target_dir}"
-                )
+                ) from err
 
             # 步骤3: 检查目录是否已存在
             if target_path.exists():
@@ -223,14 +222,14 @@ class GitCloneTool(BaseTool):
                 },
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError as err:
             raise ToolExecutionError(
                 f"Git clone timeout after {self.timeout_seconds}s"
-            )
+            ) from err
         except ToolExecutionError:
             raise
         except Exception as e:
-            raise ToolExecutionError(f"Unexpected error during clone: {e}")
+            raise ToolExecutionError(f"Unexpected error during clone: {e}") from e
 
     async def _get_current_commit(self, repo_path: Path) -> str:
         """获取当前 HEAD 的 commit hash"""

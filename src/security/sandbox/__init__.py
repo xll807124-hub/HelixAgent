@@ -1,4 +1,12 @@
 """沙箱隔离系统"""
+from .connector_manager import (
+    ConnectorDeclaration,
+    ConnectorManager,
+    ConnectorRuntimeContext,
+    ConnectorStatus,
+    ConnectorVersion,
+    DataClassification,
+)
 from .contracts import (
     AuditCapability,
     FileSystemCapability,
@@ -13,14 +21,6 @@ from .contracts import (
     SandboxExecutionContext,
     SnapshotCapability,
     TenantCapability,
-)
-from .connector_manager import (
-    ConnectorDeclaration,
-    ConnectorManager,
-    ConnectorRuntimeContext,
-    ConnectorStatus,
-    ConnectorVersion,
-    DataClassification,
 )
 from .router import SandboxRouter
 

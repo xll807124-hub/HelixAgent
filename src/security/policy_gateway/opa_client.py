@@ -73,13 +73,13 @@ class OPAClient:
 
             return result["result"]  # type: ignore[no-any-return]
 
-        except Timeout:
+        except Timeout as err:
             raise TimeoutError(
                 f"OPA 请求超时: {url} (timeout={self.timeout_seconds}s)"
-            )
+            ) from err
 
         except RequestException as e:
-            raise ConnectionError(f"无法连接到 OPA 服务: {e}")
+            raise ConnectionError(f"无法连接到 OPA 服务: {e}") from e
 
     def health_check(self) -> bool:
         """
@@ -133,4 +133,4 @@ class OPAClient:
             return True
 
         except RequestException as e:
-            raise ConnectionError(f"无法连接到 OPA 服务: {e}")
+            raise ConnectionError(f"无法连接到 OPA 服务: {e}") from e

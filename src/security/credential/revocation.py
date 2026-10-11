@@ -15,8 +15,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Any, Callable, Optional
+from typing import Any
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -93,7 +94,7 @@ class RevocationCache:
         
         return True
 
-    def get(self, token_id: str) -> Optional[RevocationEvent]:
+    def get(self, token_id: str) -> RevocationEvent | None:
         """获取撤销事件"""
         if not self.is_revoked(token_id):
             return None

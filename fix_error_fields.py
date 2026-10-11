@@ -11,7 +11,10 @@ i = 0
 while i < len(lines):
     line = lines[i]
     # 查找包含 "status_projection": ActionStatus.FAILED 的行
-    if '"status_projection": ActionStatus.FAILED,' in line or '"status_projection": ActionStatus.WAITING_APPROVAL,' in line:
+    if (  # noqa: E501
+        '"status_projection": ActionStatus.FAILED,' in line
+        or '"status_projection": ActionStatus.WAITING_APPROVAL,' in line
+    ):
         new_lines.append(line)
         i += 1
         # 检查下一行是否有 error 字段

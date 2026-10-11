@@ -11,16 +11,11 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Any
 
 from .contracts import (
-    AuditCapability,
-    FileSystemCapability,
     IsolationLevel,
     IsolationRequirement,
-    NetworkCapability,
-    ProcessCapability,
-    ResourceCapability,
     RoutingDecision,
     SandboxBackendCapabilities,
     SandboxBackendRegistry,
@@ -40,7 +35,7 @@ class SandboxRouter:
     4. 记录路由决策审计
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化路由器"""
         self._backends: dict[str, SandboxBackendRegistry] = {}
         self._routing_history: list[RoutingDecision] = []
@@ -87,7 +82,7 @@ class SandboxRouter:
         self,
         backend_id: str,
         is_healthy: bool,
-        current_capacity: Optional[int] = None,
+        current_capacity: int | None = None,
     ) -> None:
         """更新后端健康状态"""
         if backend_id not in self._backends:
@@ -106,8 +101,8 @@ class SandboxRouter:
         self,
         requirement: IsolationRequirement,
         policy_version: str,
-        preferred_backend_id: Optional[str] = None,
-        current_backend_id: Optional[str] = None,
+        preferred_backend_id: str | None = None,
+        current_backend_id: str | None = None,
     ) -> RoutingDecision:
         """
         路由到合适的后端
@@ -137,9 +132,7 @@ class SandboxRouter:
             # 检查当前后端是否满足新需求
             if current_backend_id not in self._backends:
                 raise ValueError(f"Current backend {current_backend_id} not found")
-            
-            current_level = self._backends[current_backend_id].capabilities.isolation_level
-            
+
             # 检查当前后端的隔离级别是否足以满足新需求
             if not self._backends[current_backend_id].capabilities.supports_isolation_level(
                 requirement.min_isolation_level
@@ -154,7 +147,8 @@ class SandboxRouter:
         
         if not candidates:
             raise ValueError(
-                f"Cannot find backend to upgrade from {current_backend_id}; no suitable backend available"
+                f"Cannot find backend to upgrade from {current_backend_id}; "
+                "no suitable backend available"
             )
         
         # 第三步：应用成本闸门
@@ -220,7 +214,9 @@ class SandboxRouter:
             # 检查区域
             if (
                 requirement.preferred_regions
-                and not any(r in registry.capabilities.regions for r in requirement.preferred_regions)
+                and not any(
+                    r in registry.capabilities.regions for r in requirement.preferred_regions
+                )
             ):
                 continue
             
@@ -271,7 +267,7 @@ class SandboxRouter:
     def _apply_cost_filter(
         self,
         candidates: list[str],
-        max_cost_per_hour: Optional[float],
+        max_cost_per_hour: float | None,
     ) -> list[str]:
         """应用成本闸门"""
         if max_cost_per_hour is None:
@@ -289,7 +285,7 @@ class SandboxRouter:
         self,
         candidates: list[str],
         preferred_regions: list[str],
-        preferred_backend_id: Optional[str],
+        preferred_backend_id: str | None,
     ) -> str:
         """
         从候选后端中选择最优的
@@ -343,7 +339,9 @@ class SandboxRouter:
         ]
         
         if requirement.file_system_requirements:
-            reasons.append(f"FS: {', '.join(r.value for r in requirement.file_system_requirements)}")
+            reasons.append(
+                f"FS: {', '.join(r.value for r in requirement.file_system_requirements)}"
+            )
         
         if requirement.network_requirements:
             reasons.append(f"Net: {', '.join(r.value for r in requirement.network_requirements)}")
@@ -354,9 +352,9 @@ class SandboxRouter:
         """获取路由决策历史"""
         return self._routing_history[-limit:]
 
-    def get_backend_stats(self) -> dict:
+    def get_backend_stats(self) -> dict[str, Any]:
         """获取后端统计信息"""
-        stats = {
+        stats: dict[str, Any] = {
             "total_backends": len(self._backends),
             "healthy_backends": sum(1 for r in self._backends.values() if r.is_healthy),
             "backends": {},

@@ -8,9 +8,11 @@
 4. 运行时上下文绑定
 5. 网络策略验证
 """
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 from pydantic import HttpUrl
+
 from src.security.sandbox.connector_manager import (
     ConnectorDeclaration,
     ConnectorManager,
@@ -240,7 +242,7 @@ def test_verify_network_access_allowed(connector_manager, github_connector):
     connector_id = connector_manager.declare_connector(github_connector)
     connector_manager.approve_connector(connector_id, "approver")
     
-    context = connector_manager.bind_connector_to_task(
+    connector_manager.bind_connector_to_task(
         task_id="task-001",
         worker_id="worker-001",
         connector_id=connector_id,
@@ -387,10 +389,10 @@ def test_connector_complete_lifecycle(connector_manager, github_connector):
     connector_id = connector_manager.declare_connector(github_connector)
     
     # 2. 审批
-    version_id = connector_manager.approve_connector(connector_id, "approver")
+    connector_manager.approve_connector(connector_id, "approver")
     
     # 3. 绑定
-    context = connector_manager.bind_connector_to_task(
+    connector_manager.bind_connector_to_task(
         task_id="task-001",
         worker_id="worker-001",
         connector_id=connector_id,

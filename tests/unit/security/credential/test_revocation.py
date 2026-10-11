@@ -7,9 +7,10 @@
 3. 撤销协调
 4. 传播延迟保证
 """
-import pytest
 import asyncio
-from datetime import datetime, timedelta
+
+import pytest
+
 from src.security.credential.revocation import (
     RevocationBroker,
     RevocationCache,

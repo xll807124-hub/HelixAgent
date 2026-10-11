@@ -8,7 +8,6 @@ Git PR 工具
 from __future__ import annotations
 
 import asyncio
-import json
 from pathlib import Path
 from typing import Any
 
@@ -196,10 +195,10 @@ class GitPullRequestTool(BaseTool):
 
         except ToolExecutionError:
             raise
-        except asyncio.TimeoutError:
-            raise ToolExecutionError(f"GitHub API timeout after {self.timeout_seconds}s")
+        except TimeoutError as err:
+            raise ToolExecutionError(f"GitHub API timeout after {self.timeout_seconds}s") from err
         except Exception as e:
-            raise ToolExecutionError(f"Unexpected error: {e}")
+            raise ToolExecutionError(f"Unexpected error: {e}") from e
 
     async def _get_remote_url(self, repo: Path) -> str:
         """获取 remote URL"""

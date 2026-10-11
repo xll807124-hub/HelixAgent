@@ -18,7 +18,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -69,13 +69,13 @@ class CapabilityTokenRequest(BaseModel):
     )
     
     # TTL 请求
-    max_ttl_seconds: Optional[int] = Field(
+    max_ttl_seconds: int | None = Field(
         default=None,
         description="请求的最大 TTL（可选）"
     )
     
     # DPoP 支持（MVP 预留）
-    dpop_public_key: Optional[str] = Field(
+    dpop_public_key: str | None = Field(
         default=None,
         description="DPoP 公钥（PEM/SPKI 格式）"
     )
@@ -90,7 +90,7 @@ class CapabilityTokenResponse(BaseModel):
     token_id: str = Field(default_factory=lambda: str(uuid4()), description="令牌 ID")
     
     # 凭据内容
-    issued_token: Optional[str] = Field(
+    issued_token: str | None = Field(
         default=None,
         description="实际短期凭据（Model B）或为空（Model A 代理模式）"
     )
@@ -104,7 +104,7 @@ class CapabilityTokenResponse(BaseModel):
     issued_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Model A 代理模式
-    service_endpoint: Optional[str] = Field(
+    service_endpoint: str | None = Field(
         default=None,
         description="Model A 代理模式时的代理地址"
     )
@@ -113,7 +113,7 @@ class CapabilityTokenResponse(BaseModel):
     audit_ref: str = Field(..., description="本次签发的审计记录引用")
     
     # DPoP 支持（MVP 预留）
-    dpop_fingerprint: Optional[str] = Field(
+    dpop_fingerprint: str | None = Field(
         default=None,
         description="DPoP 公钥指纹"
     )
@@ -128,7 +128,7 @@ class CredentialRental:
     scope: list[str]                       # 权限范围
     issued_at: datetime                    # 签发时间
     expires_at: datetime                   # 过期时间
-    vault_lease_id: Optional[str] = None   # Vault 租约 ID
+    vault_lease_id: str | None = None   # Vault 租约 ID
     
     def is_expired(self) -> bool:
         """检查是否已过期"""
@@ -181,7 +181,7 @@ class CredentialPDP:
     - 输出带签名的审批决策给 CDP
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化 PDP"""
         self._audit_events: list[CredentialAuditEvent] = []
         self._revoked_tokens: set[str] = set()
@@ -218,7 +218,11 @@ class CredentialPDP:
             return False, reason, []
         
         # 步骤 3：协商最终作用域（RBAC 范围与请求的交集）
-        requested_scope = set(request.requested_scope) if request.requested_scope else {request.requested_action}
+        requested_scope = (
+            set(request.requested_scope)
+            if request.requested_scope
+            else {request.requested_action}
+        )
         rbac_scope_set = set(rbac_scope)
         final_scope = list(requested_scope & rbac_scope_set)
         
@@ -307,7 +311,7 @@ class CredentialCDP:
         self,
         request: CapabilityTokenRequest,
         pdp_approval: tuple[bool, str, list[str]],
-        requested_ttl_seconds: Optional[int] = None,
+        requested_ttl_seconds: int | None = None,
     ) -> CapabilityTokenResponse:
         """
         签发 Capability Token
@@ -469,10 +473,10 @@ class CredentialCDP:
         """获取审计事件"""
         return self._audit_events[-limit:]
 
-    def get_rental_stats(self) -> dict:
+    def get_rental_stats(self) -> dict[str, Any]:
         """获取租约统计"""
         total = len(self._rentals)
-        by_service = {}
+        by_service: dict[str, int] = {}
         for rental in self._rentals.values():
             by_service.setdefault(rental.service, 0)
             by_service[rental.service] += 1

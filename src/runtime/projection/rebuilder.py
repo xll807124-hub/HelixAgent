@@ -55,9 +55,9 @@ class ProjectionRebuilder:
     def __init__(
         self,
         projector: BaseProjector,
-        event_store,
+        event_store: Any,
         rebuild_id: str | None = None,
-    ):
+    ) -> None:
         """
         Args:
             projector: 投影器实例
@@ -288,7 +288,7 @@ class ProjectionHealthMonitor:
     - 缺口和死信统计
     """
 
-    def __init__(self, storage):
+    def __init__(self, storage: Any) -> None:
         self.storage = storage
 
     def get_projection_health(

@@ -6,10 +6,11 @@
 """
 from __future__ import annotations
 
+import inspect
 import re
-from typing import Any
+from typing import Any, cast
 
-from ...tools.base import RiskLevel
+from ...tools.base import BaseTool, ExecutionContext, RiskLevel, ValidationResult
 from ...tools.registry import ToolRegistry
 from .base import PolicyDecision, PolicyGateway, PolicyResult
 
@@ -87,7 +88,16 @@ class SimplifiedPolicyGateway(PolicyGateway):
             )
 
         # 步骤2: 输入 Schema 校验
-        validation_result = tool.validate_input(params)
+        # 工具的 validate_input 签名不统一：有的是 (params)，有的是 (params, context)，
+        # 有的是 async。这里按签名分派，避免 TypeError 导致整个 Action 崩溃。
+        try:
+            validation_result = await self._run_validation(tool, action_id, params, context)
+        except Exception as e:  # noqa: BLE001 - 校验器异常一律视为拒绝（默认拒绝原则）
+            return PolicyResult(
+                decision=PolicyDecision.DENY,
+                reason="Input validation raised an error",
+                violations=[f"{type(e).__name__}: {e}"],
+            )
         if not validation_result.valid:
             return PolicyResult(
                 decision=PolicyDecision.DENY,
@@ -114,6 +124,33 @@ class SimplifiedPolicyGateway(PolicyGateway):
                 "risk_level": tool.risk_level.value
             }
         )
+
+    @staticmethod
+    async def _run_validation(
+        tool: BaseTool,
+        action_id: str,
+        params: dict[str, Any],
+        context: dict[str, Any],
+    ) -> ValidationResult:
+        """按工具 validate_input 的签名调用，并兼容同步/异步实现。"""
+        validator: Any = tool.validate_input
+        if "context" in inspect.signature(validator).parameters:
+            exec_ctx = ExecutionContext(
+                trace_id=str(context.get("trace_id", "unknown")),
+                action_id=action_id,
+                user_id=str(context.get("user_id", "unknown")),
+                organization_id=str(context.get("organization_id", "unknown")),
+                project_id=str(context.get("project_id", "unknown")),
+                task_id=str(context.get("task_id", "unknown")),
+                allowed_paths=list(context.get("allowed_paths") or []),
+                read_only=bool(context.get("read_only", False)),
+            )
+            result = validator(params, exec_ctx)
+        else:
+            result = validator(params)
+        if inspect.isawaitable(result):
+            result = await result
+        return cast(ValidationResult, result)
 
     async def check_post_execution(
         self,

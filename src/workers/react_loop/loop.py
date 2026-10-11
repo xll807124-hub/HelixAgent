@@ -15,20 +15,19 @@ ReAct Loop 核心执行器
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
-from typing import Any, Callable
+from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
+from typing import Any
 
-from src.runtime.common.types import ensure_utc, generate_entity_id
-from src.runtime.entities.action import Action, ActionType
+from src.runtime.common.types import ensure_utc
+from src.runtime.entities.action import Action
 from src.runtime.entities.evidence import Evidence
 from src.runtime.trace.context import TraceContext
 
 from .exceptions import (
     ReActLoopBudgetExceededError,
     ReActLoopCancelledException,
-    ReActLoopCheckpointError,
     ReActLoopIterationError,
-    ReActLoopStateError,
     ReActLoopTimeoutError,
 )
 from .models import (
@@ -65,9 +64,9 @@ class ReActLoop:
         worker_id: str,
         task_id: str,
         config: ReActLoopConfig,
-        observer: Callable[[dict[str, Any]], Observation],
-        reasoner: Callable[[Observation], Reasoning],
-        actor: Callable[[Reasoning], Any],
+        observer: Callable[[dict[str, Any]], Awaitable[Observation]],
+        reasoner: Callable[[Observation], Awaitable[Reasoning]],
+        actor: Callable[[Reasoning], Awaitable[Any]],
         trace_context: TraceContext,
     ):
         """初始化 ReAct Loop
@@ -111,6 +110,8 @@ class ReActLoop:
         self._termination_reason = ""
         self._error_message: str | None = None
         self._cancelled = False
+        # 超时/预算/迭代上限导致的强制终止（区别于 reasoner 主动结束）
+        self._forced_termination = False
     
     @property
     def state(self) -> ReActLoopState:
@@ -126,7 +127,7 @@ class ReActLoop:
         """剩余可用时间（秒）"""
         if self._start_time is None:
             return float(self.config.timeout_seconds)
-        elapsed = (ensure_utc(datetime.now(timezone.utc)) - self._start_time).total_seconds()
+        elapsed = (ensure_utc(datetime.now(UTC)) - self._start_time).total_seconds()
         return self.config.timeout_seconds - elapsed
 
     def _check_timeout(self) -> None:
@@ -145,7 +146,7 @@ class ReActLoop:
             )
         try:
             return await asyncio.wait_for(fn(arg), timeout=remaining)
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             raise ReActLoopTimeoutError(
                 f"Loop timeout (configured: {self.config.timeout_seconds}s)"
             ) from e
@@ -156,21 +157,24 @@ class ReActLoop:
         if self.config.max_tokens is not None:
             if self._total_tokens_consumed > self.config.max_tokens:
                 raise ReActLoopBudgetExceededError(
-                    f"Token budget exceeded: {self._total_tokens_consumed} > {self.config.max_tokens}"
+                    f"Token budget exceeded: "
+                    f"{self._total_tokens_consumed} > {self.config.max_tokens}"
                 )
         
         # 检查成本预算
         if self.config.max_cost_cents is not None:
             if self._total_cost_cents > self.config.max_cost_cents:
                 raise ReActLoopBudgetExceededError(
-                    f"Cost budget exceeded: {self._total_cost_cents} > {self.config.max_cost_cents} cents"
+                    f"Cost budget exceeded: "
+                    f"{self._total_cost_cents} > {self.config.max_cost_cents} cents"
                 )
     
     def _check_iteration_limit(self) -> None:
         """检查迭代限制"""
         if self._current_iteration >= self.config.max_iterations:
             raise ReActLoopBudgetExceededError(
-                f"Max iterations exceeded: {self._current_iteration} >= {self.config.max_iterations}"
+                f"Max iterations exceeded: "
+                f"{self._current_iteration} >= {self.config.max_iterations}"
             )
     
     def _build_context_for_observation(self) -> dict[str, Any]:
@@ -257,10 +261,13 @@ class ReActLoop:
             return True
             
         except ReActLoopTimeoutError:
+            # 被约束强制终止，不等同于 Agent 主动完成（run() 会据此判定失败）
             self._termination_reason = "Timeout"
+            self._forced_termination = True
             return False
         except ReActLoopBudgetExceededError as e:
             self._termination_reason = str(e)
+            self._forced_termination = True
             return False
         except Exception as e:
             self._error_message = str(e)
@@ -277,7 +284,7 @@ class ReActLoop:
             ReActLoopTimeoutError: 如果总超时
             ReActLoopIterationError: 如果某次迭代失败
         """
-        self._start_time = ensure_utc(datetime.now(timezone.utc))
+        self._start_time = ensure_utc(datetime.now(UTC))
         self._state = ReActLoopState.INITIALIZING
         
         try:
@@ -291,10 +298,13 @@ class ReActLoop:
                 if not should_continue:
                     break
             
-            # 成功完成
-            self._state = ReActLoopState.COMPLETE
+            # 完成：reasoner 主动结束 → COMPLETE；超时/预算/迭代上限强制终止 → FAILED
+            forced = self._forced_termination
+            self._state = ReActLoopState.FAILED if forced else ReActLoopState.COMPLETE
+            if forced:
+                self._error_message = self._termination_reason
             self._total_time_ms = int(
-                (ensure_utc(datetime.now(timezone.utc)) - self._start_time).total_seconds() * 1000
+                (ensure_utc(datetime.now(UTC)) - self._start_time).total_seconds() * 1000
             )
             
             return ReActLoopResult(
@@ -303,8 +313,8 @@ class ReActLoop:
                 task_id=self.task_id,
                 final_state=self._state,
                 termination_reason=self._termination_reason or "Completed successfully",
-                succeeded=True,
-                error_message=None,
+                succeeded=not forced,
+                error_message=self._error_message if forced else None,
                 iteration_count=self._current_iteration,
                 all_observations=self._observations,
                 all_reasonings=self._reasonings,
@@ -324,7 +334,7 @@ class ReActLoop:
                 self._state = ReActLoopState.FAILED
             self._error_message = str(e)
             self._total_time_ms = int(
-                (ensure_utc(datetime.now(timezone.utc)) - self._start_time).total_seconds() * 1000
+                (ensure_utc(datetime.now(UTC)) - self._start_time).total_seconds() * 1000
             )
             
             return ReActLoopResult(

@@ -9,23 +9,19 @@ ReAct Loop 单元测试
 5. 异常处理
 """
 import asyncio
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
 from src.runtime.common.types import generate_entity_id
 from src.runtime.entities.action import ActionType
 from src.runtime.trace.context import TraceContext
 from src.workers.react_loop import (
     Observation,
-    Reasoning,
     ReActLoop,
-    ReActLoopCheckpoint,
     ReActLoopConfig,
     ReActLoopState,
-    ReActLoopTimeoutError,
-    ReActLoopBudgetExceededError,
-    ReActLoopIterationError,
+    Reasoning,
 )
 
 
@@ -258,8 +254,11 @@ async def test_loop_max_iteration_limit(trace_context):
     
     result = await loop.run()
     
-    assert result.final_state == ReActLoopState.COMPLETE
+    # 被迭代上限强制终止：不能算成功
+    assert result.final_state == ReActLoopState.FAILED
+    assert result.succeeded is False
     assert "Max iterations" in result.termination_reason
+    assert result.error_message is not None
 
 
 @pytest.mark.asyncio
@@ -292,7 +291,8 @@ async def test_loop_timeout(trace_context):
     result = await loop.run()
     
     # deadline 在回调内部生效：约 1 秒被中断，而不是等满 5 秒
-    assert result.final_state == ReActLoopState.COMPLETE
+    assert result.final_state == ReActLoopState.FAILED
+    assert result.succeeded is False
     assert result.termination_reason == "Timeout"
     assert 900 <= result.total_execution_time_ms < 3000
     reasoner.assert_not_called()
@@ -340,7 +340,8 @@ async def test_loop_token_budget_exceeded(valid_config, trace_context):
     
     result = await loop.run()
     
-    assert result.final_state == ReActLoopState.COMPLETE
+    assert result.final_state == ReActLoopState.FAILED
+    assert result.succeeded is False
     assert "budget" in result.termination_reason.lower()
 
 
@@ -382,7 +383,7 @@ async def test_loop_checkpoint_conversion(valid_config, trace_context):
         trace_context=trace_context,
     )
     
-    result = await loop.run()
+    await loop.run()
     
     # 转换为 Checkpoint
     checkpoint = loop.to_checkpoint()

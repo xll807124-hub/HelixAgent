@@ -16,6 +16,17 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
+from ..observability import (
+    ATTR_KILL_SWITCH_SCOPE,
+    ATTR_KILL_SWITCH_STATE,
+    EVENT_KILL_SWITCH_BLOCKED,
+    EVENT_TOOL_COMPLETED,
+    EVENT_TOOL_FAILED,
+    EVENT_TOOL_INVOKED,
+    set_error_status,
+    set_ok_status,
+    tool_invoke_span,
+)
 from ..runtime.common.types import SafeMetadata
 from ..runtime.entities.action import Action, ActionStatus
 from ..runtime.entities.evidence import (
@@ -143,14 +154,69 @@ class ActionExecutor:
     ) -> ActionExecutionResult:
         """
         执行 Action
-        
+
         Args:
             action: Action 实体（REQ-RT-001）
             context: 执行上下文
-            
+
         Returns:
             ActionExecutionResult: 执行结果
         """
+        # OTel: 创建 child span 关联到当前 request 的 trace context
+        with tool_invoke_span(
+            tool_name=action.tool_name,
+            action_id=action.action_id,
+            task_id=action.task_id,
+            risk_level=action.risk_level.value,
+            workflow_id=action.workflow_id,
+        ) as span:
+            from opentelemetry import trace as _otel_trace
+
+            otel_span = _otel_trace.get_current_span()
+            if otel_span and otel_span.is_recording():
+                otel_span.add_event(
+                    EVENT_TOOL_INVOKED,
+                    attributes={
+                        "action.type": action.type.value,
+                        "tool.schema_version": action.tool_schema_version,
+                    },
+                )
+
+            result = await self._execute_action_impl(action, context)
+
+            if result.success:
+                set_ok_status(span)
+                if otel_span and otel_span.is_recording():
+                    otel_span.add_event(
+                        EVENT_TOOL_COMPLETED,
+                        attributes={
+                            ATTR_KILL_SWITCH_STATE: "IDLE",
+                        },
+                    )
+            else:
+                # 失败时记录 error.type 与 event
+                err = result.error or "unknown"
+                error_type = "tool_failed"
+                if "kill switch" in err.lower():
+                    error_type = "kill_switch_blocked"
+                elif "Policy check failed" in err:
+                    error_type = "policy_denied"
+                elif "requires manual approval" in err or "requires approval" in err.lower():
+                    error_type = "policy_requires_approval"
+                set_error_status(span, error_type=error_type, message=err)
+                if otel_span and otel_span.is_recording():
+                    otel_span.add_event(
+                        EVENT_TOOL_FAILED,
+                        attributes={"error.message": err, "error.type": error_type},
+                    )
+            return result
+
+    async def _execute_action_impl(
+        self,
+        action: Action,
+        context: ExecutionContext,
+    ) -> ActionExecutionResult:
+        """execute_action 内部实现（已包在 OTel span 内）。"""
         try:
             # 步骤1: 验证 Action 状态（REQ-RT-002 状态机约束）
             if action.status_projection != ActionStatus.PROPOSED:
@@ -168,6 +234,21 @@ class ActionExecutor:
                     repository_id=context.task_id,  # 简化：task 包含 repo 上下文
                 )
                 if block.blocked:
+                    from opentelemetry import trace as _otel_trace_inner
+
+                    otel_span_inner = _otel_trace_inner.get_current_span()
+                    if otel_span_inner and otel_span_inner.is_recording():
+                        otel_span_inner.add_event(
+                            EVENT_KILL_SWITCH_BLOCKED,
+                            attributes={
+                                ATTR_KILL_SWITCH_SCOPE: (
+                                    block.current_scope.value
+                                    if block.current_scope
+                                    else "?"
+                                ),
+                                ATTR_KILL_SWITCH_STATE: block.current_state.value,
+                            },
+                        )
                     failed_action = action.model_copy(
                         update={
                             "status_projection": ActionStatus.FAILED,
@@ -202,7 +283,11 @@ class ActionExecutor:
                     "user_id": context.user_id,
                     "organization_id": context.organization_id,
                     "project_id": context.project_id,
-                    "task_id": context.task_id
+                    "task_id": context.task_id,
+                    # 供 Gateway 构造 ExecutionContext 做路径/只读校验
+                    "trace_id": context.trace_id,
+                    "allowed_paths": list(context.allowed_paths),
+                    "read_only": context.read_only,
                 }
             )
 

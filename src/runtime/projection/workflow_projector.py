@@ -23,6 +23,7 @@ Workflow 投影器实现（REQ-RT-004）
 from datetime import UTC, datetime
 from typing import Any
 
+from .checkpoint import ProjectionCheckpoint
 from .models import WorkflowProjection
 from .projector import BaseProjector
 
@@ -33,7 +34,7 @@ class WorkflowProjector(BaseProjector[WorkflowProjection]):
     PROJECTION_NAME = "workflow_projection"
     PROJECTION_VERSION = "v1.0.0"
 
-    def __init__(self, storage):
+    def __init__(self, storage: Any) -> None:
         super().__init__()
         self.storage = storage
 
@@ -197,7 +198,7 @@ class WorkflowProjector(BaseProjector[WorkflowProjection]):
     def _save_projection_transaction(
         self,
         projection: WorkflowProjection,
-        checkpoint,
+        checkpoint: Any,
         event_id: str,
         event_hash: str,
     ) -> None:
@@ -209,7 +210,7 @@ class WorkflowProjector(BaseProjector[WorkflowProjection]):
             event_hash=event_hash,
         )
 
-    def _load_checkpoint(self, partition_key: str):
+    def _load_checkpoint(self, partition_key: str) -> ProjectionCheckpoint:
         """加载 Checkpoint"""
         return self.storage.load_checkpoint(
             projection_name=self.PROJECTION_NAME,
@@ -220,7 +221,7 @@ class WorkflowProjector(BaseProjector[WorkflowProjection]):
         """加载 Workflow 投影"""
         return self.storage.load_workflow_projection(workflow_id=entity_id)
 
-    def _extract_entity_id(self, event):
+    def _extract_entity_id(self, event: dict[str, Any]) -> str:
         """WorkflowProjector 适配。
 
         Workflow 自身事件走 payload.workflow_id；Worker/Action/Artifact 子实体事件

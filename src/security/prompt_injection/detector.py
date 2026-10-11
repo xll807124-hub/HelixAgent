@@ -119,7 +119,7 @@ class PromptInjectionDetector:
             threshold: 检测阈值（0-1），置信度 > threshold 时报警
         """
         self.threshold = threshold
-        self._detection_cache: dict[str, DetectionResult] = {}
+        self._detection_cache: dict[int, DetectionResult] = {}
 
     async def detect(self, text: str) -> DetectionResult:
         """
@@ -136,8 +136,8 @@ class PromptInjectionDetector:
         if text_hash in self._detection_cache:
             return self._detection_cache[text_hash]
 
-        detected_patterns = []
-        evidence = []
+        detected_patterns: list[str] = []
+        evidence: list[str] = []
         total_score = 0.0
 
         # 1. 模式匹配
@@ -218,7 +218,7 @@ class PromptInjectionDetector:
             return 0.0
 
         # 计算字符熵
-        char_freq = {}
+        char_freq: dict[str, int] = {}
         for char in text.lower():
             char_freq[char] = char_freq.get(char, 0) + 1
 

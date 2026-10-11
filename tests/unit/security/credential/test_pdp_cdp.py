@@ -8,8 +8,10 @@
 4. Fail-secure 语义
 5. 租约管理
 """
+from datetime import datetime
+
 import pytest
-from datetime import datetime, timedelta
+
 from src.security.credential.pdp_cdp import (
     CapabilityTokenRequest,
     CapabilityTokenType,
@@ -236,7 +238,7 @@ def test_cdp_rental_stats(cdp, token_request):
     """测试 CDP 租约统计"""
     pdp_approval = (True, "Approved", ["contents:write"])
     
-    response1 = cdp.issue_token(token_request, pdp_approval)
+    cdp.issue_token(token_request, pdp_approval)
     
     request2 = CapabilityTokenRequest(
         agent_svid="spiffe://example.com/agent/worker-001",
@@ -248,7 +250,7 @@ def test_cdp_rental_stats(cdp, token_request):
         policy_approval_ref="approval-456",
         justification="AWS access",
     )
-    response2 = cdp.issue_token(request2, pdp_approval)
+    cdp.issue_token(request2, pdp_approval)
     
     stats = cdp.get_rental_stats()
     assert stats["total_active_rentals"] == 2
@@ -259,7 +261,7 @@ def test_cdp_rental_stats(cdp, token_request):
 def test_cdp_cleanup_expired_tokens(cdp, token_request):
     """测试 CDP 清理过期令牌"""
     pdp_approval = (True, "Approved", ["contents:write"])
-    response = cdp.issue_token(
+    cdp.issue_token(
         token_request,
         pdp_approval,
         requested_ttl_seconds=1,  # 1 秒后过期
@@ -294,7 +296,7 @@ def test_token_type_mapping(cdp):
 def test_audit_no_token_content(cdp, token_request):
     """测试审计日志不包含令牌内容"""
     pdp_approval = (True, "Approved", ["contents:write"])
-    response = cdp.issue_token(token_request, pdp_approval)
+    cdp.issue_token(token_request, pdp_approval)
     
     events = cdp.get_audit_events()
     issued_events = [e for e in events if e.action == CredentialAuditAction.ISSUED]

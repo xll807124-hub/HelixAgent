@@ -1,8 +1,9 @@
 """
 GitHub 凭据代理单元测试
 """
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 
 from src.security.credential.github_proxy import (
     CredentialToken,

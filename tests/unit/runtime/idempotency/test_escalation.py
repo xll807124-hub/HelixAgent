@@ -21,7 +21,10 @@ from src.runtime.idempotency.storage import InMemoryIdempotencyStorage
 from src.runtime.idempotency.types import IdempotencyScope, IdempotencyStatus
 
 
-def create_test_key(key_id: str = "idem-001", status: IdempotencyStatus = IdempotencyStatus.OUTCOME_UNKNOWN) -> IdempotencyKey:
+def create_test_key(
+    key_id: str = "idem-001",
+    status: IdempotencyStatus = IdempotencyStatus.OUTCOME_UNKNOWN,
+) -> IdempotencyKey:
     """创建测试幂等键"""
     return IdempotencyKey(
         key_id=key_id,

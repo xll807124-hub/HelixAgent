@@ -1,0 +1,11 @@
+# 生产依赖 —— 与 pyproject.toml [project.dependencies] 严格一致
+# 规则（AGENTS.md 适配区）：新依赖必须说明理由；生产依赖锁版本。
+# 本轮生成：与 pyproject.toml [project] dependencies 字段同步。
+# 更新本文件时，请同步更新 pyproject.toml，反之亦然。
+
+# pydantic v2：Runtime Contract 实体/事件 Schema 强类型校验
+pydantic==2.9.2
+
+# OpenTelemetry：REQ-RT-006 Trace 传播与审计关联（API + SDK）
+opentelemetry-api==1.27.0
+opentelemetry-sdk==1.27.0

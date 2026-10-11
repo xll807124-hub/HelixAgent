@@ -9,6 +9,7 @@
 5. 路由决策审计
 """
 import pytest
+
 from src.security.sandbox.contracts import (
     AuditCapability,
     FileSystemCapability,
@@ -18,6 +19,7 @@ from src.security.sandbox.contracts import (
     ProcessCapability,
     ResourceCapability,
     SandboxBackendCapabilities,
+    TenantCapability,
 )
 from src.security.sandbox.router import SandboxRouter
 
@@ -320,7 +322,7 @@ def test_routing_history_recorded(router, linux_l1_backend):
     
     requirement = IsolationRequirement(min_isolation_level=IsolationLevel.L1)
     
-    decision1 = router.route(requirement, policy_version="policy-v1")
+    router.route(requirement, policy_version="policy-v1")
     decision2 = router.route(requirement, policy_version="policy-v1")
     
     history = router.get_routing_history(limit=10)

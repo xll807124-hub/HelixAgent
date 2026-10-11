@@ -14,7 +14,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -198,7 +197,7 @@ class IsolationRequirement(BaseModel):
         description="是否需要多租户隔离"
     )
     
-    max_cost_per_hour: Optional[float] = Field(
+    max_cost_per_hour: float | None = Field(
         default=None,
         description="最大小时成本（可选）"
     )
@@ -214,7 +213,7 @@ class SandboxBackendRegistry(BaseModel):
     backend_id: str = Field(..., description="后端唯一标识")
     capabilities: SandboxBackendCapabilities = Field(..., description="能力声明")
     registered_at: datetime = Field(default_factory=datetime.utcnow, description="注册时间")
-    last_health_check: Optional[datetime] = Field(default=None, description="最后健康检查")
+    last_health_check: datetime | None = Field(default=None, description="最后健康检查")
     is_healthy: bool = Field(default=True, description="是否健康")
     current_capacity: int = Field(default=0, description="当前可用容量")
 
@@ -244,7 +243,7 @@ class SandboxExecutionContext(BaseModel):
     isolation_level: IsolationLevel = Field(..., description="隔离级别")
     
     started_at: datetime = Field(default_factory=datetime.utcnow)
-    ended_at: Optional[datetime] = Field(default=None)
+    ended_at: datetime | None = Field(default=None)
     
     # 资源使用
     memory_limit_mb: int = Field(default=4096)

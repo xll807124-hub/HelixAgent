@@ -186,10 +186,10 @@ class GitDiffTool(BaseTool):
 
         except ToolExecutionError:
             raise
-        except asyncio.TimeoutError:
-            raise ToolExecutionError(f"Git diff timeout after {self.timeout_seconds}s")
+        except TimeoutError as err:
+            raise ToolExecutionError(f"Git diff timeout after {self.timeout_seconds}s") from err
         except Exception as e:
-            raise ToolExecutionError(f"Unexpected error: {e}")
+            raise ToolExecutionError(f"Unexpected error: {e}") from e
 
     def _parse_diff_stats(self, diff_content: str) -> dict[str, int]:
         """解析 diff 统计"""

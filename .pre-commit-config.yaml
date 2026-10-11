@@ -1,0 +1,39 @@
+# pre-commit hook 配置
+# 规则（AGENTS.md 适配区 + §3 验证顺序）：本地提交前跑 ruff + mypy + pytest（快速集），
+# CI 上跑完整版。本轮 sast/sca/secret-scan 仍为 n/a，落地后追加。
+# 安装：.venv\Scripts\python.exe -m pip install pre-commit && pre-commit install
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.4
+    hooks:
+      - id: ruff
+        args: ["check", "--fix"]
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        files: ^src/
+        args: ["--config-file=pyproject.toml"]
+        additional_dependencies: ["pydantic==2.9.2"]
+
+  - repo: local
+    hooks:
+      - id: pytest-quick
+        name: pytest（快速集：仅 unit）
+        entry: .venv\Scripts\python.exe -m pytest -q -m unit
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      - id: forbid-cuda-fmt
+        # 防止 fmt 字符串误用 .format() 注入（高危面代码的基础规范）
+        name: 检查 .format() 与 %
+        entry: .venv\Scripts\python.exe -m pytest tests/unit -q -k "format" --collect-only
+        language: system
+        pass_filenames: false
+        types: [python]

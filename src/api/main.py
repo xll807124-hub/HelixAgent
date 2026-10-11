@@ -30,6 +30,7 @@ from src.api.middleware import (
     register_exception_handlers,
 )
 from src.api.repositories.task_repository import TaskRepository
+from src.observability import init_tracing, shutdown_tracing
 from src.security.kill_switch import KillSwitchGate, KillSwitchManager, TriggerRegistry
 from src.security.policy_gateway import SimplifiedPolicyGateway
 from src.tools.executor import ActionExecutor
@@ -88,6 +89,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """启动期初始化共享状态；关闭期清理。"""
     settings = get_settings()
 
+    # OpenTelemetry 初始化（OBS-001；fail-open；OTEL_SDK_DISABLED=true 可关闭）
+    init_tracing()
+
     # 默认上下文（多租户接入前占位；用合法 UUID 满足 AgentTask 校验）
     app.state.default_organization_id = "00000000-0000-0000-0000-000000000001"
     app.state.default_project_id = "00000000-0000-0000-0000-000000000002"
@@ -133,6 +137,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         # 关闭期清理（如有句柄/连接/订阅）
+        shutdown_tracing()
         logger.info("api shutdown complete")
 
 

@@ -1,9 +1,8 @@
 """
 Git Clone 工具单元测试
 """
+
 import pytest
-import tempfile
-from pathlib import Path
 
 from src.tools.base import ExecutionContext, RiskLevel
 from src.tools.git.clone import GitCloneTool
