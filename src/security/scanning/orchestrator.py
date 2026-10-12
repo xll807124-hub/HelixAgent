@@ -25,13 +25,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime
 from enum import Enum
 from uuid import uuid4
 
-from .codeql_scanner import CodeQLScanner, CodeQLResult
-from .gitleaks_scanner import GitleaksScanner, GitleaksResult
-from .result_processor import ScanResultProcessor, ScanResultSummary, ScanDecision
+from .codeql_scanner import CodeQLResult, CodeQLScanner
+from .gitleaks_scanner import GitleaksResult, GitleaksScanner
+from .result_processor import ScanDecision, ScanResultProcessor, ScanResultSummary
 
 logger = logging.getLogger(__name__)
 

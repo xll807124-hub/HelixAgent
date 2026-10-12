@@ -15,10 +15,9 @@ import asyncio
 import json
 import logging
 import subprocess
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -40,13 +39,13 @@ class CodeQLFinding:
     severity: ScanSeverity          # 严重程度
     file_path: str                  # 文件路径 (相对于仓库根)
     line_start: int                 # 起始行号
-    line_end: Optional[int]         # 结束行号
+    line_end: int | None         # 结束行号
     column_start: int               # 起始列号
-    column_end: Optional[int]       # 结束列号
+    column_end: int | None       # 结束列号
     code_snippet: str               # 代码片段 (上下文)
     remediation: str                # 修复建议
     
-    def to_dict(self):
+    def to_dict(self) -> dict[str, object]:
         return asdict(self)
 
 
@@ -58,7 +57,7 @@ class CodeQLResult:
     findings: list[CodeQLFinding]   # 发现的漏洞列表
     critical_count: int             # CRITICAL 数量
     high_count: int                 # HIGH 数量
-    error_message: Optional[str]    # 错误信息
+    error_message: str | None    # 错误信息
     
     @property
     def should_block(self) -> bool:
@@ -82,8 +81,8 @@ class CodeQLScanner:
     def __init__(
         self,
         codeql_path: str = "codeql",
-        database_dir: Optional[str] = None,
-        queries_dir: Optional[str] = None,
+        database_dir: str | None = None,
+        queries_dir: str | None = None,
         timeout_seconds: int = 120,
     ):
         """
@@ -91,17 +90,22 @@ class CodeQLScanner:
         
         Args:
             codeql_path: CodeQL CLI 可执行文件路径
-            database_dir: CodeQL 数据库存储目录
+            database_dir: CodeQL 数据库存储目录 (默认系统临时目录)
             queries_dir: CodeQL 查询库目录
             timeout_seconds: 扫描超时时间
         """
+        import tempfile
+        
         self.codeql_path = codeql_path
-        self.database_dir = Path(database_dir or "/tmp/codeql-databases")
+        default_db_dir = str(Path(tempfile.gettempdir()) / "codeql-databases")
+        self.database_dir = Path(database_dir or default_db_dir)
         self.queries_dir = Path(queries_dir or "/opt/codeql-queries")
         self.timeout_seconds = timeout_seconds
         self.database_dir.mkdir(parents=True, exist_ok=True)
     
-    async def scan(self, repo_path: str, language: str = "python") -> CodeQLResult:
+    async def scan(
+        self, repo_path: str | Path, language: str = "python"
+    ) -> CodeQLResult:
         """
         扫描代码仓库
         
@@ -202,7 +206,7 @@ class CodeQLScanner:
             
             return result.returncode == 0
         
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("[CodeQL] Database 创建超时")
             return False
         except Exception as e:
@@ -232,7 +236,7 @@ class CodeQLScanner:
                 self.codeql_path,
                 "database", "analyze",
                 str(db_path),
-                f"--format=json",
+                "--format=json",
                 f"--output={output_file}",
             ]
             
@@ -255,7 +259,7 @@ class CodeQLScanner:
             
             return findings
         
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("[CodeQL] 查询执行超时")
             return []
         except Exception as e:

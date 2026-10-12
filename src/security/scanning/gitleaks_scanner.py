@@ -15,10 +15,9 @@ import asyncio
 import json
 import logging
 import subprocess
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ class GitleaksSecret:
     rule_description: str            # 规则描述
     remediation: str                 # 修复建议 (删除密钥,重写历史)
     
-    def to_dict(self):
+    def to_dict(self) -> dict[str, object]:
         return asdict(self)
 
 
@@ -56,7 +55,7 @@ class GitleaksResult:
     success: bool                   # 扫描是否成功
     scan_duration_ms: int           # 扫描耗时 (毫秒)
     secrets: list[GitleaksSecret]   # 检测到的密钥列表
-    error_message: Optional[str]    # 错误信息
+    error_message: str | None    # 错误信息
     
     @property
     def should_block(self) -> bool:
@@ -100,7 +99,7 @@ class GitleaksScanner:
     
     async def scan(
         self,
-        repo_path: str,
+        repo_path: str | Path,
         scan_all_history: bool = False
     ) -> GitleaksResult:
         """
@@ -130,26 +129,29 @@ class GitleaksScanner:
             # 构建命令
             cmd = [self.gitleaks_path, "detect"]
             cmd.extend([f"--source={repo_path}"])
-            cmd.append(f"--verbose")
-            cmd.append(f"--report-path=/tmp/gitleaks-report.json")
+            cmd.append("--verbose")
+            
+            # 使用系统临时目录
+            import tempfile
+            report_path = Path(tempfile.gettempdir()) / "gitleaks-report.json"
+            cmd.append(f"--report-path={report_path}")
             
             if scan_all_history:
                 cmd.append("--no-git")  # 扫描整个目录
             
             # 执行扫描
-            result = await asyncio.wait_for(
+            await asyncio.wait_for(
                 self._run_subprocess(cmd),
                 timeout=self.timeout_seconds
             )
             
             # 解析结果
             secrets = []
-            report_file = Path("/tmp/gitleaks-report.json")
-            if report_file.exists():
-                with open(report_file) as f:
+            if report_path.exists():
+                with open(report_path) as f:
                     data = json.load(f)
                     secrets = self._parse_results(data)
-                report_file.unlink(missing_ok=True)
+                report_path.unlink(missing_ok=True)
             
             logger.info(
                 f"[Gitleaks] 扫描完成: {len(secrets)} 个密钥检测"
@@ -162,7 +164,7 @@ class GitleaksScanner:
                 error_message=None
             )
         
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("[Gitleaks] 扫描超时")
             return GitleaksResult(
                 success=False,
@@ -233,7 +235,6 @@ class GitleaksScanner:
     @staticmethod
     def _hash_secret(secret: str) -> str:
         """对密钥值进行哈希处理 (安全脱敏)"""
-        import hashlib
         if not secret:
             return "unknown"
         # 仅保留前 4 个字符和后 4 个字符,中间用 *** 替代

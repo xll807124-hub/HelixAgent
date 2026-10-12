@@ -13,10 +13,10 @@ Security Scan Result Processor
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
-from .codeql_scanner import CodeQLResult, CodeQLFinding, ScanSeverity
+from .codeql_scanner import CodeQLFinding, CodeQLResult
 from .gitleaks_scanner import GitleaksResult, GitleaksSecret
 
 logger = logging.getLogger(__name__)
@@ -37,14 +37,8 @@ class ScanResultSummary:
     codeql_high: int                   # HIGH 漏洞数
     gitleaks_count: int                # Secret 检测数
     total_issues: int                  # 总问题数
-    codeql_findings: list[CodeQLFinding] = None
-    gitleaks_secrets: list[GitleaksSecret] = None
-    
-    def __post_init__(self):
-        if self.codeql_findings is None:
-            self.codeql_findings = []
-        if self.gitleaks_secrets is None:
-            self.gitleaks_secrets = []
+    codeql_findings: list[CodeQLFinding] = field(default_factory=list)
+    gitleaks_secrets: list[GitleaksSecret] = field(default_factory=list)
 
 
 class ScanResultProcessor:
@@ -252,7 +246,7 @@ class ScanResultProcessor:
 """
         
         # 最后的提示
-        comment += f"""
+        comment += """
 ### 📋 需要修复
 
 请根据上述建议修复所有安全问题后,重新推送代码。
@@ -263,7 +257,8 @@ class ScanResultProcessor:
             comment += f"[查看完整扫描报告]({findings_detail_url})\n"
         
         comment += """
-⚠️ **注意**: 如果有正当业务理由需要覆盖此检查,仅平台管理员可通过 Break-Glass 流程 (Kill Switch) 审批。
+⚠️ **注意**: 如果有正当业务理由需要覆盖此检查,
+仅平台管理员可通过 Break-Glass 流程 (Kill Switch) 审批。
 [联系 Admin](link)
 """
         

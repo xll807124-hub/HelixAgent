@@ -9,25 +9,32 @@ Unit tests for Security Scanning Gateway
   - Policy Integration (策略决策)
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-import asyncio
-from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch
 
 from src.security.scanning.codeql_scanner import (
-    CodeQLScanner, CodeQLResult, CodeQLFinding, ScanSeverity
+    CodeQLFinding,
+    CodeQLResult,
+    CodeQLScanner,
+    ScanSeverity,
 )
 from src.security.scanning.gitleaks_scanner import (
-    GitleaksScanner, GitleaksResult, GitleaksSecret, SecretType
+    GitleaksResult,
+    GitleaksScanner,
+    GitleaksSecret,
+    SecretType,
+)
+from src.security.scanning.orchestrator import ScanningOrchestrator
+from src.security.scanning.policy_integration import (
+    PolicyDecision,
+    ScanPolicyGateway,
+    to_github_check_status,
 )
 from src.security.scanning.result_processor import (
-    ScanResultProcessor, ScanResultSummary, ScanDecision
-)
-from src.security.scanning.orchestrator import (
-    ScanningOrchestrator, ScanStatus
-)
-from src.security.scanning.policy_integration import (
-    ScanPolicyGateway, PolicyDecision, to_github_check_status
+    ScanDecision,
+    ScanResultProcessor,
+    ScanResultSummary,
 )
 
 

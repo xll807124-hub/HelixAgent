@@ -16,7 +16,7 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 
-from .result_processor import ScanResultSummary, ScanDecision
+from .result_processor import ScanDecision, ScanResultSummary
 
 logger = logging.getLogger(__name__)
 
