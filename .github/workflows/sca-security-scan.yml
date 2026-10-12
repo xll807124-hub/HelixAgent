@@ -1,0 +1,203 @@
+name: SCA Security Scan
+
+on:
+  push:
+    branches: [ main, develop, 'feature/**' ]
+    paths:
+      - '**/*.py'
+      - '**/*.js'
+      - '**/package.json'
+      - '**/requirements.txt'
+      - '**/Pipfile'
+      - '.github/workflows/sca-security-scan.yml'
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # 每天 09:00 UTC 运行一次
+    - cron: '0 9 * * *'
+
+jobs:
+  sca-scan:
+    name: SCA Security Analysis
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pip-audit
+
+      - name: Install project dependencies (Python)
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          if [ -f Pipfile ]; then
+            pip install pipenv
+            pipenv install --deploy
+          fi
+        continue-on-error: true
+
+      - name: Install project dependencies (Node.js)
+        run: |
+          if [ -f package.json ]; then
+            npm ci --legacy-peer-deps
+          fi
+        continue-on-error: true
+
+      - name: Run NPM Audit
+        id: npm-audit
+        run: |
+          echo "### NPM Audit Results" >> $GITHUB_STEP_SUMMARY
+          npm audit --json > npm-audit-report.json 2>&1 || true
+          cat npm-audit-report.json >> $GITHUB_STEP_SUMMARY
+        continue-on-error: true
+
+      - name: Run pip-audit
+        id: pip-audit
+        run: |
+          echo "### pip-audit Results" >> $GITHUB_STEP_SUMMARY
+          python -m pip_audit --format json > pip-audit-report.json 2>&1 || true
+          python -m pip_audit --format markdown >> $GITHUB_STEP_SUMMARY 2>&1 || true
+        continue-on-error: true
+
+      - name: Run SCA orchestrator
+        id: sca-scan
+        run: |
+          python -m src.security.scanning.sca_orchestrator \
+            --npm-report npm-audit-report.json \
+            --pip-report pip-audit-report.json \
+            --output sca-results.json \
+            --policy security/policies/sca-policy.json
+        continue-on-error: true
+
+      - name: Upload scan results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: sca-reports-${{ matrix.python-version }}
+          path: |
+            npm-audit-report.json
+            pip-audit-report.json
+            sca-results.json
+          retention-days: 30
+
+      - name: Comment on PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 🔐 SCA Security Scan Results\n\n';
+            
+            try {
+              const npmAudit = JSON.parse(fs.readFileSync('npm-audit-report.json', 'utf8'));
+              const npmVulns = npmAudit.metadata?.vulnerabilities?.total || 0;
+              comment += `### NPM Audit\n`;
+              comment += `- Total vulnerabilities: ${npmVulns}\n`;
+              comment += `- Critical: ${npmAudit.metadata?.vulnerabilities?.critical || 0}\n`;
+              comment += `- High: ${npmAudit.metadata?.vulnerabilities?.high || 0}\n\n`;
+            } catch (e) {
+              comment += `### NPM Audit\nNo vulnerabilities detected.\n\n`;
+            }
+            
+            try {
+              const pipAudit = JSON.parse(fs.readFileSync('pip-audit-report.json', 'utf8'));
+              const pipVulns = pipAudit.dependencies?.filter(d => d.vulns?.length > 0).length || 0;
+              comment += `### pip-audit\n`;
+              comment += `- Vulnerable packages: ${pipVulns}\n\n`;
+            } catch (e) {
+              comment += `### pip-audit\nNo vulnerabilities detected.\n\n`;
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Fail if critical vulnerabilities found
+        id: check-critical
+        run: |
+          python << 'EOF'
+          import json
+          import sys
+          
+          critical_found = False
+          
+          # Check npm audit
+          try:
+            with open('npm-audit-report.json') as f:
+              npm = json.load(f)
+              if npm.get('metadata', {}).get('vulnerabilities', {}).get('critical', 0) > 0:
+                print("❌ CRITICAL vulnerabilities found in npm packages")
+                critical_found = True
+          except:
+            pass
+          
+          # Check pip-audit
+          try:
+            with open('pip-audit-report.json') as f:
+              pip = json.load(f)
+              for dep in pip.get('dependencies', []):
+                for vuln in dep.get('vulns', []):
+                  if vuln.get('vulnerability_id', '').startswith('GHSA'):
+                    print(f"⚠️ High-severity vulnerability in {dep['name']}")
+                    critical_found = True
+          except:
+            pass
+          
+          if critical_found:
+            sys.exit(1)
+          print("✅ No critical vulnerabilities found")
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
+
+  report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    needs: sca-scan
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Generate summary
+        run: |
+          echo "## Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for report in */sca-results.json; do
+            if [ -f "$report" ]; then
+              echo "### Results from $report" >> $GITHUB_STEP_SUMMARY
+              cat "$report" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done

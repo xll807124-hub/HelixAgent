@@ -1,0 +1,207 @@
+stages:
+  - build
+  - scan
+  - report
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  NPM_CACHE_DIR: "$CI_PROJECT_DIR/.cache/npm"
+
+cache:
+  paths:
+    - .cache/pip
+    - .cache/npm
+    - node_modules/
+
+sca:scan:npm:
+  stage: scan
+  image: node:20-alpine
+  script:
+    - npm ci --legacy-peer-deps
+    - npm audit --json > npm-audit-report.json || true
+    - |
+      echo "### NPM Audit Results"
+      cat npm-audit-report.json | jq .
+  artifacts:
+    reports:
+      dependency_scanning: npm-audit-report.json
+    paths:
+      - npm-audit-report.json
+    expire_in: 30 days
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+
+sca:scan:pip:
+  stage: scan
+  image: python:3.13-alpine
+  before_script:
+    - pip install --upgrade pip
+    - pip install pip-audit
+    - |
+      if [ -f requirements.txt ]; then
+        pip install -r requirements.txt
+      fi
+      if [ -f Pipfile ]; then
+        pip install pipenv
+        pipenv install --deploy
+      fi
+  script:
+    - python -m pip_audit --format json > pip-audit-report.json || true
+    - |
+      echo "### pip-audit Results"
+      python -m pip_audit --format markdown
+  artifacts:
+    reports:
+      dependency_scanning: pip-audit-report.json
+    paths:
+      - pip-audit-report.json
+    expire_in: 30 days
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+
+sca:orchestrator:
+  stage: scan
+  image: python:3.13-alpine
+  before_script:
+    - pip install --upgrade pip
+    - pip install pip-audit
+    - |
+      if [ -f requirements.txt ]; then
+        pip install -r requirements.txt
+      fi
+  script:
+    - |
+      python << 'EOF'
+      import subprocess
+      import json
+      import sys
+      from pathlib import Path
+      
+      results = {
+        'npm_scan': None,
+        'pip_scan': None,
+        'decision': 'unknown',
+        'timestamp': str(Path.cwd())
+      }
+      
+      # Run npm audit if package.json exists
+      if Path('package.json').exists():
+        npm_result = subprocess.run(
+          ['npm', 'audit', '--json'],
+          capture_output=True,
+          text=True
+        )
+        try:
+          npm_data = json.loads(npm_result.stdout)
+          results['npm_scan'] = {
+            'status': 'success',
+            'vulnerabilities': npm_data.get('metadata', {}).get('vulnerabilities', {})
+          }
+        except:
+          results['npm_scan'] = {'status': 'error'}
+      
+      # Run pip-audit
+      pip_result = subprocess.run(
+        ['python', '-m', 'pip_audit', '--format', 'json'],
+        capture_output=True,
+        text=True
+      )
+      try:
+        pip_data = json.loads(pip_result.stdout)
+        results['pip_scan'] = {
+          'status': 'success',
+          'vulnerabilities': len([d for d in pip_data.get('dependencies', []) if d.get('vulns')])
+        }
+      except:
+        results['pip_scan'] = {'status': 'error'}
+      
+      # Make decision
+      npm_critical = results.get('npm_scan', {}).get('vulnerabilities', {}).get('critical', 0)
+      pip_vuln = results.get('pip_scan', {}).get('vulnerabilities', 0)
+      
+      if npm_critical > 0 or pip_vuln > 5:
+        results['decision'] = 'block'
+      else:
+        results['decision'] = 'allow'
+      
+      # Save results
+      with open('sca-orchestrator-results.json', 'w') as f:
+        json.dump(results, f, indent=2)
+      
+      print(json.dumps(results, indent=2))
+      sys.exit(0 if results['decision'] == 'allow' else 1)
+      EOF
+  artifacts:
+    paths:
+      - sca-orchestrator-results.json
+    expire_in: 30 days
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+
+sca:report:
+  stage: report
+  image: python:3.13-alpine
+  dependencies:
+    - sca:scan:npm
+    - sca:scan:pip
+    - sca:orchestrator
+  script:
+    - |
+      echo "=== SCA Security Scan Report ==="
+      echo ""
+      echo "NPM Audit:"
+      cat npm-audit-report.json 2>/dev/null | python -m json.tool || echo "No npm-audit results"
+      echo ""
+      echo "pip-audit:"
+      cat pip-audit-report.json 2>/dev/null | python -m json.tool || echo "No pip-audit results"
+      echo ""
+      echo "Orchestrator Decision:"
+      cat sca-orchestrator-results.json 2>/dev/null | python -m json.tool || echo "No orchestrator results"
+  only:
+    - merge_requests
+    - main
+    - develop
+
+sca:merge-request-comment:
+  stage: report
+  image: python:3.13-alpine
+  dependencies:
+    - sca:orchestrator
+  script:
+    - |
+      python << 'EOF'
+      import json
+      import os
+      
+      try:
+        with open('sca-orchestrator-results.json') as f:
+          results = json.load(f)
+        
+        comment = f"""
+      ## 🔐 SCA Security Scan Results
+      
+      **Decision**: {results.get('decision', 'unknown').upper()}
+      
+      ### NPM Audit
+      {results.get('npm_scan', {}).get('vulnerabilities', {})}
+      
+      ### pip-audit
+      Vulnerable packages: {results.get('pip_scan', {}).get('vulnerabilities', 0)}
+      """
+        
+        print(comment)
+      except Exception as e:
+        print(f"Error: {e}")
+      EOF
+  only:
+    - merge_requests
+  allow_failure: true

@@ -1,0 +1,156 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "name": "SCA Security Policy",
+    "description": "Software Composition Analysis security policy for CI/CD integration",
+    "last_updated": "2026-10-12",
+    "maintainer": "Security Team"
+  },
+  
+  "vulnerability_thresholds": {
+    "npm": {
+      "critical": {
+        "threshold": 0,
+        "action": "block",
+        "description": "Block on any critical vulnerabilities in npm packages"
+      },
+      "high": {
+        "threshold": 3,
+        "action": "review",
+        "description": "Require review if high-severity vulnerabilities exceed threshold"
+      },
+      "medium": {
+        "threshold": 10,
+        "action": "warn",
+        "description": "Generate warning if medium-severity vulnerabilities exceed threshold"
+      }
+    },
+    "pip": {
+      "critical": {
+        "threshold": 0,
+        "action": "block",
+        "description": "Block on any critical vulnerabilities in pip packages"
+      },
+      "high": {
+        "threshold": 5,
+        "action": "review",
+        "description": "Require review if high-severity vulnerabilities exceed threshold"
+      },
+      "medium": {
+        "threshold": 15,
+        "action": "warn",
+        "description": "Generate warning if medium-severity vulnerabilities exceed threshold"
+      }
+    }
+  },
+  
+  "orchestrator_decisions": {
+    "block": {
+      "description": "Prevent merge/deployment",
+      "conditions": [
+        "npm critical vulnerabilities > 0",
+        "pip critical vulnerabilities > 0",
+        "Known exploited vulnerability detected"
+      ],
+      "remediation": [
+        "Update to patched version",
+        "Remove vulnerable dependency",
+        "Implement WAF/runtime protection"
+      ]
+    },
+    "review": {
+      "description": "Require security team approval",
+      "conditions": [
+        "npm high vulnerabilities > 3",
+        "pip high vulnerabilities > 5",
+        "Unpatched vulnerability in critical path"
+      ],
+      "remediation": [
+        "Review impact assessment",
+        "Create security ticket",
+        "Schedule patching window"
+      ]
+    },
+    "allow": {
+      "description": "Proceed with merge/deployment",
+      "conditions": [
+        "All vulnerabilities below threshold",
+        "No known exploits",
+        "Approved exceptions documented"
+      ]
+    }
+  },
+  
+  "approved_exceptions": {
+    "packages": [
+      {
+        "name": "example-package",
+        "version": "1.0.0",
+        "cve": "CVE-2024-XXXXX",
+        "reason": "Not exposed in production environment",
+        "expires_at": "2025-12-31",
+        "approved_by": "security@example.com",
+        "ticket": "SEC-123"
+      }
+    ]
+  },
+  
+  "scanning_config": {
+    "npm": {
+      "enabled": true,
+      "audit_level": "moderate",
+      "production_only": false,
+      "recursive": true,
+      "cache_results": true,
+      "cache_ttl_hours": 24
+    },
+    "pip": {
+      "enabled": true,
+      "include_dev": true,
+      "skip_packages": [],
+      "cache_results": true,
+      "cache_ttl_hours": 24
+    },
+    "schedule": {
+      "on_push": true,
+      "on_pr": true,
+      "on_schedule": "0 9 * * 0",
+      "on_release": true
+    }
+  },
+  
+  "notifications": {
+    "email": {
+      "enabled": true,
+      "recipients": [
+        "security-team@example.com"
+      ],
+      "on_block": true,
+      "on_review": true,
+      "on_allow": false
+    },
+    "slack": {
+      "enabled": true,
+      "webhook": "${SLACK_WEBHOOK_URL}",
+      "channel": "#security-alerts",
+      "on_block": true,
+      "on_review": true,
+      "on_allow": false
+    },
+    "jira": {
+      "enabled": false,
+      "project": "SEC",
+      "issue_type": "Security Incident",
+      "create_on": "block"
+    }
+  },
+  
+  "reporting": {
+    "format": "json",
+    "include_metrics": true,
+    "retention_days": 90,
+    "archive_location": "s3://security-reports/",
+    "public_dashboard": false,
+    "detailed_findings": true
+  }
+}
