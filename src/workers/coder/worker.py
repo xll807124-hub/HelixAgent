@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -57,6 +58,8 @@ from src.workers.react_loop.models import (
     Reasoning,
 )
 
+logger = logging.getLogger(__name__)
+
 
 async def _git(repo: str, *args: str) -> tuple[int, str]:
     """在仓库内执行 git，返回 (退出码, stdout)。启动失败时返回 (1, "")。"""
@@ -64,13 +67,37 @@ async def _git(repo: str, *args: str) -> tuple[int, str]:
         proc = await asyncio.create_subprocess_exec(
             "git", "-C", repo, *args,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.PIPE,  # ✅ 修复：捕获 stderr
         )
-        out, _ = await proc.communicate()
-    except (OSError, ValueError):
+        out, err = await proc.communicate()
+    except (OSError, ValueError) as e:
+        # ✅ 修复：记录异常信息便于调试
+        logger.error(
+            f"Failed to start git process in repo {repo!r} with args {args}: {e}",
+            exc_info=True,
+        )
         return 1, ""
+    
     code = proc.returncode if proc.returncode is not None else 1
-    return code, out.decode("utf-8", errors="replace").strip()
+    
+    # ✅ 修复：记录失败的 git 命令便于调试
+    if code != 0:
+        err_msg = err.decode("utf-8", errors="replace").strip()
+        logger.debug(
+            f"Git command failed: git -C {repo!r} {' '.join(args)}\n"
+            f"Exit code: {code}\nstderr: {err_msg}"
+        )
+    
+    # ✅ 修复：改进非 UTF-8 处理
+    try:
+        output = out.decode("utf-8").strip()
+    except UnicodeDecodeError:
+        output = out.decode("utf-8", errors="replace").strip()
+        logger.warning(
+            "Git output contains non-UTF-8 bytes, fallback to lossy decoding"
+        )
+    
+    return code, output
 
 
 def _tests_green(output: Any) -> bool:
@@ -355,7 +382,7 @@ class CoderWorker:
         exec_result = await self._executor.execute_action(
             action, self._exec_context(action.action_id)
         )
-        self._record_approvals()
+        await self._record_approvals_async()  # ✅ 修复：使用异步版本
         final_action = exec_result.action
         output = (final_action.metadata.model_extra or {}).get("output")
 
@@ -384,6 +411,15 @@ class CoderWorker:
         for record in records[self._approvals_seen:]:
             self.approval_evidences.append(self._approval_evidence(record))
         self._approvals_seen = len(records)
+    
+    async def _record_approvals_async(self) -> None:
+        """✅ 修复：异步记录审批（原子操作）"""
+        if self._approval_gateway is None:
+            return
+        # ✅ 原子地获取并清空所有待处理的审批记录
+        records = await self._approval_gateway.pop_pending_records()
+        for record in records:
+            self.approval_evidences.append(self._approval_evidence(record))
 
     def _approval_evidence(self, record: ApprovalRecord) -> Evidence:
         content = record.model_dump(mode="json")

@@ -166,10 +166,18 @@ class ApprovalAwarePolicyGateway(PolicyGateway):
         self._inner = inner
         self._policy = policy
         self._records: list[ApprovalRecord] = []
+        self._records_lock = asyncio.Lock()  # ✅ 修复：使用 Lock 保护并发访问
 
     @property
     def records(self) -> list[ApprovalRecord]:
         return list(self._records)
+    
+    async def pop_pending_records(self) -> list[ApprovalRecord]:
+        """✅ 修复：原子地获取并清空所有待处理的审批记录"""
+        async with self._records_lock:
+            result = self._records.copy()
+            self._records.clear()
+            return result
 
     async def check_pre_execution(
         self,
@@ -206,7 +214,10 @@ class ApprovalAwarePolicyGateway(PolicyGateway):
             branch=decision.branch,
             reason=decision.reason,
         )
-        self._records.append(record)
+        # ✅ 修复：使用 Lock 原子地追加记录
+        async with self._records_lock:
+            self._records.append(record)
+        
         return PolicyResult(
             decision=PolicyDecision.ALLOW,
             reason=f"Auto-approved: {decision.reason}",
