@@ -4,6 +4,7 @@
 # 测试框架与覆盖率
 pytest==8.3.3
 pytest-cov==5.0.0
+pytest-asyncio==0.25.2
 
 # Lint / 格式化
 ruff==0.7.4
@@ -16,3 +17,7 @@ pre-commit==3.8.0
 
 # 跨平台 Python 任务运行器（AGENTS.md §1 一键验证：nox -s lint/typecheck/test）
 nox==2024.4.15
+
+# SCA（Software Composition Analysis）工具
+# pip-audit：Python 依赖漏洞扫描（REQ-SEC-003 Policy Gateway）
+pip-audit==2.6.8
