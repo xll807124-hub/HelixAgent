@@ -9,3 +9,9 @@ pydantic==2.9.2
 # OpenTelemetry：REQ-RT-006 Trace 传播与审计关联（API + SDK）
 opentelemetry-api==1.27.0
 opentelemetry-sdk==1.27.0
+
+# cryptography：SEC-007 连接器签名验证（X.509 证书链校验、ECDSA/RSA/Ed25519 验签）
+cryptography==50.0.2
+
+# aiohttp：SEC-007 HTTP 传输层执行器（HTTPExecutor 通过 HTTP/SSE 调用 MCP 连接器）
+aiohttp==3.11.10

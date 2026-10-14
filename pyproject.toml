@@ -28,6 +28,12 @@ dependencies = [
     "python-dotenv==1.0.1",
     # pydantic-settings：Pydantic v2 配置管理（src/api/config.py 读取 AI_API_* 环境变量）
     "pydantic-settings==2.6.1",
+
+    # cryptography：SEC-007 连接器签名验证（X.509 证书链校验、ECDSA/RSA/Ed25519 验签）
+    "cryptography==50.0.2",
+    
+    # aiohttp：SEC-007 HTTP 传输层执行器（HTTPExecutor 通过 HTTP/SSE 调用 MCP 连接器）
+    "aiohttp==3.11.10",
 ]
 
 [project.optional-dependencies]
