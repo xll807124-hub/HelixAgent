@@ -132,12 +132,10 @@ class ApprovalMatrix(BaseModel):
         Returns:
             是否需要审批
         """
-        # 操作级覆盖优先
-        if operation in self.operation_overrides:
-            return self.operation_overrides[operation]
-        
-        # 使用风险等级规则
-        return self.approval_required.get(risk_level, False)
+        # 操作规则可以提高审批要求，不能取消风险等级要求的审批。
+        return self.operation_overrides.get(operation, False) or self.approval_required.get(
+            risk_level, True,
+        )
 
 
 class PolicyDecisionCache:
@@ -160,14 +158,11 @@ class PolicyDecisionCache:
         
         基于请求的重要字段生成 hash。
         """
-        key_data = {
-            "action_id": request.action_id,
-            "operation": request.operation.value,
-            "subject_id": request.rbac_result.subject.subject_id,
-            "resource_id": request.rbac_result.resource.resource_id,
-        }
+        # Include the authorization snapshot, risk and arguments. Reusing an action ID
+        # must never reuse an ALLOW after permissions or the intended operation change.
+        key_data = request.model_dump(mode="json", exclude={"request_id", "timestamp"})
         key_str = json.dumps(key_data, sort_keys=True)
-        return hashlib.sha256(key_str.encode()).hexdigest()[:16]
+        return hashlib.sha256(key_str.encode()).hexdigest()
     
     def get(self, request: PolicyRequest) -> PolicyResult | None:
         """从缓存获取决策。
@@ -185,11 +180,20 @@ class PolicyDecisionCache:
         result, cached_at = self._cache[key]
         age = (datetime.now(UTC) - cached_at).total_seconds()
         
-        if age > self.ttl_seconds:
+        now = datetime.now(UTC)
+        expirations = (
+            result.effective_until,
+            request.rbac_result.effective_until,
+            request.rbac_result.subject.effective_until,
+        )
+        if age >= self.ttl_seconds or any(
+            expiry is not None and (expiry.tzinfo is None or expiry <= now)
+            for expiry in expirations
+        ):
             del self._cache[key]
             return None
         
-        return result
+        return result.model_copy(update={"request_id": request.request_id, "timestamp": now})
     
     def set(self, request: PolicyRequest, result: PolicyResult) -> None:
         """缓存决策。
@@ -254,6 +258,7 @@ class PolicyGateway:
         """
         self.approval_matrix = approval_matrix or ApprovalMatrix()
         self.cache = PolicyDecisionCache(ttl_seconds=cache_ttl_seconds)
+        self._cached_matrix = self.approval_matrix.model_dump_json()
         self.audit_log: list[PolicyAuditEvent] = []
     
     async def evaluate(self, request: PolicyRequest) -> PolicyResult:
@@ -265,9 +270,16 @@ class PolicyGateway:
         Returns:
             策略结果
         """
+        # Changing a policy invalidates decisions made under the previous policy.
+        matrix = self.approval_matrix.model_dump_json()
+        if matrix != self._cached_matrix:
+            self.cache.clear()
+            self._cached_matrix = matrix
+
         # 1. 检查缓存
         cached_result = self.cache.get(request)
         if cached_result is not None:
+            await self._record_audit_event(request, cached_result)
             return cached_result
         
         # 2. 评估策略
@@ -290,13 +302,43 @@ class PolicyGateway:
         Returns:
             策略结果
         """
+        now = datetime.now(UTC)
+        if any(
+            expiry is not None and (expiry.tzinfo is None or expiry <= now)
+            for expiry in (
+                request.rbac_result.effective_until,
+                request.rbac_result.subject.effective_until,
+            )
+        ):
+            return PolicyResult(
+                request_id=request.request_id,
+                decision=PolicyDecision.DENY,
+                reason="Authorization or subject has expired",
+                rbac_decision=RBACDecision.DENY,
+                risk_level=request.risk_level,
+                requires_approval=False,
+            )
+
         # 1. 检查 RBAC 结果
-        if request.rbac_result.decision == RBACDecision.DENY:
+        if request.rbac_result.decision != RBACDecision.ALLOW:
             return PolicyResult(
                 request_id=request.request_id,
                 decision=PolicyDecision.DENY,
                 reason="RBAC evaluation denied the request",
                 rbac_decision=request.rbac_result.decision,
+                risk_level=request.risk_level,
+                requires_approval=False,
+            )
+
+        if (
+            request.operation != request.rbac_result.operation
+            or request.resource_id != request.rbac_result.resource.resource_id
+        ):
+            return PolicyResult(
+                request_id=request.request_id,
+                decision=PolicyDecision.DENY,
+                reason="RBAC authorization does not match the requested operation or resource",
+                rbac_decision=RBACDecision.DENY,
                 risk_level=request.risk_level,
                 requires_approval=False,
             )

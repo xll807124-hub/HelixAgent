@@ -6,6 +6,7 @@ Pytest 测试运行工具
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 from typing import cast
 
@@ -106,7 +107,11 @@ class PytestRunnerTool(BaseTool):
 
         test_path = params.get("test_path")
         if not isinstance(test_path, str):
-            errors.append("test_path must be a string")
+            return ValidationResult(valid=False, errors=["test_path must be a string"])
+
+        timeout = params.get("timeout", 300)
+        if type(timeout) is not int or timeout <= 0:
+            errors.append("timeout must be a positive integer")
 
         # isinstance 通过后 cast 收窄（mypy 不会自动 narrow 隐式 Any）
         test_path_str = cast(str, test_path)
@@ -116,7 +121,11 @@ class PytestRunnerTool(BaseTool):
             path = Path(test_path_str).resolve()
             if not path.exists():
                 errors.append(f"Test path does not exist: {test_path}")
-        except (ValueError, RuntimeError) as e:
+            if context.allowed_paths and not any(
+                path.is_relative_to(Path(p).resolve()) for p in context.allowed_paths
+            ):
+                errors.append("Test path not in allowed_paths")
+        except (OSError, ValueError, RuntimeError) as e:
             errors.append(f"Invalid test_path: {e}")
 
         return ValidationResult(valid=not bool(errors), errors=errors)
@@ -127,17 +136,20 @@ class PytestRunnerTool(BaseTool):
         context: ExecutionContext,
     ) -> ToolResult:
         """执行 Pytest"""
+        validation = await self.validate_input(params, context)
+        if not validation.valid:
+            return ToolResult(success=False, output=None, error="; ".join(validation.errors))
         try:
             # validate_input 已保证以下字段类型正确
-            test_path = cast(str, params.get("test_path"))
+            test_path = str(Path(params["test_path"]).resolve())
             keywords = cast(str | None, params.get("keywords"))
             verbose = cast(bool, params.get("verbose", False))
             coverage = cast(bool, params.get("coverage", False))
             timeout_raw = params.get("timeout", 300)
-            timeout = cast(int, timeout_raw)
+            timeout = min(cast(int, timeout_raw), context.timeout_seconds)
 
             # 构建 pytest 命令
-            cmd: list[str] = ["python", "-m", "pytest", test_path]
+            cmd: list[str] = [sys.executable, "-m", "pytest", test_path]
 
             if keywords:
                 cmd.extend(["-k", keywords])
@@ -194,7 +206,7 @@ class PytestRunnerTool(BaseTool):
             "skipped": 0,
             "duration": 0.0,
             "coverage_percent": 0.0,
-            "summary": output.split("\n")[-2] if output else "",
+            "summary": output.rstrip().split("\n")[-1] if output else "",
         }
 
         # 简单的正则匹配提取关键信息

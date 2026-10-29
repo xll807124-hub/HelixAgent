@@ -4,12 +4,12 @@
 对齐: REQ-SEC-003 (Policy Gateway) + 并发安全
 """
 import asyncio
+
 import pytest
 
 from src.security.policy_gateway.base import PolicyDecision, PolicyGateway, PolicyResult
 from src.workers.coder.approval import (
     ApprovalAwarePolicyGateway,
-    ApprovalRecord,
     TaskBranchApprovalPolicy,
 )
 

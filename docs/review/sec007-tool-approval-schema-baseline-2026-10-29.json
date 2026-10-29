@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-29",
+  "phase": "design-preparation",
+  "implementation_started": false,
+  "probe_type": "isolated in-memory objects; no external calls or production state mutation",
+  "observations": {
+    "description_change_retains_schema_digest": true,
+    "description_change_detected_by_full_hash": true,
+    "approval_api_has_no_organization_or_connector_scope": true,
+    "second_provider_matches_unscoped_approval": true,
+    "description_change_reported_unchanged": true,
+    "unrepresented_input_keyword_change_retains_full_hash": true,
+    "approval_valid_at_exact_expiry": true
+  },
+  "new_feature_tests_executed": false,
+  "accepted_regression_baseline": {
+    "passed": 2146,
+    "failed": 0,
+    "skipped": 0,
+    "date": "2026-10-29"
+  },
+  "source_files": [
+    {
+      "path": "src/security/mcp_connector_governance/models/tool_schema.py",
+      "digest": "f0b83eb43878bc8fca7918b73255e2c49a58e6cc573ba96c1477e815b32e7e45"
+    },
+    {
+      "path": "src/security/mcp_connector_governance/registry/tool_registry.py",
+      "digest": "d976fda16fa1047b3095971b90ed589417fb678c2f0375ec3b54a9854dcc76c9"
+    },
+    {
+      "path": "src/security/mcp_connector_governance/protocol/mcp_handler.py",
+      "digest": "212933ccdc2e1352a703d6245cad9ede2f055f06792c91209938b3c70fb9edf8"
+    },
+    {
+      "path": "src/security/mcp_connector_governance/execution/tool_executor_v2.py",
+      "digest": "9195b9f5c24bb182a53ad93640d7124dad54284c2e374a04cfbe5ef0edc4c075"
+    }
+  ],
+  "preparation_checks": {
+    "local_links_checked": 61,
+    "broken_links": 0,
+    "production_and_test_python_files_unchanged": 353,
+    "accepted_delivery_evidence_unchanged": true,
+    "full_software_regression_rerun": false
+  }
+}

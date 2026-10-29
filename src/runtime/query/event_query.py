@@ -9,9 +9,11 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
-from src.runtime.event_store.envelope import EventEnvelope, DataSensitivity
+from src.runtime.event_store.envelope import DataSensitivity, EventEnvelope
+from src.runtime.event_store.store import EventStore
+
 from .access_control import AccessController, AccessLevel, UserContext
 from .redaction_engine import RedactionEngine, SensitivityLevel
 
@@ -23,9 +25,9 @@ class EventQueryRequest:
     page: int = 1
     limit: int = 50
     include_payload: bool = False
-    access_level: Optional[AccessLevel] = None  # None = 使用用户最高级别
-    occurred_after: Optional[datetime] = None
-    occurred_before: Optional[datetime] = None
+    access_level: AccessLevel | None = None  # None = 使用用户最高级别
+    occurred_after: datetime | None = None
+    occurred_before: datetime | None = None
 
 
 @dataclass
@@ -52,10 +54,10 @@ class EventQueryService:
     
     def __init__(
         self,
-        event_store,  # EventStore 实例
-        access_controller: Optional[AccessController] = None,
-        redaction_engine: Optional[RedactionEngine] = None,
-    ):
+        event_store: EventStore,
+        access_controller: AccessController | None = None,
+        redaction_engine: RedactionEngine | None = None,
+    ) -> None:
         """
         初始化查询服务
         
@@ -68,7 +70,7 @@ class EventQueryService:
         self.access_controller = access_controller or AccessController()
         self.redaction_engine = redaction_engine or RedactionEngine()
     
-    def query_events(
+    async def query_events(
         self,
         user: UserContext,
         request: EventQueryRequest,
@@ -101,6 +103,18 @@ class EventQueryService:
                 f"User {user.user_id} has no access to task in org {task_org_id}"
             )
         
+        if request.page < 1 or not 1 <= request.limit <= 1000:
+            raise ValueError("page must be positive and limit must be between 1 and 1000")
+        for boundary in (request.occurred_after, request.occurred_before):
+            if boundary is not None and boundary.utcoffset() is None:
+                raise ValueError("Time filters must include a timezone")
+        if (
+            request.occurred_after is not None
+            and request.occurred_before is not None
+            and request.occurred_after > request.occurred_before
+        ):
+            raise ValueError("occurred_after must not exceed occurred_before")
+
         # 步骤 2：获取用户实际的访问级别
         user_max_level = self.access_controller.get_access_level(user)
         
@@ -113,17 +127,48 @@ class EventQueryService:
                 request.access_level, user_max_level
             )
         
-        # 步骤 4：查询原始事件
+        # 步骤 4：按存储的异步、序列接口读取同一上界内的事件。
+        # 时间过滤后的总数用于分页；仅保存当前页，避免载入完整任务历史。
+        raw_events: list[EventEnvelope] = []
+        total = 0
+        offset = (request.page - 1) * request.limit
         try:
-            raw_events, total = self.event_store.query(
-                task_id=request.task_id,
-                page=request.page,
-                limit=request.limit,
-                occurred_after=request.occurred_after,
-                occurred_before=request.occurred_before,
-            )
+            upper_sequence = await self.event_store.get_latest_sequence(request.task_id)
+            cursor = 0
+            while cursor <= upper_sequence:
+                batch = await self.event_store.query(
+                    task_id=request.task_id,
+                    from_sequence=cursor,
+                    to_sequence=upper_sequence,
+                    limit=1000,
+                )
+                if not batch:
+                    break
+                for event in batch:
+                    if (
+                        event.task_id != request.task_id
+                        or event.organization_id != task_org_id
+                        or event.project_id != task_project_id
+                        or event.repository_id != task_repo_id
+                    ):
+                        raise PermissionError("Event scope does not match authorized task")
+                    if request.occurred_after and event.occurred_at < request.occurred_after:
+                        continue
+                    if request.occurred_before and event.occurred_at > request.occurred_before:
+                        continue
+                    if offset <= total < offset + request.limit:
+                        raw_events.append(event)
+                    total += 1
+                next_cursor = batch[-1].sequence + 1
+                if next_cursor <= cursor:
+                    raise ValueError("Event store returned a non-advancing sequence")
+                cursor = next_cursor
+                if len(batch) < 1000:
+                    break
+        except PermissionError:
+            raise
         except Exception as e:
-            raise ValueError(f"Failed to query events: {str(e)}")
+            raise ValueError(f"Failed to query events: {str(e)}") from e
         
         # 步骤 5：脱敏返回
         # 如果不返回载荷，使用 BASIC 级别避免泄露；否则使用实际访问级别
@@ -137,6 +182,8 @@ class EventQueryService:
             redacted_event = self._redact_event(
                 event, redaction_access_level, actual_access_level
             )
+            if not request.include_payload:
+                redacted_event.payload = {}
             redacted_events.append(redacted_event)
         
         return redacted_events, total

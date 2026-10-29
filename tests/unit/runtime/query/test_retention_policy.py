@@ -9,10 +9,11 @@ RT-008 留存策略单元测试
 """
 
 import pytest
+
 from src.runtime.query.retention_policy import (
     EventTypeCategory,
-    RetentionPolicy,
     RetentionPolicies,
+    RetentionPolicy,
 )
 
 

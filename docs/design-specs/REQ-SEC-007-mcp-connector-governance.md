@@ -356,3 +356,5 @@ Trace 关联 connector_id、connector_version、tool_name、schema_digest、trus
 | 版本 | 日期 | 变更 |
 |---|---|---|
 | `v0.1-designed` | 2026-09-23 | 根据确认决策完成MCP连接器身份、OAuth优先/API Key弃用、L1-L4信任分级、逐工具权限、签名与Schema完整性、PDP侧独立Auto-review、加权配额、双层名单、网络/凭据/审计及跨模块验收设计。 |
+| `v0.1-designed`（实施进展记录，契约未变） | 2026-10-28 | 用户批准 §4.7～4.8 / AC15 中生命周期发现与调用门禁切片，见[ADR/方案](../review/sec007-lifecycle-discovery-design-2026-10-28.md#6-adr已确认的实施决策)及[API](../api/sec-007-mcp-connector-governance-api.md)。本切片已实现；专项 46、全量 2047 通过 / 3 跳过，见[测试报告](../test-reports/sec007-lifecycle-2026-10-28.md)。后续用户批准依赖/扫描扩展后，本轮安全扫描通过（全量 2100 通过 / 3 跳过），见[增量报告](../test-reports/sec007-security-gate-2026-10-28.md)；待用户验收。原共享字段、规范版本与整体待冻结状态不变。 |
+| `v0.1-designed`（验收记录，契约未变） | 2026-10-29 | ✅ 用户要求“将已完成的任务标记✅”，据此验收生命周期发现/调用切片及依赖升级、扫描配置。2026-10-28 实测：专项 46 + 53、全量 2100 通过 / 3 Docker 跳过，SAST/SCA/Secret 通过；见[验收记录](../delivery-reports/sec007-lifecycle-acceptance-2026-10-29.json)。仅本切片完成；REQ 整体及其余生产缺口保持待完成，原始证据不改写。 |

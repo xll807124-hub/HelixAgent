@@ -1,8 +1,9 @@
 # AI Agent 平台统一设计基线与未完成需求清单
 
-> 文档版本：v1.7  
-> 基线日期：2026-10-05  
-> 文档状态：方案整合基线，未进入代码实现  
+> ✅ SEC-007 生命周期切片及依赖/扫描扩展于 2026-10-29 验收；2026-10-28 实测：全量 2100 通过 / 3 Docker 跳过，SAST/SCA/Secret 通过。其余缺口保持开放。
+> 文档版本：v1.9（2026-10-29 G-CTX限定契约同步）
+> 基线日期：2026-10-05
+> 文档状态：设计与实现分列；对齐评审已验收，SEC-007 生命周期发现/调用补缺✅ 已完成（2026-10-29 用户验收）
 > 适用范围：`AI_AGENT项目方案.md`、`优化设计思路.md`、`docs/design-specs/README.md`、`INDEX.md` 及 `01-05` 设计规范
 
 ---
@@ -18,15 +19,9 @@
 
 ### 1.1 文档权威级别
 
-从高到低采用以下优先级：
+2026-10-28 用户已确认：《项目开发步骤》即[项目开发执行手册](../../项目开发执行手册.md)，按其正文路线图核定开发顺序。用户当次指令优先；执行手册与迭代规则冲突时以手册为准并确认冲突。专项冻结契约约束共享字段，不能用既有代码或旧汇总自动覆盖。
 
-1. 本文档中的“统一设计决策”和“版本基线”。
-2. 已单独冻结并经评审的专项设计文档。
-3. `AI_AGENT项目方案.md` 中的总体架构和 MVP 边界。
-4. `优化设计思路.md` 中的候选方案、行业调研和待验证假设。
-5. 其他草稿、示例、候选算法和未验证指标。
-
-当前没有任何专项模块达到“实现已完成”状态。本文档中的“已设计”仅表示形成了可继续细化的高层方案，不表示已经编码、部署或验证。
+本文汇总设计状态；RT-001～008 采用专项页记录的 **2026-10-07 冻结版本**，不撤销、不重新命名。其他 52 项仍未冻结；CTX-008 原文开头不完整。项目已有实现和测试，历史交付范围及日期见[评审记录](../review/roadmap-status-and-stage0-proposal-2026-10-28.md)。✅ 对齐评审于 2026-10-28 验收：60 项需求、341 链接通过，2001 测试通过 / 3 跳过；Security 整体冻结未批准。
 
 ### 1.2 统一状态定义
 
@@ -38,7 +33,7 @@
 | 详细设计已冻结 | 设计评审通过，版本、接口、验收标准和变更流程已固定 |
 | 已实现并验证 | 已有代码、测试、环境验证和可追溯证据 |
 
-当前所有模块最高只能标记为“详细设计进行中”或“详细设计已完成、待跨模块冻结”，没有模块可标记为“已实现并验证”。
+设计冻结、代码实现、测试通过、用户验收是独立状态。已实现并验证的局部成果可以按范围记录；整个模块必须具备全部验收证据。未执行、工具缺失和跳过不算通过。
 
 ---
 
@@ -164,7 +159,7 @@ Durable State Machine
 
 ### 4.1 方向一：零信任架构与渐进披露
 
-**状态：高层设计已形成，详细设计未冻结**  
+**状态：高层设计已形成，详细设计未冻结**
 **采用基线：`Context Governance Baseline v0.1`**
 
 已形成的设计：
@@ -196,7 +191,7 @@ Durable State Machine
 
 ### 4.2 方向二：Coordinator + 专家 Worker
 
-**状态：高层设计已形成，详细设计未冻结**  
+**状态：高层设计已形成，详细设计未冻结**
 **采用基线：`Worker Orchestration Baseline v0.1`**
 
 已形成的设计：
@@ -230,7 +225,7 @@ Planner -- approval --> Coder ----+
 
 ### 4.3 方向三：ReAct + Workflow DAG + Durable Runtime
 
-**状态：高层设计已形成，详细设计未冻结**  
+**状态：RT 八项契约已冻结；DAG 与完整持久执行链路尚未整体冻结或验收**
 **采用基线：`Agent Runtime Baseline v0.1`**
 
 已形成的设计：
@@ -249,19 +244,18 @@ Planner -- approval --> Coder ----+
 - 接口预留迁移到 Temporal 或 LangGraph 等持久运行时的空间；
 - 事件事实源、状态投影和检查点恢复作为共同运行时坐标系。
 
-尚未冻结：
+尚待完整实现、集成验收或专项冻结（不撤销已冻结的 RT 契约）：
 
-- WorkerRuntime 接口；
-- WorkflowCompiler 接口；
-- Action Executor 接口；
-- Event Store 和 Projection API；
-- Checkpoint Protocol；
-- 事件重放和回放工具；
-- 与外部副作用系统的幂等及补偿边界。
+- WorkerRuntime 与 WorkflowCompiler 的平台编排接口；
+- Action Executor 的决策引用和生产装配；
+- Event Store / Projection 的持久化后端；
+- 已冻结 Checkpoint Protocol 的持久化恢复验证；
+- 事件重放工具与真实故障恢复演练；
+- 外部副作用系统的完整幂等封装与补偿契约。
 
 ### 4.4 方向四：Agent Infra 与四道零信任防线
 
-**状态：高层设计已形成，详细设计未冻结**  
+**状态：高层设计已形成，详细设计未冻结**
 **采用基线：`Agent Infra Governance Baseline v0.1`**
 
 四道防线：
@@ -301,12 +295,12 @@ Planner -- approval --> Coder ----+
 
 ---
 
-## 5. 部分形成推荐基线但未完成 Runtime Contract 冻结的方向
+## 5. 各模块设计基线与冻结状态
 
 ### 5.1 运行时基础契约
 
-**状态：P0，REQ-RT-001 至 REQ-RT-008 已完成详细设计，待跨模块评审与冻结；尚未满足 Runtime Contract v1 冻结条件**  
-**采用版本：`Runtime Contract v1-draft`；REQ-RT-001：`v0.2-designed`；REQ-RT-002/003/004/005/006/007/008：`v0.1-designed`**
+**状态：RT 八项已冻结（2026-10-07，2026-10-28 用户确认保留）；实现与验证仍有缺口，见接口评审。**
+**采用版本：Runtime Contract v1 对应八份专项冻结契约；RT-001 为 v0.2-frozen，RT-002～008 为 v0.1-frozen。不另造整包 v1.0-frozen 决议。**
 
 推荐基线：
 
@@ -331,22 +325,22 @@ Planner -- approval --> Coder ----+
 - `REQ-SEC-002` RBAC 与资源授权，版本：`v0.1-designed`，详见 [专项设计](./REQ-SEC-002-rbac-resource-authorization.md)；待跨模块评审与冻结。
 - `REQ-SEC-003` Policy Gateway，版本：`v0.1-designed`，详见 [专项设计](./REQ-SEC-003-policy-gateway.md)；待跨模块评审与冻结。MVP 采用 OPA/Cedar 之一、独立 Auto-review、粗粒度审批矩阵、审批超时升级、多 Agent 单跳 OBO、差异化决策缓存及三级审计脱敏。
 - `REQ-SEC-005` 凭据代理，版本：`v0.1-designed`，详见 [专项设计](./REQ-SEC-005-credential-proxy.md)；待跨模块评审与冻结。MVP 支持 GitHub App + AWS STS（OIDC 联合）+ 通用 OAuth 2.0；PDP/CDP 分离架构；三代理模型（Model B 为主、Model A 用于 OIDC 联合）；Vault 集成（单云云厂商托管）；CDP 多实例 active-active；撤销传播 < 5s；OIDC 联合 MVP 必选；DPoP 接口预留渐进路线。
-- `REQ-RT-001` 核心实体 Schema，版本：`v0.2-designed`；
-- `REQ-RT-002` Task、Workflow、Worker、Action 状态机与迁移约束，版本：`v0.1-designed`；
-- `REQ-RT-003` Event Schema v1 和事件版本策略，版本：`v0.1-designed`；
-- `REQ-RT-004` 状态投影与一致性规则，版本：`v0.1-designed`；
-- `REQ-RT-005` Checkpoint Protocol，版本：`v0.1-designed`；
-- `REQ-RT-006` Trace 传播和审计关联，版本：`v0.1-designed`；（[详细设计](./REQ-RT-006-Trace-传播和审计关联.md)，默认采样率 15%，审计保留 30 天热存储 + 180 天冷存储，MVP 支持跨服务追踪）
-- `REQ-RT-007` Idempotency Key 与副作用边界，版本：`v0.1-designed`；（[详细设计](./REQ-RT-007-idempotency-key.md)，作为运行时共享锚点；具体写操作包装器由 `REQ-REL-006` 细化。Redis 仅为 24 小时热层，PostgreSQL 为权威账本；结果未知时不得盲目重放）
-- `REQ-RT-008` 事件查询、留存、脱敏和权限边界，版本：`v0.1-designed`；（[详细设计](./REQ-RT-008-event-query-retention-redaction-permission.md)，30 天热存储 + 180 天冷存储；平台默认值 + 组织覆盖配置；混合 Payload 归档；分级审批 + HITL 合规删除；全协议流式传输；多云归档存储；事件层 trace_id 关联）
+- `REQ-RT-001` 核心实体 Schema，版本：`v0.2-frozen`；
+- `REQ-RT-002` Task、Workflow、Worker、Action 状态机与迁移约束，版本：`v0.1-frozen`；
+- `REQ-RT-003` Event Schema v1 和事件版本策略，版本：`v0.1-frozen`；
+- `REQ-RT-004` 状态投影与一致性规则，版本：`v0.1-frozen`；
+- `REQ-RT-005` Checkpoint Protocol，版本：`v0.1-frozen`；
+- `REQ-RT-006` Trace 传播和审计关联，版本：`v0.1-frozen`；（[详细设计](./REQ-RT-006-Trace-传播和审计关联.md)，默认采样率 15%，审计保留 30 天热存储 + 180 天冷存储，MVP 支持跨服务追踪）
+- `REQ-RT-007` Idempotency Key 与副作用边界，版本：`v0.1-frozen`；（[详细设计](./REQ-RT-007-idempotency-key.md)，作为运行时共享锚点；具体写操作包装器由 `REQ-REL-006` 细化。Redis 仅为 24 小时热层，PostgreSQL 为权威账本；结果未知时不得盲目重放）
+- `REQ-RT-008` 事件查询、留存、脱敏和权限边界，版本：`v0.1-frozen`；（[详细设计](./REQ-RT-008-event-query-retention-redaction-permission.md)，30 天热存储 + 180 天冷存储；平台默认值 + 组织覆盖配置；混合 Payload 归档；分级审批 + HITL 合规删除；全协议流式传输；多云归档存储；事件层 trace_id 关联）
 - `REQ-REL-006` 写操作幂等封装，版本：`v0.1-designed`；（[详细设计](./REQ-REL-006-write-operation-idempotency.md)，稳定逻辑意图键、JCS/类型化规范化、六态账本、fencing lease、Effect Log/Outbox 原子边界、A-D 连接器能力分级和 SLA 驱动对账）
 - `REQ-REL-009` 故障注入和恢复验证场景，版本：`v0.1-designed`；（[详细设计](./REQ-REL-009-fault-injection-recovery-verification.md)，HTTP/SDK/系统调用三层故障注入、系统化故障分类法映射 REL-001 症状、行为契约验证、完整恢复路径验证、自动化验证流水线、爆炸半径限制和审计跟踪）
 
-**里程碑**：运行时基础契约（REQ-RT-001 至 REQ-RT-008）全部完成详细设计；可靠性（REL）模块全部 9 项完成详细设计；仍需完成跨模块交叉评审并冻结后，Runtime Contract v1 才可作为稳定实现契约。
+**里程碑**：Runtime 八项冻结记录已对齐；设计冻结不代表实现全部通过。可靠性九项设计已有，仍待各自评审。Security 条件冻结建议见[接口评审](./INTERFACE_ALIGNMENT_CHECKLIST.md)，尚无新的冻结批准。
 
 ### 5.2 安全威胁模型与控制矩阵
 
-**状态：P0；`REQ-SEC-001` 至 `REQ-SEC-010` 均已完成详细设计，待跨模块评审与冻结；总体控制基线待跨模块冻结**  
+**状态：P0；`REQ-SEC-001` 至 `REQ-SEC-010` 均已完成详细设计，待跨模块评审与冻结；总体控制基线待跨模块冻结**
 **采用版本：`Security Threat Model v1`，当前为草案基线**
 
 已识别的主要威胁：
@@ -387,7 +381,7 @@ Planner -- approval --> Coder ----+
 
 已完成详细设计的独立需求：
 
-- `REQ-SEC-010` 安全控制验证与红队测试计划，版本：`v0.1-designed`，详见 [专项设计](./REQ-SEC-010-security-control-validation-red-team.md)；采用事件驱动的分层验证体系、L1/L2/L3 × D1-D6 攻击面矩阵、Tier-2 注入回归、独立性硬约束、蓝队容量闸门和响应—缓解—修复—根除四段式风险加权 SLA。
+- `REQ-SEC-010` 安全控制验证与红队测试计划，版本：`v0.2-designed`，详见 [专项设计](./REQ-SEC-010-security-control-validation-red-team.md)；采用事件驱动的分层验证体系、L1/L2/L3 × D1-D6 攻击面矩阵、Tier-2 注入回归、独立性硬约束、蓝队容量闸门和响应—缓解—修复—根除四段式风险加权 SLA。
 
 尚未完成的独立需求：
 
@@ -395,7 +389,7 @@ Planner -- approval --> Coder ----+
 
 ### 5.3 失败恢复与重试
 
-**状态：P0；`REQ-REL-001` 至 `REQ-REL-009` 全部 9 项已完成详细设计，失败恢复执行协议待跨模块冻结**  
+**状态：P0；`REQ-REL-001` 至 `REQ-REL-009` 全部 9 项已完成详细设计，失败恢复执行协议待跨模块冻结**
 **采用版本：`Failure Recovery Baseline v1-draft`；`REQ-REL-001` 至 `REQ-REL-009`：已完成详细设计**，待跨模块评审与冻结
 
 推荐基线：
@@ -425,12 +419,12 @@ Planner -- approval --> Coder ----+
 
 ### 5.4 上下文管理与代码索引
 
-**状态：P1，`REQ-CTX-001`、`REQ-CTX-002` 和 `REQ-CTX-003` 已完成详细设计，算法参数未冻结**  
+**状态：P1，CTX 九项文件已有；CTX-008 开头不完整，算法与模块均未冻结。**
 **采用版本：`Context and Code Index Baseline v1`，当前为实验基线**
 
 已完成详细设计的独立需求：
 
-- `REQ-CTX-001` 索引实体和关系 Schema，版本：`v0.1-designed`，详见 [专项设计](./REQ-CTX-001-index-entities-schema.md)；采用 FileNode、SymbolNode、DependencyNode、RelationEdge、IndexMetadata 五核心实体；每个实体绑定 `repository_id` 和 `source_revision`（Git commit SHA）；符号采用 qualified name（借鉴 Sourcegraph SCIP）；关系包含 8 种类型（IMPORTS、DEPENDS_ON、DEFINES、CALLS、REFERENCES、USES_TYPE、EXTENDS、IMPLEMENTS）；支持 Merkle 树增量检测（借鉴 Cursor）；索引元数据包含 IndexState（PENDING/BUILDING/ACTIVE/STALE/ARCHIVED/FAILED）；与 Runtime Contract 版本绑定（Task.base_revision → IndexMetadata.source_revision）；待跨模块评审与冻结。
+- `REQ-CTX-001` 索引实体和关系 Schema，版本：`v0.2-designed`，详见 [专项设计](./REQ-CTX-001-index-entities-schema.md)；采用 FileNode、SymbolNode、DependencyNode、RelationEdge、IndexMetadata 五核心实体；每个实体绑定 `repository_id` 和 `source_revision`（Git commit SHA）；符号采用 qualified name（借鉴 Sourcegraph SCIP）；关系包含 8 种类型（IMPORTS、DEPENDS_ON、DEFINES、CALLS、REFERENCES、USES_TYPE、EXTENDS、IMPLEMENTS）；支持 Merkle 树增量检测（借鉴 Cursor）；索引元数据包含 IndexState（PENDING/BUILDING/ACTIVE/STALE/ARCHIVED/FAILED）；与 Runtime Contract 版本绑定（Task.base_revision → IndexMetadata.source_revision）；待跨模块评审与冻结。
 
 - `REQ-CTX-002` 语言、仓库规模和基准集，版本：`v0.1-designed`，详见 [专项设计](./REQ-CTX-002-language-repository-scale-benchmark.md)；定义语言三级支持（TIER_1: Python/TypeScript/Go，TIER_2: Java/Rust/C++/C#，UNSUPPORTED: 其他）；仓库四级规模（SMALL < 100文件 < 5s索引，MEDIUM 100-1000文件 < 30s索引，LARGE 1000-10000文件 < 120s索引，XLARGE > 10000文件需手动配置）；基准集规范（每 TIER_1 语言至少 10 仓库，总计 50+ 真实任务，难度分布 40%/40%/20%）；性能目标参考 GitHub Copilot 秒级索引、Infino benchmark 数据、SWE-bench Verified 子集；待跨模块评审与冻结。
 
@@ -444,7 +438,7 @@ Planner -- approval --> Coder ----+
   - **质量目标**：解析成功率 ≥ 95%，符号提取召回率 > 0.9，调用图准确率 > 0.9，依赖解析准确率 > 0.95；
   - **行业对标**：Sourcegraph SCIP、Cursor Merkle 树、Codebase-Memory Tree-sitter KG、通义灵码 GraphTransformer、2026 LSP K8s 企业部署、Qoder 混合检索；待跨模块评审与冻结。
 
-- `REQ-CTX-004` 混合检索与排序，版本：`v0.1-designed`，详见 [专项设计](./REQ-CTX-004-hybrid-retrieval-ranking.md)；**核心架构决策基于行业最佳实践分析**：
+- `REQ-CTX-004` 混合检索与排序，版本：`v0.2-designed`，详见 [专项设计](./REQ-CTX-004-hybrid-retrieval-ranking.md)；**核心架构决策基于行业最佳实践分析**：
   - **三通道并行检索**：BM25F多字段评分（symbol_name×3.0, filename×2.0, docstring×1.5, code×1.0）、Dense Vector语义检索（HNSW索引，cosine相似度，1536维嵌入）、Graph调用链遍历（DFS深度3，Tarjan SCC防环，距离衰减0.8）；
   - **Reciprocal Rank Fusion（RRF）**：公式 score(d) = Σ wᵢ/(k + rankᵢ(d))，默认k=60（大型仓库）/10-30（小型仓库），权重根据查询类型动态调整，无需分数归一化；
   - **权限前置过滤**：在RRF融合前对每个通道结果执行RBAC检查，批量权限检查+缓存（TTL=5分钟），零权限泄漏容忍度；
@@ -453,10 +447,10 @@ Planner -- approval --> Coder ----+
   - **行业对标**：Cursor语义+词法双通道、GitHub Copilot自研嵌入模型、Anthropic Contextual Retrieval、Sourcegraph Zoekt BM25F、DeepSeek三阶段流水线；
   - **演进路线**：Phase 1 MVP（BM25+Vector+Graph+RRF） → Phase 2 质量增强（Contextual Embeddings+Cross-Encoder重排） → Phase 3 规模化（分布式检索+增量索引）；待跨模块评审与冻结。
 
-- `REQ-CTX-005` 检索权限与敏感路径，版本：`v1.0-designed`，详见 [专项设计](./REQ-CTX-005-retrieval-permissions-sensitive-paths.md)；**核心架构决策基于零信任Pre-filter原则**：
+- `REQ-CTX-005` 检索权限与敏感路径，版本：`v1.0`，详见 [专项设计](./REQ-CTX-005-retrieval-permissions-sensitive-paths.md)；**核心架构决策基于零信任Pre-filter原则**：
   - **零信任预过滤检索**：在向量/词法/图检索执行前进行权限校验和敏感路径过滤，避免授权泄露风险和Token浪费；
   - **三级敏感路径过滤**：Level 1硬编码基线（.env*, *.pem, *.key, .ssh/, secrets/, *.sql等，不可绕过）、Level 2组织级规则（管理员配置）、Level 3项目级规则（.aiagentignore配置）；
-  - **Fail-Secure策略**：权限服务超时→DENY，Redis缓存失效→降级查询权限服务，敏感路径规则加载失败→仅应用Level 1基线，多租户ID缺失→DENY；
+  - **Fail-Secure策略**：权限服务超时→DENY，Redis缓存失效→降级查询权限服务，敏感路径规则加载失败→DENY（不得仅用基线或旧缓存放行），多租户ID缺失→DENY；
   - **多租户数据隔离**（集成SEC-008）：物理分区（vectors_{organization_id}, code_{organization_id}）或逻辑分区（Payload Filter），强制租户边界；
   - **RBAC权限校验**（集成SEC-002）：Deny > Ask > Allow优先级，allowed_repositories/allowed_paths/denied_paths，支持Exact/Prefix/Glob/Regex匹配；
   - **审计与可观测性**：审计日志字段（trace_id, query_text, total_candidates, filtered_count, denied_reasons, latency_ms）、Prometheus Metrics、OpenTelemetry Trace；
@@ -464,7 +458,7 @@ Planner -- approval --> Coder ----+
   - **合规性**：SOC2 Type II（CC6.1访问控制、CC7.2审计日志）、ISO27001（A.9.4.1访问策略、A.12.4.1审计保留90天）、GDPR（审计日志脱敏）；
   - **行业对标**：GitHub Copilot .copilotignore、Sourcegraph Pre-filter架构、Claude Code/Cursor工作区配置、DeepSeek/Kimi Code路径黑名单、Dify+SpiceDB Zero-Trust模型；待跨模块评审与冻结。
 
-- `REQ-CTX-006` Context Selector 与预算，版本：`v0.1-designed`，详见 [专项设计](./REQ-CTX-006-context-selector-budget.md)；**核心架构决策基于行业标杆Token预算管理**：
+- `REQ-CTX-006` Context Selector 与预算，版本：`v0.2-designed`，详见 [专项设计](./REQ-CTX-006-context-selector-budget.md)；**核心架构决策基于行业标杆Token预算管理**：
   - **任务类型驱动Token预算分配**：6种任务类型（BUG_FIX/FEATURE_DEVELOPMENT/REFACTORING/CODE_REVIEW/UNIT_TEST/DOCUMENTATION）差异化预算配置；默认分配比例（任务描述5%-10%/核心代码35%-50%/依赖代码15%-30%/测试代码10%-40%/文档5%-40%）；
   - **多维度优先级计算**：综合评分 = 相关性(0.4)×融合分数 + 依赖(0.25)×依赖分数 + 中心性(0.25)×图分数 + 新鲜度(0.1)×时间分数；任务类型调整权重（BUG_FIX相关性优先0.5，REFACTORING结构优先0.35/0.35）；
   - **渐进式上下文暴露**（借鉴Cursor）：L1 Compact Summary（~50 tokens）→ L2 Timeline Context（~200 tokens）→ L3 Full Code（~500-1000 tokens），按需加载优化Token使用；
@@ -493,7 +487,7 @@ Planner -- approval --> Coder ----+
 
 ### 5.5 记忆管理
 
-**状态：`REQ-MEM-001`、`REQ-MEM-002`、`REQ-MEM-003` 和 `REQ-MEM-004` 已完成详细设计，待跨模块评审与冻结**  
+**状态：`REQ-MEM-001`、`REQ-MEM-002`、`REQ-MEM-003` 和 `REQ-MEM-004` 已完成详细设计，待跨模块评审与冻结**
 **采用版本：`Structured Memory Baseline v0.3`**
 
 推荐基线：
@@ -519,7 +513,7 @@ Planner -- approval --> Coder ----+
 
 ### 5.6 Harness Engineering
 
-**状态：部分形成设计，专项规范未完成**  
+**状态：HAR-001～006 详细设计文件已有，待跨模块评审冻结**
 **采用版本：`Harness Contract v0.1`**
 
 推荐基线：
@@ -533,7 +527,7 @@ Planner -- approval --> Coder ----+
 已完成详细设计的独立需求：
 
 - `REQ-HAR-001` Harness 生命周期和标准接口（**v0.1-designed，2026-09-26 完成详细设计**）；
-- `REQ-HAR-002` Worker Context Compaction 规范（**v0.1-designed，2026-09-27 完成详细设计**）；
+- `REQ-HAR-002` Worker Context Compaction 规范（**v0.2-designed，2026-09-27 完成详细设计**）；
 - `REQ-HAR-003` Tool Adapter 和工具 Schema（**v0.1-designed，2026-09-30 完成详细设计**，详见 [专项设计](./REQ-HAR-003-tool-adapter.md)）；
 - `REQ-HAR-004` Hook Registry，版本：`v0.1-designed`，详见 [专项设计](./REQ-HAR-004-hook-registry.md)；采用六层注册源(platform/enterprise/team/project/user/plugin)、29个生命周期事件、五种Hook类型(command/http/mcp_tool/approval/inline)、六种失败策略(fail-closed/fail-open/degraded/retry/escalate/wait-approval)、Plugin Hook沙箱隔离(seccomp+AppArmor)、签名验证(SHA-256+RSA-2048/Ed25519)、响应合并协议(block>allow>observe)、manifest schema版本化、事件演进协议(兼容期6-12个月)；对齐OpenAI Agents SDK双层Hook、Claude Code 20+事件与响应合并、LangChain Middleware洋葱模型、Cursor多级优先级、Dify Plugin Daemon、Kimi Plugin Hook隔离行业实践；待跨模块评审与冻结。
 - `REQ-HAR-005` LSP/MCP/Skill 统一路由，版本：`v0.1-designed`，详见 [专项设计](./REQ-HAR-005-unified-routing.md)；采用跨协议 Capability Abstraction Layer、12 步发现流程（协议源聚合→权限预检→Policy 预检→延迟加载评估→语义检索→能力聚合→冲突仲裁→Schema 规范化→响应封装→PEP 拦截点注册）、7 步调用路由（协议路由→执行前检查→参数转换→执行委托→结果处理）、延迟加载机制（Token 预算驱动+语义检索 top-N）、冲突仲裁规则（协议优先级 LSP=100>MCP=80>SKILL=60）、发现时+调用时双层权限裁剪、SEC-007 Schema 签名验证集成、12 核心指标+5 告警规则；对齐 MCP 官方规范（tools/list+tools/call+listChanged）、Cursor Enterprise/Team 多层策略、LangGraph Picker Node 动态绑定、OpenAI MCPServerManager、Kimi Code deferred 机制、DeepSeekCode 统一执行路径行业实践；待跨模块评审与冻结。
@@ -545,7 +539,7 @@ Planner -- approval --> Coder ----+
 
 ### 5.7 可观测性与审计
 
-**状态：`REQ-OBS-001` 至 `REQ-OBS-007` 全部已完成详细设计，待跨模块评审与冻结**  
+**状态：`REQ-OBS-001` 至 `REQ-OBS-007` 全部已完成详细设计，待跨模块评审与冻结**
 **采用版本：`Observability and Audit Baseline v0.2`**
 
 推荐基线：
@@ -558,14 +552,14 @@ Planner -- approval --> Coder ----+
 
 已完成详细设计的独立需求：
 
-- `REQ-OBS-001` OpenTelemetry 语义约定，版本：`v0.1-designed`，详见 [专项设计](./REQ-OBS-001-opentelemetry-semantic-conventions.md)；采用 OpenTelemetry GenAI 语义约定作为标准化基础；定义 Task→Workflow→Worker→Action→Tool/Model/Sandbox 分层 Span 结构；默认 15% 采样率，高风险/失败/安全相关操作强制采样；三级内容捕获策略（FULL/FEEDBACK_ONLY/DISABLED），默认关闭；受信任边界内 W3C Trace Context 传播；对齐 OTel GenAI SIG、Cursor Enterprise、DeepSeek Harness、LangSmith、Microsoft Copilot 行业实践；待跨模块评审与冻结。
-- `REQ-OBS-002` Trace/Event/Evidence Schema，版本：`v0.1-designed`，详见 [专项设计](./REQ-OBS-002-trace-event-evidence-schema.md)；采用分层数据模型（Trace/Span/Event/Evidence）、44 项 EventType 枚举覆盖 Agent 全生命周期、Evidence 独立建模支持审计合规、多维关联模型（Trace↔Span↔Event↔Evidence）、分层存储策略（热 30 天/温 180 天/冷 7 年）；对齐 OpenTelemetry GenAI、LangSmith、Manus AI、Microsoft Copilot、Dify 行业实践；待跨模块评审与冻结。
-- `REQ-OBS-003` 指标字典，版本：`v0.1-designed`，详见 [专项设计](./REQ-OBS-003-metrics-dictionary.md)；采用 GenAI 专有指标字典（15 项核心指标）、维度定义体系（18 个标准维度）、高基数控制算法（黑名单+白名单+溢出策略）、指标分类体系（Usage/Quality/Performance/Cost/Safety）、统计口径标准化（窗口/聚合/分组规则）；对齐 OpenTelemetry GenAI、LangSmith、Grafana、Microsoft Copilot、Dify 行业实践；待跨模块评审与冻结。
-- `REQ-OBS-004` 脱敏和高基数控制，版本：`v0.1-designed`，详见 [专项设计](./REQ-OBS-004-redaction-cardinality-control.md)；采用四层敏感度分级（PUBLIC/INTERNAL/CONFIDENTIAL/RESTRICTED）、Key Name 词素分词脱敏（tokenize on _/-/./space/camelCase）、32 层递归上限防 CPU 耗尽、调试模式 24h 审批流、高基数黑名单（trace_id/session_id/user_id 等）+ `__overflow__` 兜底策略、URL Sanitizer 降基数、HMAC-SHA256 scope-specific 哈希（保留可关联性）、流式缓冲跨 chunk 脱敏、15 项功能验收 + 4 项合规验收；对齐 OpenTelemetry、Cursor Enterprise、LangSmith、DeepSeek Harness、Azure Foundry、Grafana Alloy、AISIX Gateway 等 8 家标杆；待跨模块评审与冻结。
-- `REQ-OBS-005` 告警和 Kill Switch 联动，版本：`v0.1-designed`，详见 [专项设计](./REQ-OBS-005-alert-killswitch-linkage.md)；采用三维判定矩阵（严重度×置信度×爆破半径）驱动自动化联动、告警规则引擎（支持 PromQL 风格条件表达式）、与 SEC-009 Kill Switch 深度集成（M0-M5 模式映射）、分层通知渠道（PagerDuty/Slack/Email/Webhook）+ 升级机制、告警有效性评估体系（精确率/召回率/噪声比）、自动化联动三条铁律（爆破半径上限/自动解除分档/观察期）、告警生命周期管理（触发/确认/解决/升级）、静默与抑制规则、告警去重与聚合；对齐 OneUptime Circuit Breakers、AgentGazer Kill Switch、Agent Sentinel 置信度门控、Guardplane 控制平面、Grafana SLO Burn Rate、PagerDuty Automation Actions、DeepSeek Prometheus Exporter 行业实践；待跨模块评审与冻结。
+- `REQ-OBS-001` OpenTelemetry 语义约定，版本：`v0.1`，详见 [专项设计](./REQ-OBS-001-opentelemetry-semantic-conventions.md)；采用 OpenTelemetry GenAI 语义约定作为标准化基础；定义 Task→Workflow→Worker→Action→Tool/Model/Sandbox 分层 Span 结构；默认 15% 采样率，高风险/失败/安全相关操作强制采样；三级内容捕获策略（FULL/FEEDBACK_ONLY/DISABLED），默认关闭；受信任边界内 W3C Trace Context 传播；对齐 OTel GenAI SIG、Cursor Enterprise、DeepSeek Harness、LangSmith、Microsoft Copilot 行业实践；待跨模块评审与冻结。
+- `REQ-OBS-002` Trace/Event/Evidence Schema，版本：`v0.1`，详见 [专项设计](./REQ-OBS-002-trace-event-evidence-schema.md)；采用分层数据模型（Trace/Span/Event/Evidence）、44 项 EventType 枚举覆盖 Agent 全生命周期、Evidence 独立建模支持审计合规、多维关联模型（Trace↔Span↔Event↔Evidence）、分层存储策略（热 30 天/温 180 天/冷 7 年）；对齐 OpenTelemetry GenAI、LangSmith、Manus AI、Microsoft Copilot、Dify 行业实践；待跨模块评审与冻结。
+- `REQ-OBS-003` 指标字典，版本：`v0.1`，详见 [专项设计](./REQ-OBS-003-metrics-dictionary.md)；采用 GenAI 专有指标字典（15 项核心指标）、维度定义体系（18 个标准维度）、高基数控制算法（黑名单+白名单+溢出策略）、指标分类体系（Usage/Quality/Performance/Cost/Safety）、统计口径标准化（窗口/聚合/分组规则）；对齐 OpenTelemetry GenAI、LangSmith、Grafana、Microsoft Copilot、Dify 行业实践；待跨模块评审与冻结。
+- `REQ-OBS-004` 脱敏和高基数控制，版本：`v0.1`，详见 [专项设计](./REQ-OBS-004-redaction-cardinality-control.md)；采用四层敏感度分级（PUBLIC/INTERNAL/CONFIDENTIAL/RESTRICTED）、Key Name 词素分词脱敏（tokenize on _/-/./space/camelCase）、32 层递归上限防 CPU 耗尽、调试模式 24h 审批流、高基数黑名单（trace_id/session_id/user_id 等）+ `__overflow__` 兜底策略、URL Sanitizer 降基数、HMAC-SHA256 scope-specific 哈希（保留可关联性）、流式缓冲跨 chunk 脱敏、15 项功能验收 + 4 项合规验收；对齐 OpenTelemetry、Cursor Enterprise、LangSmith、DeepSeek Harness、Azure Foundry、Grafana Alloy、AISIX Gateway 等 8 家标杆；待跨模块评审与冻结。
+- `REQ-OBS-005` 告警和 Kill Switch 联动，版本：`v0.1`，详见 [专项设计](./REQ-OBS-005-alert-killswitch-linkage.md)；采用三维判定矩阵（严重度×置信度×爆破半径）驱动自动化联动、告警规则引擎（支持 PromQL 风格条件表达式）、与 SEC-009 Kill Switch 深度集成（M0-M5 模式映射）、分层通知渠道（PagerDuty/Slack/Email/Webhook）+ 升级机制、告警有效性评估体系（精确率/召回率/噪声比）、自动化联动三条铁律（爆破半径上限/自动解除分档/观察期）、告警生命周期管理（触发/确认/解决/升级）、静默与抑制规则、告警去重与聚合；对齐 OneUptime Circuit Breakers、AgentGazer Kill Switch、Agent Sentinel 置信度门控、Guardplane 控制平面、Grafana SLO Burn Rate、PagerDuty Automation Actions、DeepSeek Prometheus Exporter 行业实践；待跨模块评审与冻结。
 
-- `REQ-OBS-006` 审计查询 API，版本：`v0.1-designed`，详见 [专项设计](./REQ-OBS-006-audit-query-api.md)；采用四层 API 架构（RESTful 查询 API + GraphQL 灵活查询 + Streaming API + Webhook 推送）、统一查询过滤模型（时间范围/Actor/Action/Outcome/标签）、权限隔离模型（RBAC 资源级授权 + 敏感数据二次审批）、审计日志完整性验证接口（哈希链验证 + Merkle Proof）、分页与游标策略、查询成本限制（默认 10s 超时/1000 条上限）；对齐 Datadog Audit Trail API、AWS CloudTrail、Azure Monitor Logs、Splunk、Elastic SIEM 行业实践；待跨模块评审与冻结。
-- `REQ-OBS-007` 审计留存和完整性，版本：`v1.0-designed`，详见 [专项设计](./REQ-OBS-007-audit-retention-integrity.md)；采用四层分层留存策略（Hot 0-30d/Warm 31-180d/Cold 181d-3y/Archive 3-7y+ WORM）、防篡改哈希链设计（SHA-256 单记录哈希 + prev_hash 链式哈希 + 创世记录）、外部锚定机制（RFC 3161 TSA 时间戳 + WORM 存储 + 可选区块链）、周期性 Merkle Tree 构建（1 小时 Epoch）+ Merkle Root 外部发布防回滚、GDPR 兼容 Tombstone 机制（保留 content_fingerprint + 销毁敏感内容 + 维持链连续性）、Legal Hold 架构（case_id 范围锁定 + 审批流程 + 跨层保全）、PII 隔离 Tier（独立加密密钥 + 30 天最小留存 + 删除权优先）、自动分层迁移策略（TimescaleDB 压缩 + pg_cron 导出 Parquet + S3 Object Lock）、完整性验证算法（单条验证 + 链式验证 + Merkle Proof）；对齐 AWS Agentic AI Lens、IETF Agent Audit Trail、Microsoft Agent Governance、OpenAI/Anthropic/Google AI、字节 Coze/阿里百炼/月之暗面 Kimi、LangGraph/Dify/Claude Code 实践及 EU AI Act Art. 12、GDPR Art. 17、SOC 2 CC7.2、ISO 27001:2022 A.8.15、PCI DSS v4.0.1 Req. 10、SEC Rule 17a-4(f)、CFTC Rule 1.31 合规标准；待跨模块评审与冻结。
+- `REQ-OBS-006` 审计查询 API，版本：`v0.1`，详见 [专项设计](./REQ-OBS-006-audit-query-api.md)；采用四层 API 架构（RESTful 查询 API + GraphQL 灵活查询 + Streaming API + Webhook 推送）、统一查询过滤模型（时间范围/Actor/Action/Outcome/标签）、权限隔离模型（RBAC 资源级授权 + 敏感数据二次审批）、审计日志完整性验证接口（哈希链验证 + Merkle Proof）、分页与游标策略、查询成本限制（默认 10s 超时/1000 条上限）；对齐 Datadog Audit Trail API、AWS CloudTrail、Azure Monitor Logs、Splunk、Elastic SIEM 行业实践；待跨模块评审与冻结。
+- `REQ-OBS-007` 审计留存和完整性，版本：`v0.1-designed`，详见 [专项设计](./REQ-OBS-007-audit-retention-integrity.md)；采用四层分层留存策略（Hot 0-30d/Warm 31-180d/Cold 181d-3y/Archive 3-7y+ WORM）、防篡改哈希链设计（SHA-256 单记录哈希 + prev_hash 链式哈希 + 创世记录）、外部锚定机制（RFC 3161 TSA 时间戳 + WORM 存储 + 可选区块链）、周期性 Merkle Tree 构建（1 小时 Epoch）+ Merkle Root 外部发布防回滚、GDPR 兼容 Tombstone 机制（保留 content_fingerprint + 销毁敏感内容 + 维持链连续性）、Legal Hold 架构（case_id 范围锁定 + 审批流程 + 跨层保全）、PII 隔离 Tier（独立加密密钥 + 30 天最小留存 + 删除权优先）、自动分层迁移策略（TimescaleDB 压缩 + pg_cron 导出 Parquet + S3 Object Lock）、完整性验证算法（单条验证 + 链式验证 + Merkle Proof）；对齐 AWS Agentic AI Lens、IETF Agent Audit Trail、Microsoft Agent Governance、OpenAI/Anthropic/Google AI、字节 Coze/阿里百炼/月之暗面 Kimi、LangGraph/Dify/Claude Code 实践及 EU AI Act Art. 12、GDPR Art. 17、SOC 2 CC7.2、ISO 27001:2022 A.8.15、PCI DSS v4.0.1 Req. 10、SEC Rule 17a-4(f)、CFTC Rule 1.31 合规标准；待跨模块评审与冻结。
 
 尚未完成的独立需求：
 
@@ -573,17 +567,17 @@ Planner -- approval --> Coder ----+
 
 ### 5.8 评估体系
 
-**状态：`REQ-EVA-001` 至 `REQ-EVA-007` 已完成详细设计（`REQ-EVA-007` 于 2026-10-08 完成，v1.0-designed）；待跨模块评审与冻结**  
+**状态：`REQ-EVA-001` 至 `REQ-EVA-007` 已完成详细设计（`REQ-EVA-007` 于 2026-10-08 完成，v1.0-designed）；待跨模块评审与冻结**
 **采用版本：`Evaluation and Release Gate Baseline v0.2`（EVA-007 升级为基线后为 v0.3-planning）**
 
 已完成详细设计的独立需求：
 
-- `REQ-EVA-001` Golden Dataset，版本：`v0.1-designed`，详见 [专项设计](./REQ-EVA-001-golden-dataset.md)；采用 Oracle 入集闸门、五类血缘分开报告、污染控制安全事件管理、IRT 多维难度校准、对抗样本三层隔离和两条红线Verifier 独立测试机制；待跨模块评审与冻结。
+- `REQ-EVA-001` Golden Dataset，版本：`v0.1`，详见 [专项设计](./REQ-EVA-001-golden-dataset.md)；采用 Oracle 入集闸门、五类血缘分开报告、污染控制安全事件管理、IRT 多维难度校准、对抗样本三层隔离和两条红线Verifier 独立测试机制；待跨模块评审与冻结。
 - `REQ-EVA-002` 标注规范，版本：`v0.1-designed`，详见 [专项设计](./REQ-EVA-002-annotation-specification.md)；采用六层标注Schema（Oracle验证层、上下文需求层、质量评估层6维度、难度评估层IRT+5维复杂度、失败归因层、一致性元数据层）、Must-have/Nice-to-have分离、LLM-as-Judge校准（位置偏差/verbose偏差/自我偏好偏差检测）、Krippendorff's alpha ≥ 0.7一致性要求、Iterate-Grade-Revise评估循环、人工标注→LLM辅助→人工复审三层体系；对齐Claude Code Outcomes、Kimi K3 GRM、OpenAI Trace Grading、CursorBench、DeepSWE、SPICE、BACON/A-BB行业实践；待跨模块评审与冻结。
-- `REQ-EVA-003` 自动评分器，版本：`v0.1-designed`，详见 [专项设计](./REQ-EVA-003-automated-scorer.md)；采用独立grader架构（对标Claude Outcomes上下文隔离）、三层混合评分策略（确定性检查优先+LLM-as-Judge分级+人工校准）、per-criterion独立评分、五层评分体系覆盖（工具/Worker/Workflow/端到端/安全对抗）、评分器校准机制（50样本、Spearman相关≥0.85、假阳性率≤2%、假阴性率≤3%）、Security Judge独立设计（三层隔离、两条红线）；对齐Claude Outcomes、Codex Skillgrade、Cursor @cursor/july、Qoder Better Harness、SWE-bench行业实践；待跨模块评审与冻结。
-- `REQ-EVA-004` 失败归因，版本：`v0.1-designed`，详见 [专项设计](./REQ-EVA-004-failure-attribution.md)；采用反事实验证作为判定条件（非置信度加分项）、三维正交分类体系（症状×阶段×根因）、分层指标报告（top-1/3/MRR + per-根因类最低值）、约束必须附带可判定checker、种子来源分级、约束保质期管理、置信度校准闭环、复合门槛定义准确率分母、holdout集隔离测试；对齐AgentRx、LongRCA Bench、MAST行业实践；待跨模块评审与冻结。
+- `REQ-EVA-003` 自动评分器，版本：`v0.1`，详见 [专项设计](./REQ-EVA-003-automated-scorer.md)；采用独立grader架构（对标Claude Outcomes上下文隔离）、三层混合评分策略（确定性检查优先+LLM-as-Judge分级+人工校准）、per-criterion独立评分、五层评分体系覆盖（工具/Worker/Workflow/端到端/安全对抗）、评分器校准机制（50样本、Spearman相关≥0.85、假阳性率≤2%、假阴性率≤3%）、Security Judge独立设计（三层隔离、两条红线）；对齐Claude Outcomes、Codex Skillgrade、Cursor @cursor/july、Qoder Better Harness、SWE-bench行业实践；待跨模块评审与冻结。
+- `REQ-EVA-004` 失败归因，版本：`v0.2`，详见 [专项设计](./REQ-EVA-004-failure-attribution.md)；采用反事实验证作为判定条件（非置信度加分项）、三维正交分类体系（症状×阶段×根因）、分层指标报告（top-1/3/MRR + per-根因类最低值）、约束必须附带可判定checker、种子来源分级、约束保质期管理、置信度校准闭环、复合门槛定义准确率分母、holdout集隔离测试；对齐AgentRx、LongRCA Bench、MAST行业实践；待跨模块评审与冻结。
 - `REQ-EVA-005` 回归流水线，版本：`v0.1-designed`，详见 [专项设计](./REQ-EVA-005-regression-pipeline.md)；采用三层评估管道（确定性验证→自动评分→失败归因）、轨迹感知子集选择（节省50-90%成本）、ATIF轨迹格式+回放机制、统计显著性回归检测、三种并行策略（静态/成本驱动/优先级）、CI/CD深度集成（GitHub Action + Webhook）、评估仪表板；对齐OpenAI Codex三层管道、Cursor软硬门禁、DeepSeek容器隔离、Kimi K3 rubric评分、SWE-bench轨迹感知子集、Manus自愈调试行业实践；待跨模块评审与冻结。
-- `REQ-EVA-006` 发布门禁，版本：`v0.1-designed`，详见 [专项设计](./REQ-EVA-006-release-gate.md)；采用四级门禁体系（Level 1冒烟测试→Level 2回归测试→Level 3性能基准→Level 4安全扫描）、软硬门禁分离（硬门禁阻断/软门禁告警）、血缘感知阈值（5类血缘差异化配置）、多维度回归检测（通过率+评分分布+轨迹相似度）、决策状态机（ALLOW/DENY/CONDITIONAL/OVERRIDE）、例外审批流程与Break-Glass紧急通道（Quorum审批≥3人含1位VP）、自动回滚机制（4类触发器）、CI/CD集成（GitHub Actions等）；对齐Cursor软硬门禁分离、SWE-bench血缘感知阈值与统计检验、OpenAI Codex分层管道行业实践；待跨模块评审与冻结。
+- `REQ-EVA-006` 发布门禁，版本：`v0.2`，详见 [专项设计](./REQ-EVA-006-release-gate.md)；采用四级门禁体系（Level 1冒烟测试→Level 2回归测试→Level 3性能基准→Level 4安全扫描）、软硬门禁分离（硬门禁阻断/软门禁告警）、血缘感知阈值（5类血缘差异化配置）、多维度回归检测（通过率+评分分布+轨迹相似度）、决策状态机（ALLOW/DENY/CONDITIONAL/OVERRIDE）、例外审批流程与Break-Glass紧急通道（Quorum审批≥3人含1位VP）、自动回滚机制（4类触发器）、CI/CD集成（GitHub Actions等）；对齐Cursor软硬门禁分离、SWE-bench血缘感知阈值与统计检验、OpenAI Codex分层管道行业实践；待跨模块评审与冻结。
 
 ### EVA 模块闭环缺口说明（2026-10-05 补充，2026-10-06 补充证据与接口评估）
 
@@ -604,7 +598,7 @@ Planner -- approval --> Coder ----+
 
 **结论（降级为更谨慎的表述）**：现有六项需求之间已有部分接口预留（OBS-003 的评估指标、OBS-005 的评分输入声明），缺口不是"完全空白"，而是**缺少"评估模块主动发起、面向生产态漂移的回滚触发路径"这一个具体环节**。`REQ-EVA-007` 的职责应聚焦于补齐这一条路径，而非重新设计生产反馈采集或回滚执行机制本身：
 
-- `REQ-EVA-007` 生产反馈、数据集更新和版本回滚，版本：`v0.0-planned`，文件待创建，纳入 60 项正式基线（EVA 模块由 6 项扩展为 7 项）。
+- `REQ-EVA-007` 生产反馈、数据集更新和版本回滚，版本：`v1.0-designed`，专项文件已于 2026-10-08 完成，纳入 60 项正式基线（EVA 模块为 7 项）；上述推导是历史范围说明，当前接口评审和实现仍待后续。
 - **核心职责（已收窄范围，避免与 OBS/REL 职责重叠）**：
   1. 生产任务结果与用户反馈的采集规则（复用 `OBS-003` 已定义的 `gen_ai.evaluation.result` 指标通道，不新增采集基础设施）；
   2. Golden Dataset 增量更新与去污染校验（复用 `EVA-001` 的污染控制机制）；
@@ -612,7 +606,7 @@ Planner -- approval --> Coder ----+
   4. **向 `EVA-006` 发布门禁的回滚机制提交第 5 类触发器**（"生产态分布漂移触发器"，补齐当前仅覆盖发布后短窗口的 4 类触发器），具体接口字段由 EVA-007 详细设计时与 EVA-006 协同确认，不单方面假设 EVA-006 的现有数据结构可直接扩展；
   5. 模型/提示/评估集捆绑版本化记录（供回滚时识别"原子回滚单元"，避免部分回滚产生未测试组合）。
 - **明确不包含**：不新增 OBS 层指标采集基础设施（复用现有）、不重新设计 Kill Switch 或告警联动机制（复用 `SEC-009`/`OBS-005`）、不定义回滚的执行层技术方案（部署/发布系统由 Runtime/Harness 模块承接）。
-- 下游关联 `EVA-001`（Golden Dataset 更新入口）、`EVA-004`（归因结果反哺）、`EVA-006`（新增第 5 类回滚触发器，需求详细设计阶段需与 EVA-006 作者协同确认接口字段，存在触发器 Schema 变更的风险，暂定为中等风险、非阻塞性）；待详细设计。
+- 下游关联 `EVA-001`（Golden Dataset 更新入口）、`EVA-004`（归因结果反哺）、`EVA-006`（新增第 5 类回滚触发器，需求详细设计阶段需与 EVA-006 作者协同确认接口字段，存在触发器 Schema 变更的风险，暂定为中等风险、非阻塞性）；详细设计已于 2026-10-08 完成，接口评审和实现仍待后续。
 - **决策可逆性**：若详细设计阶段发现分布漂移判定逻辑的技术可行性不足（例如依赖的时序分析基础设施未选型），允许将本需求降级回候选区，由架构组批准，并需同步回退本节及下方三处文档计数的修改。
 
 ---
@@ -624,7 +618,7 @@ Planner -- approval --> Coder ----+
 本项目采用一个总基线版本和多个专项草案版本：
 
 - 总体架构：`Platform Design Baseline v1.0`；
-- 运行时契约：`Runtime Contract v1-draft`；
+- 运行时契约：`Runtime Contract v1`，采用 RT-001 v0.2-frozen 与 RT-002～008 v0.1-frozen（2026-10-07）；
 - 安全：`Security Threat Model v1-draft`；
 - 失败恢复：`Failure Recovery Baseline v1-draft`；
 - 上下文索引：`Context and Code Index Baseline v1-experimental`；
@@ -638,9 +632,9 @@ Planner -- approval --> Coder ----+
 ### 6.2 版本采用规则
 
 1. 没有经过详细设计评审的版本只能作为设计输入，不能作为实现契约。
-2. `v0.x` 表示候选或专项草案，不得作为跨模块稳定接口。
+2. 状态以版本后缀和批准记录判断；v0.x-designed 仍待评审，不能仅因已有实现而自动冻结。
 3. `v1-draft` 表示主版本结构已经形成，但 Schema、迁移和验收仍未冻结。
-4. 只有标记为 `v1.0-frozen` 的版本才能作为实现和集成依据。
+4. 有明确批准记录的 frozen 专项版本可作为实现依据，包括既有 RT 的 v0.x-frozen；不得人为升级为未批准的整包版本。
 5. 算法、模型、沙箱和检索方案没有通过统一评测时，只能称为推荐基线，不能称为最优方案。
 6. 运行时实体、事件、Trace、Revision 和 Version 是所有专项模块共享的锚点，任何专项设计不能自行定义一套替代坐标系。
 
@@ -657,75 +651,32 @@ Runtime Contract v1
 其中：
 
 - `REQ-SEC-003` 与 `REQ-SEC-004` 均已完成详细设计，待跨模块评审与冻结；沙箱路由、授权、凭据、租户和事件边界分别依赖 `REQ-SEC-001/002/003/005/008`。
-- 安全与失败恢复可以在运行时契约草案上并行细化，但最终冻结必须引用 Runtime Contract v1；
+- 安全与失败恢复引用已冻结 Runtime Contract v1；本轮按用户要求逐任务串行推进，未经确认不得同时开发多个模块；
 - 上下文索引必须使用统一的 `organization_id`、`repository_id`、`source_revision`、权限上下文和 Trace；
 - 评估体系必须使用统一的 Task、Artifact、Evidence、Failure 和 Trace；
 - 任何算法冻结前必须通过 Golden Dataset、性能基准和安全门禁。
 
 ---
 
-## 7. 当前未设计完成的需求总表
+## 7. 正式需求状态与开放缺口
 
-以下需求是当前正式基线中仍需逐项设计的最小单元。已完成详细设计但尚待跨模块冻结的 `REQ-RT-001` 至 `REQ-RT-008`、`REQ-SEC-001` 至 `REQ-SEC-010`、`REQ-REL-001` 至 `REQ-REL-007`、`REQ-EVA-001`、`REQ-CTX-001` 不再列入待设计项。正式基线历史汇总口径为 59 项。清单以 `PENDING-REQUIREMENTS.md` 为准。每个需求都应形成独立设计文档、验收标准和版本记录。
+正式基线为 **60 项**，不再使用旧“59 项”计数；REL-008A 与 WKR-001 不重复计入。[完整 60 项索引](./INDEX.md)保留各需求源文件导航，[实施盘点](../review/roadmap-status-and-stage0-proposal-2026-10-28.md)记录实现、测试和未验收边界。
 
-### P0：运行时、安全、可靠性、Harness、可观测性和评估
-
- > P0 逐项清单以本表唯一需求编号为准；`REQ-RT-001` 至 `REQ-RT-008`、`REQ-SEC-001` 至 `REQ-SEC-008` 中已完成详细设计的专项，列于本文件第 5.1/5.2 节和 `PENDING-REQUIREMENTS.md` 的已完成表，不属于本表待办。
-
-| 编号 | 需求 | 前置依赖 | 后续交付物 |
+| 模块 | 数量 | 设计/冻结状态 | 实现状态摘要 |
 |---|---|---|---|
-| `REQ-SEC-009` | Kill Switch 与事故响应 | RT-002、SEC-003 | 停止、凭据撤销、现场保存和恢复流程 |
-| `REQ-SEC-010` | 安全控制验证与红队测试计划 | SEC-001 至 SEC-009 | 攻击场景、控制验证、红队演练 |
-| `REQ-REL-001` | Failure Taxonomy | REL-001 已完成设计 | 失败枚举、识别条件和处理方式 |
-| `REQ-REL-002` | RetryPolicy | REL-001、RT-007 | 时限预算推导、Full Jitter、服务端优先、全局预算、熔断器、DLQ |
-| `REQ-REL-003` | 重试决策引擎 | REL-001、REL-002、RT-007、SEC-003、SEC-009 | 幂等闸门、待决队列、分层计数器、对账和降级规则 |
-| `REQ-REL-004` | Checkpoint 保存与保留策略 | RT-005、REL-001 | 失败场景保存时机、保留、清理和容量策略 |
-| `REQ-REL-005` | 恢复决策与失败处理 | RT-005、RT-004、REL-001、SEC-005 | 恢复点判定、失败回退和人工处理 |
-| `REQ-REL-006` | 写操作幂等封装 | REL-001、REL-003、RT-007 | ✅ 已完成详细设计（见 REQ-REL-006-write-operation-idempotency.md） |
-| `REQ-REL-007` | Compensation Workflow | REL-001、REL-005、SEC-009 | ✅ 已完成详细设计（见 REQ-REL-007-compensation-workflow.md） |
-| `REQ-REL-008` | 测试失败与工具异常分类（工具治理） | REL-001、REL-003 | ✅ 已完成详细设计（见 REQ-REL-008-test-failure-tool-error-classification.md） |
-| `REQ-REL-008A` | 测试失败与工具异常分类（分类引擎） | REL-001、REL-003、RT-003、RT-007 | ✅ 已完成详细设计（见 REQ-REL-008A-test-failure-tool-exception-classification.md） |
-| `REQ-REL-009` | 故障注入和恢复验证场景 | REL-001 至 REL-008 | ✅ 已完成详细设计（见 REQ-REL-009-fault-injection-recovery-verification.md） |
-| `REQ-EVA-001` | Golden Dataset | RT-001、REL-001 | ✅ 已完成详细设计（见 REQ-EVA-001-golden-dataset.md） |
-| `REQ-EVA-002` | 标注规范 | EVA-001 | ✅ 已完成详细设计（见 REQ-EVA-002-annotation-specification.md） |
-| `REQ-EVA-003` | 自动评分器 | EVA-001、EVA-002 | ✅ 已完成详细设计（见 REQ-EVA-003-automated-scorer.md） |
-| `REQ-EVA-004` | 失败归因 | RT-003、REL-001、EVA-003 | 归因类别、证据、置信度和报告 |
-| `REQ-EVA-005` | 回归流水线 | EVA-003、EVA-004 | 测试套件、回放、并行和报告 |
-| `REQ-EVA-006` | 发布门禁 | EVA-005、SEC-001 | 阈值、阻断规则、例外和回滚 |
+| RT | 8 | 8 项已冻结，2026-10-07 | 已有实现；契约、持久化与生产链路待完整验收 |
+| SEC | 10 | 10 项待评审 | 部分组件历史交付；Security 总基线未冻结 |
+| REL | 9 | 9 项待评审 | 有 Runtime 共用基础，完整策略待开发 |
+| CTX | 9 | 8 项设计文件已有，1 项原文完整性缺口；均未冻结 | 待开发 |
+| MEM | 4 | 4 项待评审 | 待开发 |
+| HAR | 6 | 6 项待评审 | 已有局部基础 |
+| OBS | 7 | 7 项待评审 | 已有 Trace/查询/脱敏局部基础 |
+| EVA | 7 | 7 项设计已有；待评审 | 局部测试/扫描流水线不等于完整评估实现 |
+| 合计 | 60 | 冻结 8；未冻结 52（含 CTX-008 完整性缺口） | 逐项验收，禁止由设计文件数量推导软件完成率 |
 
-### P1：上下文和记忆
+CTX-008 已核对 Git 全分支历史：仅找到初始提交 6f506aa，内容同样从残余代码块和 5.2 节起始，未找到可恢复的完整开头。其源文件保持原样；需要可验证原文，或在相应任务中经确认重新设计。EVA-007 已于 2026-10-08 完成详细设计，待与 EVA-006 的接口评审和后续实现。
 
-> 当前待设计的 P1 共 13 项，正式逐项清单以 `PENDING-REQUIREMENTS.md` 为准；Harness 与可观测性属于 P0，已在正式清单中按 P0 管理。
-
-| 编号 | 需求 | 前置依赖 | 后续交付物 |
-|---|---|---|---|
-| `REQ-CTX-001` | 索引实体和关系 Schema | RT-001 | ✅ 已完成详细设计（见 REQ-CTX-001-index-entities-schema.md） |
-| `REQ-CTX-002` | 语言、仓库规模和基准集 | CTX-001、EVA-001 | ✅ 已完成详细设计（见 REQ-CTX-002-language-repository-scale-benchmark.md） |
-| `REQ-CTX-003` | AST/LSP/依赖解析 | CTX-001、CTX-002 | ✅ 已完成详细设计（见 REQ-CTX-003-ast-lsp-dependency-parsing.md） |
-| `REQ-CTX-004` | 混合检索与排序 | CTX-001、CTX-003 | ✅ 已完成详细设计（见 REQ-CTX-004-hybrid-retrieval-ranking.md） |
-| `REQ-CTX-005` | 检索权限与敏感路径 | SEC-002、SEC-008 | ✅ 已完成详细设计（见 REQ-CTX-005-retrieval-permissions-sensitive-paths.md） |
-| `REQ-CTX-006` | Context Selector 与预算 | CTX-004、RT-007 | Token 预算、排序、裁剪和可解释性 | ✅ v0.1-designed | 2026-10-03 |
-| `REQ-CTX-007` | 增量索引一致性 | CTX-001、RT-001 | Git SHA、更新、回退和并发读取 | ✅ v0.1-designed | 2026-10-04 |
-| `REQ-CTX-008` | 上下文压缩与分层加载 | CTX-006、HAR-002 | 摘要、符号级压缩和恢复规则 | 待设计 | - |
-| `REQ-CTX-009` | 检索评测 | CTX-002、EVA-001 | Recall、Precision、MRR、延迟和任务正确率 | ✅ v0.1-designed | 2026-10-04 |
-| `REQ-MEM-001` | Memory Schema | RT-001、SEC-008 | ✅ [已完成详细设计](./REQ-MEM-001-memory-schema.md) |
-| `REQ-MEM-002` | 记忆写入审批 | MEM-001、SEC-003 | ✅ [已完成详细设计](./REQ-MEM-002-memory-write-approval.md) | v0.1-designed | 2026-10-04 |
-| `REQ-MEM-003` | 记忆检索与冲突 | MEM-001、CTX-006 | 排序、冲突合并和覆盖规则 | ✅ v0.1-designed | 2026-10-05 |
-| `REQ-MEM-004` | 记忆生命周期 | MEM-001、SEC-008 | 衰减、过期、删除和数据驻留 | ✅ v0.1-designed | 2026-10-05 |
-| `REQ-HAR-001` | Harness 生命周期 | RT-001、SEC-003 | ✅ [已完成详细设计](./REQ-HAR-001-harness-lifecycle.md) | **v0.1-designed** | **2026-09-26** |
-| `REQ-HAR-002` | Context Compaction | CTX-008、REL-004 | ✅ [已完成详细设计](./REQ-HAR-002-context-compaction.md) | **v0.1-designed** | **2026-09-27** |
-| `REQ-HAR-003` | Tool Adapter | RT-001、SEC-003 | ✅ [已完成详细设计](./REQ-HAR-003-tool-adapter.md) | **v0.1-designed** | **2026-09-30** |
-| `REQ-HAR-004` | Hook Registry | HAR-001、SEC-001 | ✅ [已完成详细设计](./REQ-HAR-004-hook-registry.md) | **v0.1-designed** | **2026-10-04** |
-| `REQ-HAR-005` | LSP/MCP/Skill 统一路由 | HAR-003、SEC-007 | ✅ [已完成详细设计](./REQ-HAR-005-unified-routing.md) | **v0.1-designed** | **2026-10-05** |
-| `REQ-HAR-006` | Harness 契约测试 | HAR-001 至 HAR-005、EVA-003 | ✅ [已完成详细设计](./REQ-HAR-006-harness-contract-testing.md) | **v0.1-designed** | **2026-10-05** |
-| `REQ-OBS-001` | OpenTelemetry 语义约定 | RT-006 | ✅ [已完成详细设计](./REQ-OBS-001-opentelemetry-semantic-conventions.md) |
-| `REQ-OBS-002` | Trace/Event/Evidence Schema | RT-003、RT-006 | ✅ [已完成详细设计](./REQ-OBS-002-trace-event-evidence-schema.md) |
-| `REQ-OBS-003` | 指标字典 | RT-001、EVA-005 | ✅ [已完成详细设计](./REQ-OBS-003-metrics-dictionary.md) |
-| `REQ-OBS-004` | 脱敏和高基数控制 | SEC-008、OBS-003 | ✅ [已完成详细设计](./REQ-OBS-004-redaction-cardinality-control.md) | **v0.1-designed** | **2026-10-05** |
-| `REQ-OBS-005` | 告警和 Kill Switch 联动 | SEC-009、OBS-003 | ✅ [已完成详细设计](./REQ-OBS-005-alert-killswitch-linkage.md) | **v0.1-designed** | **2026-10-05** |
-| `REQ-OBS-006` | 审计查询 API | RT-006、SEC-008 | ✅ [已完成详细设计](./REQ-OBS-006-audit-query-api.md) | **v0.1-designed** | **2026-10-05** |
-| `REQ-OBS-007` | 审计留存和完整性 | SEC-008、RT-003 | ✅ [已完成详细设计](./REQ-OBS-007-audit-retention-integrity.md) | **v1.0-designed** | **2026-10-05** |
-| `REQ-OBS-007` | 审计留存和完整性 | SEC-008、RT-003 | 防篡改、保留期、归档和校验、WORM存储、Merkle哈希链、Legal Hold、删除证明 | v1.0-designed |
+当前执行任务是阶段 0 / 步骤 2，SEC-007 停用后的工具发现与直接调用一致拒绝，[✅ 已完成（2026-10-29 用户验收）](../review/sec007-lifecycle-discovery-design-2026-10-28.md)。步骤 1 已验收，后续按[手册正文](../../项目开发执行手册.md)串行推进。Web 控制台需求保留为待开发/正文归属待明确。
 
 ---
 
@@ -796,35 +747,20 @@ Runtime Contract v1
 
 以下内容必须在后续专项设计中完成并通过评审后，才能进入实现：
 
-- Runtime Contract v1 的追踪、幂等和查询约束；状态迁移、事件、投影和 Checkpoint 约束已分别由 `REQ-RT-002/003/004/005` 完成详细设计；
+- Runtime 八项已冻结，不属于本节待冻结范围；其代码缺口在接口评审与执行手册中跟踪；
 - 安全威胁控制矩阵和沙箱最终选型；
 - RetryPolicy、Recovery 决策和 Compensation；
 - Context Selector、索引一致性和混合检索参数；
 - Harness 生命周期和工具适配契约；
-- 记忆写入、冲突、删除和权限继承（MEM-001/002/003 已完成详细设计，待 MEM-004）；
+- 记忆写入、冲突、删除和权限继承（MEM-001～004 设计文件均已有，待评审冻结）；
 - OpenTelemetry、审计查询和数据留存；
 - Golden Dataset、评分器、失败归因和发布门禁。
 
-### 9.3 推荐后续设计顺序
+### 9.3 后续执行顺序
 
-```text
-1. REQ-RT-001 核心实体 Schema（已完成设计，待跨模块冻结）
-2. REQ-RT-002 状态机与迁移约束（已完成设计，待跨模块冻结）
-3. REQ-RT-003 Event Schema 与版本策略（已完成设计，待跨模块冻结）
-4. REQ-RT-004 状态投影（已完成设计，待跨模块冻结）
-5. REQ-RT-005 Checkpoint Protocol（已完成设计，待跨模块冻结）
-6. REQ-SEC-001 威胁模型和风险评分（已完成详细设计，待跨模块评审与冻结）
-7. REQ-SEC-002 RBAC 与资源授权（已完成详细设计，待跨模块评审与冻结）
-8. REQ-REL-001 Failure Taxonomy
-9. REQ-REL-002 RetryPolicy
-10. REQ-CTX-001 索引实体和关系 Schema（已完成详细设计，待跨模块评审与冻结）
-11. REQ-CTX-002 语言、仓库规模和基准集（已完成详细设计，待跨模块评审与冻结）
-12. REQ-CTX-003 AST/LSP/依赖解析（已完成详细设计，待跨模块评审与冻结）
-13. REQ-EVA-001 Golden Dataset
-14. 其余安全、恢复、上下文、Harness、观测、记忆和评估需求
-```
+按执行手册正文推进：阶段 0 对齐评审已验收 → SEC-007 生命周期切片及依赖/扫描扩展 ✅ 2026-10-29 验收 → 其余优先缺口逐项处理 → Security 冻结决议 → 后续阶段。每个新功能先完成需求分析、对标和方案确认；交付后暂停等待验收。
 
-这样安排的原因是：运行时契约提供所有模块共享的身份、版本、状态和事件坐标；安全和恢复需要依赖这些坐标；上下文和评估又必须引用任务、版本、权限和证据模型。
+模块依赖与冻结关系仍按第 6.3 节引用，不能用旧设计待办列表替代当前开发顺序。历史有代码的条目保留成果，缺少完整测试或环境证据的条目继续待验收。
 
 ---
 
@@ -861,6 +797,13 @@ Runtime Contract v1
 
 ---
 
-**文档版本**: v1.8  
-**最后更新**: 2026-10-08（REQ-EVA-007 生产反馈、数据集更新和版本回滚已完成详细设计，EVA模块100%完成；总进度 60/60 = 100%，全部正式基线需求已完成详细设计）  
+**文档版本**: v1.8
+**最后更新**：2026-10-28（对齐评审验收记录及下一项方案状态；原冻结版本不变）
 **维护团队**: 架构组
+
+
+## G-CTX 2026-10-29 引用同步记录
+
+用户已确认 `gctx-review-20261029-r2`，见 [契约与交付记录](../development/contracts/context.md) §9～15。CTX-001/004/006/007/008 与 HAR-002 为 v0.2-designed，CTX-005 为 v1.1-designed；规则加载失败为 DENY；CTX-008 缺失章节为批准重建，并非历史原稿恢复。以上仅为限定文档基线，不代表整项 REQ 冻结、生产实现或 G-CTX 用户验收。原历史统计和未涉及模块状态不由本记录更新。
+
+变更：v1.8 → v1.9；日期 2026-10-29；仅同步上述版本、完整性和安全语义，不改变正式需求总数。

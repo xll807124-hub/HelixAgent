@@ -18,6 +18,7 @@ class TestCreateTask:
         body = r.json()
         assert body["code"] == 0
         assert body["data"]["status"] == "CREATED"
+        assert body["data"]["creator_id"] == "00000000-0000-0000-0000-000000000010"
         assert "task_id" in body["data"]
         # trace_id 必返回
         assert body["trace_id"]

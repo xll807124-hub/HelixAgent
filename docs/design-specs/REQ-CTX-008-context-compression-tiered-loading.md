@@ -1,5 +1,83 @@
-└── 成本：本地计算
-```
+# REQ-CTX-008 上下文压缩与分层加载详细设计
+
+> 版本：v0.2-designed
+> 状态：G-CTX r2 限定文档基线已于 2026-10-29 用户确认；待工作包验收，未全项冻结或实现。
+> 原文创建日期：2026-10-04；修订日期：2026-10-29。
+
+## 1. 修订来源与目标
+
+本次重建缺失 §1～5.1，不声称找回历史原稿。原稿及本地唯一可见提交均从代码围栏中途开始；历史证据和原断片见 [G-CTX §3](../development/contracts/context.md)。新增类型和限额来自用户确认的 `gctx-review-20261029-r2` §10～14。
+
+目标：在有限模型窗口内按任务优先级压缩文件/符号上下文，保留安全约束、审批事实及完整工具调用对，并与 HAR 对话压缩协调。快照与索引始终绑定租户、资源和固定代码版本。
+
+## 2. 范围与边界
+
+支持六种已有任务类型，任务优先级沿用 §5.2；支持分层压缩、L1/L2/L3 按需加载和可验证快照。MVP 不含 Agent 自主触发、动态阈值、长期记忆或学习模型。现有厂商收益数字及存储代码示例不代表本项目实测或生产依赖授权。Runtime 实体/事件/Checkpoint 冻结字段保持不变。
+
+## 3. 请求、结果与引用结构
+
+
+下表中“提案”字段为本次补拟；现有 DTO 保持原名与字段，补拟对象位于适配/协调层。标识复用 Runtime 的真实坐标，禁止以 org 代替 project 或以 workflow 代替 task。
+
+| 对象 | 字段与类型 | 约束及来源 |
+|---|---|---|
+| CompressionScope（提案） | organization_id、project_id、repository_id、task_id、workflow_id、worker_id?: string；source_revision、index_version: string | 请求上下文经授权后注入；索引与代码版本匹配；不扩改冻结 Runtime 实体 |
+| ContextRevision（提案） | context_version: integer；scope: CompressionScope | context_version ≥0，协调层维护的上下文递增版本，不等同事件 sequence |
+| CompressionRequest（补拟） | request_id、trace_id: string；base: ContextRevision；task_type: 六类枚举；trigger: pressure/overflow/manual；context_tokens、max_context_tokens、reserved_output_tokens、reserved_tool_tokens: integer；tokenizer_version: string；items: ContextItem[] | 均必填；计数非负，max_context_tokens >0；保留预算和必须小于窗口；request_id 为关联标识，不作为新的幂等键生成规则 |
+| ContextItem（提案） | item_id: string；kind: system/constraint/decision/tool_pair/symbol/document；content: string；required: boolean；estimated_tokens: integer；source_refs: SourceRef[] | required 项不可自动丢弃；system/constraint/审批决定强制 required；tool_pair 是完整调用及结果单元，不按消息数拆开 |
+| SourceRef（提案） | file_id、file_path、file_hash: string；symbol_id?: string；range: CTX-001.SourceRange；source_revision、index_version: string | 规范化相对路径；哈希与绑定快照一致；符号可选，文件引用不可缺；SourceRange 先原样透传，不擅改行列起点 |
+| LayerMarker（补拟） | marker_id: string；source: SourceRef；target_layer: L2/L3；estimated_tokens: integer | marker 不是授权令牌；展开必须按当前权限重新检查，revision 不可替换成 latest |
+| CompressionResult（补拟） | request_id、trace_id: string；base_context_version: integer；committed_context_version?: integer；outcome: success/partial/skipped/failed/cancelled；before_tokens、after_tokens: integer；items: ContextItem[]；layers: SymbolCompressionResult；snapshot_ref?: string；warnings: string[]；failure_kind?: string | success/partial 只有 CAS 发布成功后才带 committed_context_version；其他结果不得更新权威上下文；失败/取消返回空 items，旧上下文由调用方保留 |
+
+SymbolCompressionResult 继续沿用原文的 l1_summary、l2_context、l3_markers；源示例的 `estimated_tokens: 50/200` 是估计示意，不作为精确计数或固定字面量类型。提案将实际估计置于运行时计数，使用 tokenizer_version 复算，实际总 Token 不得超过可用输入预算。
+
+每个请求必须在服务端授权范围内取材；模型生成的摘要仅为不可信派生数据，不能覆盖系统约束、审批事实或产生新权限。输入包含必须保留但已无权访问的内容时拒绝请求，不以压缩方式继续传播。
+
+
+## 4. 触发、预算与协作状态机
+
+
+压力定义提案：`usable = max_context_tokens - reserved_output_tokens - reserved_tool_tokens`；`pressure = context_tokens / usable`。usable ≤0 为非法输入。CTX 阈值保持 70%/80%/95%，HAR 保持 70%/85%/95%；两者统一使用该请求记录的预算坐标，避免一个含输出预留、另一个不含预留的隐式误差。阈值使用整数比较：`100 * context_tokens >= threshold_pct * usable`。
+
+| CTX 条件 | 必须响应 |
+|---|---|
+| pressure <70% | 不自动压缩；手动请求仍允许按授权执行 |
+| 70% ≤ pressure <80% | 只产生压力提示，不自动修改上下文 |
+| 80% ≤ pressure <95% | 在工具调用边界安排常规压缩 |
+| pressure ≥95% 或 overflow | 优先压缩，停止继续向模型派发超预算输入；仍不得截断活跃工具调用对 |
+
+压缩流水线沿用 L0 清理 → L1 摘要 → L2 符号。此处流水线等级与展示层级 L1/L2/L3 是两套概念：展示层 L1 是摘要、L2 是定义与依赖、L3 是完整代码的按需引用。先去除确证冗余，再选择可压缩非 required 项；保留项自身超预算时返回 failed，不能删除安全约束硬凑成功。预览使用相同输入/版本/配置，只返回估计变更和风险，不写快照或发布状态；实际执行重新校验权限、预算与版本。
+
+协调状态机提案：`IDLE → WAITING_BOUNDARY → HAR_RUNNING（如需）→ CTX_RUNNING（如需）→ VALIDATING → COMMITTED`；任一步失败或取消进入 FAILED/CANCELLED，释放本次租约并保留旧版本。仅有历史压力时委托 HAR；仅检索压力时由 CTX 处理；混合压力先 HAR 后重新测量，只有仍需压缩时执行 CTX。
+
+协调层每个 `(organization_id, task_id, workflow_id)` 同时一个压缩操作，使用存储租约和 fencing token；最终提交以 context_version 做 CAS。收到已过期租约/旧版本回调、重复完成回调或取消后的回调时不发布内容；返回重复/版本冲突诊断。context_version 未变化的重复请求复用既有终态结果；内容变化必须重新评估。真正持久化写操作沿用 RT-007/REL-006 的已批准逻辑意图、首次派发前持久化及重试复用规则，本材料不定义替代幂等算法。
+
+五分钟冷却沿用原文用于抑制常规重复压缩；不允许因冷却把超过窗口的输入交给模型，紧急时无法安全压缩即停止并返回明确失败。HAR 的 active_tool_calls 不为空时先等边界，在截止时间前未完成则返回 skipped，不截断、不强行取消外部工具。
+
+
+## 5. 处理流程与失败边界
+
+### 5.1 快照、限额及异常
+
+
+沿用 CTX-008 原文 §8 的 summary、preserved_decisions/context/constraints、original_messages_ref、checksum、created_at、expires_at 等语义。快照是应用层恢复资产，不能当成 RT-005 WorkflowCheckpoint 本体；与 Runtime 快照使用 asset 引用关联。storage_path 只保留服务内部，外部返回授权校验后的 snapshot_ref，不能返回可任意读取的路径。
+
+提案：校验和覆盖完整语义载荷（含保留约束、源引用、版本和租户范围），采用明确的 canonical JSON/UTF-8 序列化和 SHA-256；原示例只摘要部分字段，不能证明全载荷防篡改。SHA-256 用于完整性比对，可信摘要存储与写权限仍须隔离，不能把无密钥哈希宣称为攻击者可写存储中的真实性证明。原文 90 天为保留目标，不能覆盖安全删除和冻结 RT 留存规则；实际生效期限受批准的资源留存策略约束。
+
+| 限额/异常 | 基线候选规则（新增限额为提案） |
+|---|---|
+| 候选/负载 | 每次最多 1000 项、总 UTF-8 内容最多 8 MiB；超限拒绝，不先无界加载后裁剪 |
+| 请求期限 | 服务端端到端最多 10s；调用方可缩短；模型/存储使用剩余期限，取消信号传播；本切片远程失败不自动重试 |
+| 质量验证 | 必需项和工具对完整、版本一致、Token 不超预算才可提交；LLM 摘要不作授权依据 |
+| 快照失败 | 默认拒绝破坏性替换；仅可返回不提交的预览或保留完整原始材料的可逆展示结果，不报告可恢复快照成功 |
+| 摘要失败 | 模板化安全提取后仍需全部验证；失败即拒绝发布，不按“最后 N 条”任意截断 |
+| 失效/缺失 marker | 重新按固定 revision 定位并验 hash；无法验证即明确失败，不回退最新代码 |
+| 状态持久化或审计失败 | 不宣称提交成功；状态与必需审计采用事务/outbox，交由实现方案落实，不把异步 best-effort 日志当作完成证据 |
+
+错误用 failure_kind 记录语义分类：INVALID_INPUT、ACCESS_DENIED、RULES_UNAVAILABLE、REVISION_UNAVAILABLE、VERSION_CONFLICT、DEADLINE_EXCEEDED、INTEGRITY_FAILURE、BUDGET_UNSATISFIABLE、DEPENDENCY_FAILURE。它们是待确认协调层分类，不是新增 HTTP/RET-* 枚举；HTTP/API 映射由实施方案对齐 G-SEC/G-WEB。
+
+
+以上为当前批准的明确契约；下文历史示例中冲突的截断/快照代码须遵守本节约束。
 
 ### 5.2 任务类型优先级矩阵（借鉴通义灵码）
 
@@ -122,6 +200,7 @@ function calculateSymbolImportance(
 ### 8.1 快照创建与验证（借鉴 GitHub Copilot + DeepSeek）
 
 ```typescript
+// 历史流程示意；校验和覆盖及发布约束以 §5.1 为准，不直接照搬下列摘要算法。
 class SnapshotManager {
   async createSnapshot(
     summarization: SummarizationResult,
@@ -184,6 +263,7 @@ class SnapshotManager {
 ### 8.2 历史回溯查询
 
 ```typescript
+// 历史流程示意；读取前必须执行租户/资源授权、有效期/校验和验证及有界查询。
 async queryHistoricalContext(
   snapshotId: UUID,
   query: string
@@ -219,9 +299,9 @@ async queryHistoricalContext(
 | 级别 | 名称 | 操作 | 保留内容 | 延迟 |
 |------|------|------|----------|------|
 | **0** | 正常压缩 | 完整压缩流程 | 摘要 + 保留尾 + 快照 | ~2s |
-| **1** | 简单摘要 | 跳过快照 | 摘要 + 保留尾 | ~1s |
-| **2** | 截断 | 固定截断 | 最后 20 条消息 | ~100ms |
-| **3** | 紧急截断 | 最小截断 | 系统消息 + 最后 5 条 | ~50ms |
+| **1** | 简单摘要 | 安全模板提取并验证 | 必需约束 + 完整工具对；无快照不破坏性替换 | ~1s（历史估计） |
+| **2** | 安全裁剪 | 仅移除非 required 冗余项 | 全部必需约束、审批事实及完整工具对 | ~100ms（历史估计） |
+| **3** | 紧急预算处理 | 验证后裁剪；无法满足即拒绝 | 不因紧急状态删除必需项或拆开调用对 | ~50ms（历史估计） |
 | **4** | 拒绝压缩 | 不压缩 | 全部保留，返回警告 | 0ms |
 
 ### 9.2 异常处理矩阵
@@ -229,7 +309,7 @@ async queryHistoricalContext(
 | 异常类型 | 检测条件 | 处理策略 | 降级路径 |
 |----------|----------|----------|----------|
 | **压缩超时** | duration > 10s | 降级到简单截断 | Level 0 → Level 2 |
-| **快照创建失败** | 存储写入失败 | 跳过快照，继续压缩 | Level 0 → Level 1 |
+| **快照创建失败** | 存储写入失败 | 拒绝破坏性替换；仅可返回不提交的可逆展示/预览 | 不发布新权威版本 |
 | **摘要生成失败** | LLM API 返回错误 | 使用模板摘要 | Level 0 → Level 1 |
 | **权限检查失败** | 权限服务不可用 | 拒绝压缩 | Level 0 → Level 4 |
 | **循环压缩** | 压缩后 5 分钟内再次触发 | 延迟压缩 + 扩大保留窗口 | 添加冷却期 |
@@ -491,4 +571,14 @@ const COMPRESSION_METRICS = {
 
 **文档创建时间**：2026-10-04  
 **维护团队**：架构组  
-**状态**：v0.1-designed，待跨模块评审与冻结
+**状态**：v0.2-designed，限定 r2 文档基线已确认；待工作包验收，未全项冻结
+
+
+## 十七、变更记录
+
+| 版本 | 日期 | 变更原因与依据 |
+|---|---|---|
+| v0.1-designed（历史残稿） | 2026-10-04 | 原始可见文本缺失开头，保留历史说明，不宣称完整 |
+| v0.2-designed | 2026-10-29 | 用户确认 gctx-review-20261029-r2：重建 §1～5.1、完整输入输出/预算/协调/快照、收紧不安全降级；不改冻结 Runtime Schema |
+
+原有 §6～16 保留作来源及后续验收清单；与本版明确约束冲突的代码仅为历史流程示意。验收目标未执行，不能因文档补齐标记功能完成。消费接口、规则故障默认拒绝和迁移清单见 [G-CTX §11～15](../development/contracts/context.md)。

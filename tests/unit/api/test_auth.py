@@ -31,11 +31,11 @@ class TestAuth:
         )
         assert r.status_code == 401
 
-    def test_valid_token_passes(self, client: TestClient) -> None:
+    def test_valid_token_passes(self, client: TestClient, auth_headers: dict[str, str]) -> None:
         """合法 token：通过鉴权。"""
         r = client.get(
             "/api/v1/tasks?limit=1",
-            headers={"Authorization": "Bearer valid-token-abc"},
+            headers=auth_headers,
         )
         assert r.status_code == 200
         assert r.json()["code"] == 0

@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "scope": "已完成模块的单元/集成回归与已复现安全缺口修复；包含现有 MCP 测试，不代表 Task 2.4 验收完成。",
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.18",
+    "interpreter": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-verification\\venv\\Scripts\\python.exe",
+    "notes": "原 .venv 引用的 D:/Python313 不存在；使用独立临时环境。按项目锁定依赖安装，并补装 pytest-asyncio 与 requests 以执行异步及 OPA 测试。"
+  },
+  "commands": {
+    "test": "python -m pytest -q --disable-warnings --tb=short --cov=src --cov-report=json --junitxml=final-tests.xml",
+    "lint": "python -m ruff check src tests",
+    "typecheck": "python -m mypy src"
+  },
+  "baseline": {
+    "passed": 1838,
+    "failed": 2,
+    "skipped": 8,
+    "failures": [
+      "tests/integration/test_coder_e2e.py::test_happy_path_fixes_bug_and_commits",
+      "tests/integration/test_coder_e2e.py::test_resume_after_model_crash"
+    ],
+    "note": "初次环境未装 requests，OPA 测试未收集；后续补装后恢复执行。"
+  },
+  "final": {
+    "passed": 1908,
+    "failed": 0,
+    "skipped": 7,
+    "new_regression_cases": 56,
+    "line_coverage_percent": 84.22
+  },
+  "fixes": [
+    "API 拒绝未登记令牌，绑定服务端配置的主体 UUID，不保存原始令牌到请求状态。",
+    "API 工具调用要求服务端配置工作区范围；未配置时拒绝；成功响应返回实际工具输出。",
+    "Policy Gateway 缓存覆盖权限、风险、参数和策略变化，并遵守授权/主体有效期；缓存命中仍审计。",
+    "RBAC UNKNOWN、操作或资源与授权不符时拒绝；高风险不能被普通操作规则免除审批。",
+    "Prompt 注入高风险覆盖验证 admin/senior_admin 层级及非空审批身份、理由。",
+    "ToolResult.success=False 正确生成 FAILED Action/Evidence，防止测试失败误报成功。",
+    "Shell 工作目录按规范化路径边界检查，执行前复验输入并遵守只读和超时限制。",
+    "Pytest 工具检查路径权限，使用当前 Python 解释器和绝对测试路径。",
+    "文件搜索校验解析后的目标路径，阻止目录链接/符号链接越界及敏感文件别名读取。",
+    "npm/pip/CodeQL/Gitleaks 的超时、异常退出、无效或缺失报告不再产生零漏洞成功结果。",
+    "pip-audit 指向仓库依赖文件并解析 dependencies[].vulns[]；CodeQL 使用 SARIF runs；Gitleaks 报告独立隔离并正确处理检出退出码。",
+    "扫描取消时终止并回收直接子进程；扫描结果不完整时 GitHub Check 返回 failure。",
+    "pyproject dev 依赖补齐 pytest-asyncio，与已有 requirements-dev 对齐。"
+  ],
+  "static_checks": {
+    "ruff_remaining": 547,
+    "ruff_new_findings": 0,
+    "mypy_remaining_errors": 86,
+    "mypy_baseline_errors": 86,
+    "status": "全项目静态检查仍失败；剩余为历史问题，本次修改无新增诊断。"
+  },
+  "skipped_tests": [
+    {
+      "test": "tests.unit.security.credential.test_github_proxy.TestGitHubCredentialProxyIntegration::test_get_installation_token",
+      "reason": "Requires PyJWT and network access"
+    },
+    {
+      "test": "tests.unit.security.credential.test_github_proxy.TestGitHubCredentialProxyIntegration::test_token_issuance_without_installation_id",
+      "reason": "Requires installation_id"
+    },
+    {
+      "test": "tests.unit.security.credential.test_github_proxy.TestGitHubCredentialProxyIntegration::test_jwt_token_generation",
+      "reason": "Requires PyJWT"
+    },
+    {
+      "test": "tests.unit.security.sandbox.test_docker_sandbox.TestDockerSandboxInitialization::test_sandbox_client_lazy_initialization",
+      "reason": "Requires docker package"
+    },
+    {
+      "test": "tests.unit.security.sandbox.test_docker_sandbox.TestDockerSandboxIntegration::test_run_command_successful",
+      "reason": "Requires Docker environment"
+    },
+    {
+      "test": "tests.unit.security.sandbox.test_docker_sandbox.TestDockerSandboxIntegration::test_run_command_with_timeout",
+      "reason": "Requires Docker environment"
+    },
+    {
+      "test": "tests.unit.security.sandbox.test_docker_sandbox.TestDockerSandboxIntegration::test_run_command_cleanup",
+      "reason": "Requires Docker environment"
+    }
+  ],
+  "limits": [
+    "Docker 和真实 GitHub 凭据集成的 7 个测试仍跳过。",
+    "CodeQL/Gitleaks/npm/pip-audit 的 CLI 报告契约与异常用例使用模拟进程输出；已验证实际 Python 子进程执行和取消。未执行真实外部漏洞库全量扫描。",
+    "Shell 命令白名单和路径检查不是 OS 沙箱隔离；真实隔离仍依赖部署环境。",
+    "API 当前为显式令牌的单组织鉴权；完整 OAuth/JWT、多租户授权与 MCP 生产闭环仍未验收。",
+    "未修改原有未提交的 MCP 实现及历史 README 合并冲突。"
+  ],
+  "configuration_changes": {
+    "AI_API_AUTH_TOKENS": "JSON object: private random token -> principal UUID; empty mapping rejects requests.",
+    "AI_API_TOOL_ALLOWED_PATHS": "JSON array of absolute workspace roots; empty array disables tool invocation."
+  },
+  "format_references": [
+    "https://github.com/pypa/pip-audit",
+    "https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/scan-from-the-command-line/write-custom-queries",
+    "https://github.com/gitleaks/gitleaks"
+  ]
+}

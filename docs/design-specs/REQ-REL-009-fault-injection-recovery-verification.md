@@ -622,3 +622,9 @@ blast_radius:
 
 **文档创建时间**：2026-09-26  
 **维护团队**：可靠性工程组
+
+### 已有故障回归场景登记（2026-10-29）
+
+SEC-007 凭据失效切片新增的 SDK/HTTP 故障场景登记在[测试报告与场景库](../test-reports/sec007-credential-invalidation-2026-10-29.json)的 `fault_scenarios`；对应可执行用例为 `tests/test_mcp_credential_invalidation.py`。包括迟到签发/刷新、撤销失败重试、超时后迟到确认、并发重复停用、审计失败及真实 HTTP 发送前的代次变化。
+
+该登记用于复用故障回归，不改变本 REQ 的设计契约、冻结状态或实现进度，不宣称 FaultInjectionEngine 已开发。

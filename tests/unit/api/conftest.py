@@ -1,18 +1,29 @@
 """API 层测试公共 fixtures。"""
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 
+from src.api.config import get_settings
 from src.api.main import create_app
 
 
 @pytest.fixture
-def app() -> Any:
+def app(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Any:
     """创建 FastAPI 应用实例（lifespan 不自动跑，依赖 FastAPI 上下文）。"""
-    return create_app()
+    monkeypatch.setenv("AI_API_AUTH_REQUIRED", "true")
+    monkeypatch.setenv(
+        "AI_API_AUTH_TOKENS",
+        '{"demo-token-abc12345": "00000000-0000-0000-0000-000000000010"}',
+    )
+    monkeypatch.setenv("AI_API_TOOL_ALLOWED_PATHS", json.dumps([str(tmp_path)]))
+    get_settings.cache_clear()
+    yield create_app()
+    get_settings.cache_clear()
 
 
 @pytest.fixture

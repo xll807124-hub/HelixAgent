@@ -22,6 +22,7 @@ wheels/
 
 # Virtual Environment
 .venv/
+.venv.pre-repair-*/
 venv/
 ENV/
 env/
@@ -37,6 +38,9 @@ env/
 # Testing
 .pytest_cache/
 .coverage
+coverage.xml
+test_output.txt
+query_tests.txt
 htmlcov/
 .tox/
 .nox/
@@ -76,3 +80,7 @@ Thumbs.db
 terminals/
 .cursor/
 agent-transcripts/
+
+# Local security tools and raw scan evidence
+.tools/
+.security-reports/

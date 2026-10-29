@@ -44,13 +44,20 @@ uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --workers 4
 | `AI_API_RELOAD` | `False` | dev reload 开关 |
 | `AI_API_CORS_ORIGINS` | `` | 逗号分隔白名单 |
 | `AI_API_AUTH_REQUIRED` | `True` | 是否启用 Bearer Token 鉴权 |
+| `AI_API_AUTH_TOKENS` | `{}` | 私密令牌到主体 UUID 的 JSON 映射；必须由部署方配置 |
+| `AI_API_TOOL_ALLOWED_PATHS` | `[]` | 允许工具访问的工作区绝对路径 JSON 数组；空数组禁用工具调用 |
 
 ## 鉴权
 
-MVP 用 `Authorization: Bearer <token>` 占位实现：
-- 缺失/格式错/空 token → 401 UNAUTHENTICATED
-- 合法 token → 注入 `request.state.principal_id`（UUID5 派生）和 `request.state.auth_token`
-- 真 OAuth/JWT/Scope 校验待 SEC-002 RBAC 接入时替换
+单组织部署使用 `Authorization: Bearer <token>`，与 `AI_API_AUTH_TOKENS` 中的令牌进行恒定时间比较（2026-10-28 修复）：
+- 缺失、格式错误、空值或未登记令牌 → 401 UNAUTHENTICATED。
+- 已登记令牌 → 将配置中的主体 UUID 写入 `request.state.principal_id`，不保存原始令牌到请求状态。
+- 开启鉴权但未配置令牌时，携带令牌的业务请求返回 503；探针仍可访问。
+- `AI_API_TOOL_ALLOWED_PATHS` 未配置时，工具调用返回 503；配置后，路径检查使用服务端允许的工作区范围。
+- 配置应写入部署环境或被 Git 忽略的 `.env`；令牌不得提交到仓库。修改配置后需重启服务。
+- OAuth/JWT、细粒度 Scope 与多租户授权仍需后续接入，此处只提供显式令牌的单组织鉴权。
+
+工具成功调用会返回实际 `output` 与 `execution_time_ms`；失败或后置策略拒绝时不会返回工具输出。
 
 ## 目录结构
 

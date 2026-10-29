@@ -7,11 +7,11 @@ Run: python test_sca_integration.py
 """
 
 import asyncio
+import json
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
-import json
-import sys
-import subprocess
 
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -84,13 +84,13 @@ async def test_npm_scanner():
     scanner = NPMScanner(npm_path=npm_path, timeout_seconds=60)
     result = await scanner.scan(str(npm_project), deep_scan=False)
     
-    print(f"\nScan results:")
+    print("\nScan results:")
     print(f"  Success: {result.success}")
     print(f"  Vulnerabilities: {len(result.vulnerabilities)}")
     print(f"  CRITICAL: {result.critical_count}, HIGH: {result.high_count}")
     
     if result.vulnerabilities:
-        print(f"\nFound vulnerabilities:")
+        print("\nFound vulnerabilities:")
         for vuln in result.vulnerabilities[:3]:  # Show first 3
             print(f"  - {vuln.package} {vuln.current_version} -> {vuln.fix_version}")
             print(f"    Severity: {vuln.severity.value}")
@@ -109,13 +109,13 @@ async def test_pip_scanner():
     scanner = PipScanner(pip_audit_path="python", timeout_seconds=60)
     result = await scanner.scan(str(pip_project), deep_scan=False)
     
-    print(f"\nScan results:")
+    print("\nScan results:")
     print(f"  Success: {result.success}")
     print(f"  Vulnerabilities: {len(result.vulnerabilities)}")
     print(f"  CRITICAL: {result.critical_count}, HIGH: {result.high_count}")
     
     if result.vulnerabilities:
-        print(f"\nFound vulnerabilities:")
+        print("\nFound vulnerabilities:")
         for vuln in result.vulnerabilities[:3]:  # Show first 3
             print(f"  - {vuln.package} {vuln.current_version} -> {vuln.fix_version}")
             print(f"    Severity: {vuln.severity.value}")
@@ -162,10 +162,10 @@ async def main():
     
     try:
         # Test npm scanner
-        npm_result = await test_npm_scanner()
+        await test_npm_scanner()
         
         # Test pip scanner
-        pip_result = await test_pip_scanner()
+        await test_pip_scanner()
         
         # Test orchestrator
         await test_orchestrator()

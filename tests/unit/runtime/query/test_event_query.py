@@ -8,15 +8,16 @@ RT-008 事件查询服务集成测试
 """
 
 from datetime import UTC, datetime
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
-from src.runtime.event_store.envelope import EventEnvelope, DataSensitivity
-from src.runtime.query.access_control import AccessLevel, AccessController, UserContext
+from src.runtime.event_store.envelope import DataSensitivity, EventEnvelope
+from src.runtime.event_store.store import EventStore
+from src.runtime.query.access_control import AccessController, AccessLevel, UserContext
 from src.runtime.query.event_query import (
-    EventQueryService,
     EventQueryRequest,
+    EventQueryService,
 )
 from src.runtime.query.redaction_engine import RedactionEngine
 
@@ -27,7 +28,8 @@ class TestEventQueryService:
     def setup_method(self):
         """测试前初始化"""
         # 创建 mock event store
-        self.mock_store = MagicMock()
+        self.mock_store = AsyncMock(spec=EventStore)
+        self.mock_store.get_latest_sequence.return_value = 100
         
         # 创建实际的访问控制器和脱敏引擎
         self.access_controller = AccessController()
@@ -58,7 +60,8 @@ class TestEventQueryService:
             occurred_at=datetime.now(UTC),
         )
 
-    def test_query_events_basic_user_no_access_to_task(self):
+    @pytest.mark.asyncio
+    async def test_query_events_basic_user_no_access_to_task(self):
         """基础用户无权访问其他 org 的任务"""
         user = UserContext(
             user_id="user-1",
@@ -69,7 +72,7 @@ class TestEventQueryService:
         request = EventQueryRequest(task_id="task-123")
         
         with pytest.raises(PermissionError):
-            self.service.query_events(
+            await self.service.query_events(
                 user,
                 request,
                 task_org_id="org-2",  # 不同 org
@@ -77,7 +80,8 @@ class TestEventQueryService:
                 task_repo_id="repo-1",
             )
 
-    def test_query_events_basic_user_with_access(self):
+    @pytest.mark.asyncio
+    async def test_query_events_basic_user_with_access(self):
         """基础用户有权访问同 org 的任务"""
         user = UserContext(
             user_id="user-1",
@@ -87,11 +91,11 @@ class TestEventQueryService:
         
         # 创建示例事件
         events = [self._create_sample_event()]
-        self.mock_store.query.return_value = (events, 1)
+        self.mock_store.query.return_value = events
         
         request = EventQueryRequest(task_id="task-123", include_payload=False)
         
-        result, total = self.service.query_events(
+        result, total = await self.service.query_events(
             user,
             request,
             task_org_id="org-1",  # 同 org
@@ -103,7 +107,8 @@ class TestEventQueryService:
         assert total == 1
         assert result[0].access_level_applied == AccessLevel.BASIC
 
-    def test_query_events_audit_user_elevated_access(self):
+    @pytest.mark.asyncio
+    async def test_query_events_audit_user_elevated_access(self):
         """审计员有更高的访问级别"""
         user = UserContext(
             user_id="user-1",
@@ -113,11 +118,11 @@ class TestEventQueryService:
         
         # 创建示例事件
         events = [self._create_sample_event()]
-        self.mock_store.query.return_value = (events, 1)
+        self.mock_store.query.return_value = events
         
         request = EventQueryRequest(task_id="task-123", include_payload=True)
         
-        result, total = self.service.query_events(
+        result, total = await self.service.query_events(
             user,
             request,
             task_org_id="org-1",
@@ -129,7 +134,8 @@ class TestEventQueryService:
         # 审计员的访问级别应该是 AUDIT（用户实际级别）
         assert result[0].access_level_applied in [AccessLevel.AUDIT, AccessLevel.ADMIN]
 
-    def test_query_events_no_payload_by_default(self):
+    @pytest.mark.asyncio
+    async def test_query_events_no_payload_by_default(self):
         """默认不返回载荷（avoid redaction bypass）"""
         user = UserContext(
             user_id="user-1",
@@ -138,14 +144,14 @@ class TestEventQueryService:
         )
         
         events = [self._create_sample_event()]
-        self.mock_store.query.return_value = (events, 1)
+        self.mock_store.query.return_value = events
         
         request = EventQueryRequest(
             task_id="task-123",
             include_payload=False,  # 不返回载荷
         )
         
-        result, total = self.service.query_events(
+        result, total = await self.service.query_events(
             user,
             request,
             task_org_id="org-1",
@@ -155,7 +161,8 @@ class TestEventQueryService:
         
         assert result[0].access_level_applied == AccessLevel.BASIC
 
-    def test_query_events_with_sensitive_payload(self):
+    @pytest.mark.asyncio
+    async def test_query_events_with_sensitive_payload(self):
         """查询含敏感数据的载荷"""
         user = UserContext(
             user_id="user-1",
@@ -169,11 +176,11 @@ class TestEventQueryService:
             "api_key": "sk-1234567890abcdef",
         }
         events = [self._create_sample_event(payload=sensitive_payload)]
-        self.mock_store.query.return_value = (events, 1)
+        self.mock_store.query.return_value = events
         
         request = EventQueryRequest(task_id="task-123", include_payload=True)
         
-        result, total = self.service.query_events(
+        result, total = await self.service.query_events(
             user,
             request,
             task_org_id="org-1",
@@ -184,9 +191,11 @@ class TestEventQueryService:
         # 基础用户看到 L1 数据，访问级别为 BASIC
         # 在 BASIC + L1 情况下应该返回 SUMMARY 级别的脱敏
         redacted_payload = result[0].payload
+        assert "sk-1234567890abcdef" not in str(redacted_payload)
         assert result[0].access_level_applied == AccessLevel.BASIC
 
-    def test_query_events_sensitive_payload_audit_user(self):
+    @pytest.mark.asyncio
+    async def test_query_events_sensitive_payload_audit_user(self):
         """审计员查询敏感载荷"""
         user = UserContext(
             user_id="user-1",
@@ -200,11 +209,11 @@ class TestEventQueryService:
             "api_key": "sk-1234567890abcdef",
         }
         events = [self._create_sample_event(payload=sensitive_payload)]
-        self.mock_store.query.return_value = (events, 1)
+        self.mock_store.query.return_value = events
         
         request = EventQueryRequest(task_id="task-123", include_payload=True)
         
-        result, total = self.service.query_events(
+        result, total = await self.service.query_events(
             user,
             request,
             task_org_id="org-1",
@@ -219,7 +228,8 @@ class TestEventQueryService:
         if "api_key" in redacted_payload:
             assert redacted_payload["api_key"] == "sk-1234567890abcdef"
 
-    def test_query_events_empty_result(self):
+    @pytest.mark.asyncio
+    async def test_query_events_empty_result(self):
         """查询无结果"""
         user = UserContext(
             user_id="user-1",
@@ -227,11 +237,11 @@ class TestEventQueryService:
             roles=["DEVELOPER"],
         )
         
-        self.mock_store.query.return_value = ([], 0)
+        self.mock_store.query.return_value = []
         
         request = EventQueryRequest(task_id="task-123")
         
-        result, total = self.service.query_events(
+        result, total = await self.service.query_events(
             user,
             request,
             task_org_id="org-1",
@@ -242,7 +252,8 @@ class TestEventQueryService:
         assert len(result) == 0
         assert total == 0
 
-    def test_query_events_pagination(self):
+    @pytest.mark.asyncio
+    async def test_query_events_pagination(self):
         """分页查询"""
         user = UserContext(
             user_id="user-1",
@@ -254,7 +265,7 @@ class TestEventQueryService:
             self._create_sample_event(f"evt-{i}")
             for i in range(5)
         ]
-        self.mock_store.query.return_value = (events[:50], 150)
+        self.mock_store.query.return_value = events
         
         request = EventQueryRequest(
             task_id="task-123",
@@ -262,7 +273,7 @@ class TestEventQueryService:
             limit=50,
         )
         
-        result, total = self.service.query_events(
+        result, total = await self.service.query_events(
             user,
             request,
             task_org_id="org-1",
@@ -271,16 +282,18 @@ class TestEventQueryService:
         )
         
         assert len(result) == 5
-        assert total == 150
+        assert total == 5
         
         # 验证 mock_store.query 被正确调用
         self.mock_store.query.assert_called_once()
         call_args = self.mock_store.query.call_args
         assert call_args.kwargs["task_id"] == "task-123"
-        assert call_args.kwargs["page"] == 1
-        assert call_args.kwargs["limit"] == 50
+        assert call_args.kwargs["from_sequence"] == 0
+        assert call_args.kwargs["to_sequence"] == 100
+        assert call_args.kwargs["limit"] == 1000
 
-    def test_query_events_with_time_filter(self):
+    @pytest.mark.asyncio
+    async def test_query_events_with_time_filter(self):
         """时间过滤"""
         user = UserContext(
             user_id="user-1",
@@ -289,7 +302,7 @@ class TestEventQueryService:
         )
         
         events = [self._create_sample_event()]
-        self.mock_store.query.return_value = (events, 1)
+        self.mock_store.query.return_value = events
         
         start_time = datetime(2024, 1, 1, tzinfo=UTC)
         end_time = datetime(2024, 1, 31, tzinfo=UTC)
@@ -300,7 +313,7 @@ class TestEventQueryService:
             occurred_before=end_time,
         )
         
-        result, total = self.service.query_events(
+        result, total = await self.service.query_events(
             user,
             request,
             task_org_id="org-1",
@@ -308,10 +321,9 @@ class TestEventQueryService:
             task_repo_id="repo-1",
         )
         
-        # 验证时间过滤被传递
-        call_args = self.mock_store.query.call_args
-        assert call_args.kwargs["occurred_after"] == start_time
-        assert call_args.kwargs["occurred_before"] == end_time
+        # 当前事件不在 2024 年时间范围内。
+        assert result == []
+        assert total == 0
 
 
 class TestEventQueryServicePermissionDenial:
@@ -319,7 +331,8 @@ class TestEventQueryServicePermissionDenial:
 
     def setup_method(self):
         """测试前初始化"""
-        self.mock_store = MagicMock()
+        self.mock_store = AsyncMock(spec=EventStore)
+        self.mock_store.get_latest_sequence.return_value = 100
         self.access_controller = AccessController()
         self.redaction_engine = RedactionEngine()
         self.service = EventQueryService(
@@ -328,7 +341,8 @@ class TestEventQueryServicePermissionDenial:
             self.redaction_engine,
         )
 
-    def test_cross_org_access_denied(self):
+    @pytest.mark.asyncio
+    async def test_cross_org_access_denied(self):
         """跨 org 访问被拒绝"""
         user = UserContext(
             user_id="user-1",
@@ -339,7 +353,7 @@ class TestEventQueryServicePermissionDenial:
         request = EventQueryRequest(task_id="task-123")
         
         with pytest.raises(PermissionError) as exc_info:
-            self.service.query_events(
+            await self.service.query_events(
                 user,
                 request,
                 task_org_id="org-2",  # 不同 org
@@ -349,7 +363,8 @@ class TestEventQueryServicePermissionDenial:
         
         assert "no access" in str(exc_info.value).lower()
 
-    def test_cross_project_access_with_restriction(self):
+    @pytest.mark.asyncio
+    async def test_cross_project_access_with_restriction(self):
         """有 project 限制时跨 project 访问被拒绝"""
         user = UserContext(
             user_id="user-1",
@@ -361,7 +376,7 @@ class TestEventQueryServicePermissionDenial:
         request = EventQueryRequest(task_id="task-123")
         
         with pytest.raises(PermissionError):
-            self.service.query_events(
+            await self.service.query_events(
                 user,
                 request,
                 task_org_id="org-1",

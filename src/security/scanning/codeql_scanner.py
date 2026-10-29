@@ -15,9 +15,12 @@ import asyncio
 import json
 import logging
 import subprocess
+import tempfile
 from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
+
+from .process import run_scanner_process
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +126,9 @@ class CodeQLScanner:
         """
         try:
             repo_path = Path(repo_path)
-            db_path = self.database_dir / f"{repo_path.name}-{language}-db"
+            # Caller-controlled language/repository names must not form deletion paths.
+            scan_dir = tempfile.TemporaryDirectory(prefix="scan-", dir=self.database_dir)
+            db_path = Path(scan_dir.name) / "database"
             
             logger.info(f"[CodeQL] 开始扫描: {repo_path} (Language: {language})")
             
@@ -176,6 +181,9 @@ class CodeQLScanner:
                 high_count=0,
                 error_message=str(e)
             )
+        finally:
+            if "scan_dir" in locals():
+                scan_dir.cleanup()
     
     async def _create_database(
         self,
@@ -185,11 +193,6 @@ class CodeQLScanner:
     ) -> bool:
         """创建 CodeQL 数据库"""
         try:
-            # 清理旧数据库
-            if db_path.exists():
-                import shutil
-                shutil.rmtree(db_path)
-            
             cmd = [
                 self.codeql_path,
                 "database", "create",
@@ -231,12 +234,13 @@ class CodeQLScanner:
                 queries_path = self.queries_dir
             
             # 运行分析
-            output_file = Path("/tmp/codeql-results.json")
+            report_dir = tempfile.TemporaryDirectory(prefix="codeql-report-")
+            output_file = Path(report_dir.name) / "results.sarif"
             cmd = [
                 self.codeql_path,
                 "database", "analyze",
                 str(db_path),
-                "--format=json",
+                "--format=sarif-latest",
                 f"--output={output_file}",
             ]
             
@@ -249,29 +253,49 @@ class CodeQLScanner:
             )
             
             # 解析结果
-            if result.returncode == 0 and output_file.exists():
-                with open(output_file) as f:
-                    data = json.load(f)
-                    findings = self._parse_results(data)
-                
-                # 清理
-                output_file.unlink(missing_ok=True)
+            if result.returncode != 0 or not output_file.is_file():
+                raise RuntimeError(
+                    f"CodeQL analysis failed or report missing (exit {result.returncode})"
+                )
+            with output_file.open(encoding="utf-8") as f:
+                findings = self._parse_results(json.load(f))
             
             return findings
         
         except TimeoutError:
             logger.error("[CodeQL] 查询执行超时")
-            return []
+            raise RuntimeError("CodeQL analysis timed out") from None
         except Exception as e:
             logger.error(f"[CodeQL] 查询执行失败: {e}")
-            return []
+            raise
+        finally:
+            if "report_dir" in locals():
+                report_dir.cleanup()
     
     def _parse_results(self, data: dict) -> list[CodeQLFinding]:
         """解析 CodeQL JSON 结果"""
         findings = []
         
-        for result in data.get("results", []):
-            rule_id = result.get("ruleID", "unknown")
+        if not isinstance(data, dict):
+            raise ValueError("Invalid CodeQL report")
+        runs = data.get("runs", [data] if "results" in data else None)
+        if not isinstance(runs, list):
+            raise ValueError("CodeQL report contains no runs or results")
+        results = []
+        for run in runs:
+            if any(
+                not invocation.get("executionSuccessful", True)
+                for invocation in run.get("invocations", [])
+            ):
+                raise ValueError("CodeQL invocation did not complete successfully")
+            rules = run.get("tool", {}).get("driver", {}).get("rules", [])
+            rules_by_id = {rule["id"]: rule for rule in rules}
+            for item in run.get("results", []):
+                rule = rules_by_id.get(item.get("ruleId"), {})
+                results.append({**item, "_rule_properties": rule.get("properties", {})})
+
+        for result in results:
+            rule_id = result.get("ruleId", result.get("ruleID", "unknown"))
             
             # 严重程度映射
             severity_map = {
@@ -283,6 +307,14 @@ class CodeQLScanner:
                 result.get("level", "note"),
                 ScanSeverity.MEDIUM
             )
+            score = result["_rule_properties"].get("security-severity")
+            if score is not None:
+                numeric_score = float(score)
+                severity = (
+                    ScanSeverity.CRITICAL if numeric_score >= 9.0 else
+                    ScanSeverity.HIGH if numeric_score >= 7.0 else
+                    ScanSeverity.MEDIUM if numeric_score >= 4.0 else ScanSeverity.LOW
+                )
             
             # 提取位置信息
             locations = result.get("locations", [{}])
@@ -320,8 +352,4 @@ class CodeQLScanner:
     @staticmethod
     async def _run_subprocess(cmd: list[str]) -> subprocess.CompletedProcess:
         """异步运行子进程"""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
-            lambda: subprocess.run(cmd, capture_output=True, text=True)
-        )
+        return await run_scanner_process(cmd)

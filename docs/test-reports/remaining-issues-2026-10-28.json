@@ -1,0 +1,94 @@
+{
+  "date": "2026-10-28",
+  "scope": "上轮遗留静态检查、运行时缺口、空壳测试及本地验证入口修复；不代表 MCP Task 2.4 生产验收完成。",
+  "baseline_report": "completed-features-2026-10-28.json",
+  "environment": {
+    "python": "3.13.18",
+    "interpreter": "D:\\project\\Ai_agent\\.venv\\Scripts\\python.exe",
+    "base_python": "C:\\Users\\93478\\.local\\share\\ai-agent\\python-3.13.18\\python.exe",
+    "old_environment_backup": "D:\\project\\Ai_agent\\.venv.pre-repair-20261028",
+    "installed_extras": [
+      "dev",
+      "sandbox"
+    ],
+    "pip_check": "passed",
+    "dependency_manifests": "requirements.txt / requirements-dev.txt 与 pyproject.toml 完全一致"
+  },
+  "validation": {
+    "entry_point": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/make.ps1 check",
+    "exit_code": 0,
+    "ruff_scope": ".",
+    "ruff_findings": 0,
+    "ruff_src_tests_baseline": 547,
+    "ruff_additional_root_findings_fixed": 7,
+    "mypy_scope": "src",
+    "mypy_source_files": 196,
+    "mypy_errors": 0,
+    "mypy_baseline_errors": 86,
+    "tests_total": 2004,
+    "passed": 2001,
+    "failed": 0,
+    "skipped": 3,
+    "new_regression_cases": 89,
+    "previously_skipped_cases_now_executed": 4,
+    "line_coverage_percent": 85.55,
+    "baseline_line_coverage_percent": 84.22,
+    "warnings": 1673,
+    "nox_lint_typecheck": "passed",
+    "powershell_failure_propagation": "Injected temporary lint failure returned exit code 1; probe removed afterward.",
+    "docker_sdk_offline_contract": "docker 7.1.0 accepted container argument mapping without contacting a daemon.",
+    "logs": {
+      "quality_gate": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-verification\\remaining-final-check.log",
+      "junit": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-verification\\remaining-tests.xml",
+      "coverage": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-verification\\remaining-coverage.json"
+    }
+  },
+  "fixes": [
+    "清理导入、废弃类型写法、无用变量与长行；补齐模型、数据库协议、执行器和传输边界类型，没有增加全局忽略规则。",
+    "EventQueryService 对接真实异步 EventStore；按序列快照分页、时间过滤、校验事件归属、限制请求参数并传播错误原因。默认 include_payload=False 时不返回载荷。",
+    "InMemoryEventStore.get_latest_sequence 返回最后已写入序列，不再误返回下一待分配序列。",
+    "敏感字段脱敏递归处理嵌套字典/列表，遮盖短秘密和非字符串秘密，记录脱敏路径，不改变调用方原始数据；访问级别统一为同一个枚举。",
+    "HTTP/SSE stop 释放 runner 和监听端口；启动失败清理、重复启动幂等；SSE 停止立即唤醒心跳等待。",
+    "MCP 校验 JSON-RPC 请求形状、ID、参数和工具参数；解析失败与非法请求区分，内部异常不再回显到响应。",
+    "GitHub 凭据验证和撤销使用真实 HTTP 路径与状态码，不再无条件成功；请求权限由 scopes 构造，校验返回权限和有效期；JWT 缓存限制为当前条目。",
+    "GitHub 3 个永久跳过用例改为可运行的本地 RSA / HTTP 契约测试；Docker 延迟初始化测试可离线执行。",
+    "Docker 使用高层 SDK 的正确参数、attrs State 和独立输出流；失败/取消/超时后清理，清理失败向上传播；网络默认禁止，无法实施的目的地白名单和逃逸检测明确返回未实现错误。",
+    "3 个 Docker 集成测试补齐实际执行逻辑，只有显式启用且具备 Docker 环境时运行，不再是永久 skip + pass 的空壳。",
+    "重建项目 .venv 并保留旧环境；补齐 API/OPA 依赖、Docker 可选依赖；将不存在的 pip-audit 2.6.8 修正为 2.9.0。",
+    "Windows / Make / Nox 安装与检查入口统一；PowerShell 遇失败立即退出，Nox 复用当前解释器并兼容 Windows 文件编码。",
+    "README 合并冲突已解决，补文档用途索引与本地验证方式，更新执行手册最新测试事实。"
+  ],
+  "compatibility_notes": [
+    "EventQueryService.query_events 改为 async，需要 await；当前源码内没有外部服务调用点，相关测试已同步。",
+    "GitHub CredentialToken 的签发时间和过期时间改为带 UTC 时区；ttl_seconds 是本地使用期限，不承诺改变 GitHub 服务端令牌过期时间。",
+    "Docker 默认 network_mode=none；允许出站需要显式 NetworkPolicy 且采用受支持模式。未实现的逃逸检测抛 NotImplementedError。"
+  ],
+  "skipped_tests": [
+    {
+      "test": "tests.unit.security.sandbox.test_docker_sandbox.TestDockerSandboxIntegration::test_run_command_successful",
+      "reason": "Set AI_AGENT_RUN_DOCKER_TESTS=1 with a running Docker daemon"
+    },
+    {
+      "test": "tests.unit.security.sandbox.test_docker_sandbox.TestDockerSandboxIntegration::test_run_command_with_timeout",
+      "reason": "Set AI_AGENT_RUN_DOCKER_TESTS=1 with a running Docker daemon"
+    },
+    {
+      "test": "tests.unit.security.sandbox.test_docker_sandbox.TestDockerSandboxIntegration::test_run_command_cleanup",
+      "reason": "Set AI_AGENT_RUN_DOCKER_TESTS=1 with a running Docker daemon"
+    }
+  ],
+  "remaining_boundaries": [
+    "Docker CLI 存在，但 dockerDesktopLinuxEngine 管道不可用；未启动 Docker Desktop，也未执行真实容器测试。运行说明见 README。",
+    "GitHub 测试使用 MockTransport 和本地 RSA 签名；未使用真实 App 私钥、安装 ID 或真实网络令牌签发/撤销。",
+    "MCP Task 2.4 仍缺生产 authorization_manager 装配、工具批准/Schema 复审执行闭环、SEC-002/SEC-003 权限交集、撤销凭据/缓存失效、目的地白名单、可靠审计提交、真实隔离评估环境和 Auto-review；详见原对标报告。",
+    "Docker 本轮修复 SDK 与生命周期契约，未实现主机级逃逸检测或出站目的地白名单。",
+    "未执行全量真实 CodeQL/Gitleaks/依赖漏洞数据库审计，也没有据此声称依赖无漏洞。",
+    "测试仍产生既有弃用警告等 1673 条，详细种类可在不使用 --disable-warnings 的测试运行中查看。"
+  ],
+  "interface_references": [
+    "https://docs.github.com/en/rest/apps/apps#create-an-installation-access-token-for-an-app",
+    "https://docs.github.com/en/rest/apps/installations#revoke-an-installation-access-token",
+    "https://docker-py.readthedocs.io/en/stable/containers.html",
+    "https://pypi.org/project/pip-audit/2.9.0/"
+  ]
+}

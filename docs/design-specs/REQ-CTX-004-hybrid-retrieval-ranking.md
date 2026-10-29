@@ -4,9 +4,24 @@
 > **需求名称**: 混合检索与排序  
 > **优先级**: P1  
 > **所属模块**: 上下文管理（CTX）  
-> **状态**: v0.1-designed  
+> **状态**: v0.2-designed
 > **设计日期**: 2026-10-03  
 > **前置依赖**: REQ-CTX-001（索引实体和关系 Schema）、REQ-CTX-003（AST/LSP/依赖解析）
+
+
+## G-CTX 2026-10-29 批准修订
+
+版本：v0.2-designed；限定基线：`gctx-review-20261029-r2`；批准依据：[G-CTX 确认记录及完整方案](../development/contracts/context.md) §9～14。用户先确认四项原则，再确认完整 r2 方案；未批准本需求全项冻结或生产实现。
+
+保留原 RetrievalResult/Query 字段；与 CTX-001 的适配使用批准方案 §11 逐字段表及独立外层。final_top_k 默认20、范围1～100，每路召回最多100、合并最多300；图深度0～2、广度1～10、访问节点最多1000。total_candidates 不等于 total_hits。固定有限候选快照分页、5分钟TTL、授权变化重新校验，失败路与合法空结果分开记录；不静默把 SYMBOL 当作其他模式。
+
+本节为上述涉及内容的现行修订，原文算法/存储/厂商示例不构成生产已实现或新依赖授权。其余未涉及契约保持原要求。
+
+### 变更记录
+
+| 版本 | 日期 | 原因与影响 |
+|---|---|---|
+| v0.2-designed | 2026-10-29 | 用户确认 r2 后同步跨模块契约，保留源 DTO 和 Runtime 冻结字段；更新内容与验证见 G-CTX §15 |
 
 ---
 
@@ -225,7 +240,7 @@ interface RetrievalResult {
   
   // 检索结果
   items: RetrievalItem[];
-  total_candidates: number;
+  total_candidates: number;           // 候选数，不得直接当作 CTX-001 total_hits
   
   // 融合信息
   fusion: FusionMetadata;

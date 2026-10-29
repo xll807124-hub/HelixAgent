@@ -101,6 +101,13 @@ async def invoke_tool(
         )
 
     # 组装 ExecutionContext
+    allowed_paths = getattr(request.app.state, "tool_allowed_paths", [])
+    if not allowed_paths:
+        raise APIError(
+            status_code=503,
+            code=APIErrorCode.UPSTREAM_UNAVAILABLE,
+            message="tool workspace is not configured (AI_API_TOOL_ALLOWED_PATHS)",
+        )
     task_id = body.task_id or generate_entity_id()
     project_id = body.project_id or "default-project"
     organization_id = getattr(request.app.state, "default_organization_id", "default-org")
@@ -113,7 +120,7 @@ async def invoke_tool(
         organization_id=organization_id,
         project_id=project_id,
         task_id=task_id,
-        allowed_paths=[],
+        allowed_paths=list(allowed_paths),
         read_only=False,
         timeout_seconds=tool.timeout_seconds,
     )
@@ -157,13 +164,14 @@ async def invoke_tool(
     )
 
     result = await executor.execute_action(action, context)
+    execution_metadata = (result.action.metadata.model_extra or {}) if result.success else {}
 
     response_payload = ToolInvokeResponse(
         tool_name=name,
         success=result.success,
-        output=None,
+        output=execution_metadata.get("output"),
         error=result.error,
-        execution_time_ms=0,
+        execution_time_ms=execution_metadata.get("execution_time_ms", 0),
         evidence_id=result.evidence.evidence_id if result.evidence else None,
         action_status=(
             result.action.status_projection.value

@@ -62,16 +62,16 @@
 | `REQ-REL-006` | 写操作幂等封装 | v0.1-designed | 2026-09-25 | [查看](./REQ-REL-006-write-operation-idempotency.md) |
 | `REQ-REL-007` | Compensation Workflow | v0.1-designed | 2026-09-25 | [查看](./REQ-REL-007-compensation-workflow.md) |
 | `REQ-EVA-001` | Golden Dataset | v0.1-designed | 2026-09-25 | [查看](./REQ-EVA-001-golden-dataset.md) |
-| `REQ-CTX-001` | 索引实体和关系 Schema | v0.1-designed | 2026-09-26 | [查看](./REQ-CTX-001-index-entities-schema.md) |
+| `REQ-CTX-001` | 索引实体和关系 Schema | v0.2-designed | 2026-09-26 | [查看](./REQ-CTX-001-index-entities-schema.md) |
 | `REQ-REL-008` | 测试失败与工具异常分类（工具治理） | v0.1-designed | 2026-09-26 | [查看](./REQ-REL-008-test-failure-tool-error-classification.md) |
 | `REQ-REL-008A` | 测试失败与工具异常分类（分类引擎，008 子需求） | v0.1-designed | 2026-09-26 | [查看](./REQ-REL-008A-test-failure-tool-exception-classification.md) |
 | `REQ-HAR-001` | Harness 生命周期 | v0.1-designed | 2026-09-26 | [查看](./REQ-HAR-001-harness-lifecycle.md) |
 | `REQ-REL-009` | 故障注入和恢复验证场景 | v0.1-designed | 2026-09-26 | [查看](./REQ-REL-009-fault-injection-recovery-verification.md) |
 | `REQ-CTX-002` | 语言、仓库规模和基准集 | v0.1-designed | 2026-09-26 | [查看](./REQ-CTX-002-language-repository-scale-benchmark.md) |
 | `REQ-CTX-003` | AST/LSP/依赖解析 | v0.1-designed | 2026-09-28 | [查看](./REQ-CTX-003-ast-lsp-dependency-parsing.md) |
-| `REQ-CTX-004` | 混合检索与排序 | v0.1-designed | 2026-10-03 | [查看](./REQ-CTX-004-hybrid-retrieval-ranking.md) |
-| `REQ-CTX-005` | 检索权限与敏感路径 | v1.0-designed | 2026-10-03 | [查看](./REQ-CTX-005-retrieval-permissions-sensitive-paths.md) |
-| `REQ-HAR-002` | Context Compaction | v0.1-designed | 2026-09-26 | [查看](./REQ-HAR-002-context-compaction.md) |
+| `REQ-CTX-004` | 混合检索与排序 | v0.2-designed | 2026-10-03 | [查看](./REQ-CTX-004-hybrid-retrieval-ranking.md) |
+| `REQ-CTX-005` | 检索权限与敏感路径 | v1.1-designed | 2026-10-03 | [查看](./REQ-CTX-005-retrieval-permissions-sensitive-paths.md) |
+| `REQ-HAR-002` | Context Compaction | v0.2-designed | 2026-09-26 | [查看](./REQ-HAR-002-context-compaction.md) |
 | `REQ-HAR-003` | Tool Adapter | v0.1-designed | 2026-09-30 | [查看](./REQ-HAR-003-tool-adapter.md) |
 | `REQ-MEM-001` | Memory Schema | v0.1-designed | 2026-09-27 | [查看](./REQ-MEM-001-memory-schema.md) |
 | `REQ-EVA-002` | 标注规范 | v0.1-designed | 2026-09-27 | [查看](./REQ-EVA-002-annotation-specification.md) |
@@ -83,9 +83,9 @@
 | `REQ-OBS-001` | OpenTelemetry 语义约定 | v0.1-designed | 2026-10-01 | [查看](./REQ-OBS-001-opentelemetry-semantic-conventions.md) |
 | `REQ-OBS-002` | Trace/Event/Evidence Schema | v0.1-designed | 2026-10-04 | [查看](./REQ-OBS-002-trace-event-evidence-schema.md) |
 | `REQ-HAR-004` | Hook Registry | v0.1-designed | 2026-10-02 | [查看](./REQ-HAR-004-hook-registry.md) |
-| `REQ-CTX-006` | Context Selector 与预算 | v0.1-designed | 2026-10-03 | [查看](./REQ-CTX-006-context-selector-budget.md) |
-| `REQ-CTX-007` | 增量索引一致性 | v0.1-designed | 2026-10-04 | [查看](./REQ-CTX-007-incremental-index-consistency.md) |
-| `REQ-CTX-008` | 上下文压缩与分层加载 | v0.1-designed | 2026-10-04 | [查看](./REQ-CTX-008-context-compression-tiered-loading.md) |
+| `REQ-CTX-006` | Context Selector 与预算 | v0.2-designed | 2026-10-03 | [查看](./REQ-CTX-006-context-selector-budget.md) |
+| `REQ-CTX-007` | 增量索引一致性 | v0.2-designed | 2026-10-04 | [查看](./REQ-CTX-007-incremental-index-consistency.md) |
+| `REQ-CTX-008` | 上下文压缩与分层加载 | v0.2-designed | 2026-10-04 | [查看](./REQ-CTX-008-context-compression-tiered-loading.md) |
 | `REQ-CTX-009` | 检索评测 | v0.1-designed | 2026-10-04 | [查看](./REQ-CTX-009-retrieval-evaluation.md) |
 | `REQ-MEM-002` | 记忆写入审批 | v0.1-designed | 2026-10-04 | [查看](./REQ-MEM-002-memory-write-approval.md) |
 | `REQ-HAR-005` | LSP/MCP/Skill 统一路由 | v0.1-designed | 2026-10-05 | [查看](./REQ-HAR-005-unified-routing.md) |
@@ -141,18 +141,18 @@
 
 ### 4. 上下文管理（CTX）- 6 项已完成详细设计，3 项待设计
 
-**`REQ-CTX-001` 索引实体和关系 Schema 已完成详细设计（v0.1-designed），`REQ-CTX-002` 语言、仓库规模和基准集已完成详细设计（v0.1-designed），`REQ-CTX-003` AST/LSP/依赖解析已完成详细设计（v0.1-designed），`REQ-CTX-004` 混合检索与排序已完成详细设计（v0.1-designed），`REQ-CTX-005` 检索权限与敏感路径已完成详细设计（v1.0-designed），`REQ-CTX-006` Context Selector 与预算已完成详细设计（v0.1-designed），`REQ-CTX-007` 增量索引一致性已完成详细设计（v0.1-designed），待跨模块评审与冻结；详见专项设计文档。**
+**`REQ-CTX-001` 索引实体和关系 Schema 已完成详细设计（v0.2-designed），`REQ-CTX-002` 语言、仓库规模和基准集已完成详细设计（v0.2-designed），`REQ-CTX-003` AST/LSP/依赖解析已完成详细设计（v0.2-designed），`REQ-CTX-004` 混合检索与排序已完成详细设计（v0.2-designed），`REQ-CTX-005` 检索权限与敏感路径已完成详细设计（v1.1-designed），`REQ-CTX-006` Context Selector 与预算已完成详细设计（v0.2-designed），`REQ-CTX-007` 增量索引一致性已完成详细设计（v0.2-designed），待跨模块评审与冻结；详见专项设计文档。**
 
 | 编号 | 需求 | 优先级 | 前置依赖 | 关键交付物 | 状态 |
 |------|------|--------|----------|-----------|------|
-| `REQ-CTX-001` | 索引实体和关系 Schema | P1 | RT-001 | ✅ [已完成详细设计](./REQ-CTX-001-index-entities-schema.md) | v0.1-designed |
+| `REQ-CTX-001` | 索引实体和关系 Schema | P1 | RT-001 | ✅ [已完成详细设计](./REQ-CTX-001-index-entities-schema.md) | v0.2-designed |
 | `REQ-CTX-002` | 语言、仓库规模和基准集 | P1 | CTX-001、EVA-001 | ✅ [已完成详细设计](./REQ-CTX-002-language-repository-scale-benchmark.md) | v0.1-designed |
 | `REQ-CTX-003` | AST/LSP/依赖解析 | P1 | CTX-001、CTX-002 | ✅ [已完成详细设计](./REQ-CTX-003-ast-lsp-dependency-parsing.md) | v0.1-designed |
-| `REQ-CTX-004` | 混合检索与排序 | P1 | CTX-001、CTX-003 | ✅ [已完成详细设计](./REQ-CTX-004-hybrid-retrieval-ranking.md) | v0.1-designed |
-| `REQ-CTX-005` | 检索权限与敏感路径 | P1 | SEC-002、SEC-008 | ✅ [已完成详细设计](./REQ-CTX-005-retrieval-permissions-sensitive-paths.md) | v1.0-designed |
-| `REQ-CTX-006` | Context Selector 与预算 | P1 | CTX-004、RT-007 | ✅ [已完成详细设计](./REQ-CTX-006-context-selector-budget.md) | v0.1-designed |
-| `REQ-CTX-007` | 增量索引一致性 | P1 | CTX-001、RT-001 | ✅ [已完成详细设计](./REQ-CTX-007-incremental-index-consistency.md) | v0.1-designed |
-| `REQ-CTX-008` | 上下文压缩与分层加载 | P1 | CTX-006、HAR-002 | ✅ [已完成详细设计](./REQ-CTX-008-context-compression-tiered-loading.md) | v0.1-designed |
+| `REQ-CTX-004` | 混合检索与排序 | P1 | CTX-001、CTX-003 | ✅ [已完成详细设计](./REQ-CTX-004-hybrid-retrieval-ranking.md) | v0.2-designed |
+| `REQ-CTX-005` | 检索权限与敏感路径 | P1 | SEC-002、SEC-008 | ✅ [已完成详细设计](./REQ-CTX-005-retrieval-permissions-sensitive-paths.md) | v1.1-designed |
+| `REQ-CTX-006` | Context Selector 与预算 | P1 | CTX-004、RT-007 | ✅ [已完成详细设计](./REQ-CTX-006-context-selector-budget.md) | v0.2-designed |
+| `REQ-CTX-007` | 增量索引一致性 | P1 | CTX-001、RT-001 | ✅ [已完成详细设计](./REQ-CTX-007-incremental-index-consistency.md) | v0.2-designed |
+| `REQ-CTX-008` | 上下文压缩与分层加载 | P1 | CTX-006、HAR-002 | ✅ [已完成详细设计](./REQ-CTX-008-context-compression-tiered-loading.md) | v0.2-designed |
 | `REQ-CTX-009` | 检索评测 | P1 | CTX-002、EVA-001 | ✅ [已完成详细设计](./REQ-CTX-009-retrieval-evaluation.md) | v0.1-designed |
 
 ---
@@ -172,12 +172,12 @@
 
 ### 6. Harness 工程（HAR）- 全部 6 项已完成详细设计
 
-**`REQ-HAR-001` Harness生命周期已完成详细设计（v0.1-designed），`REQ-HAR-002` Context Compaction已完成详细设计（v0.1-designed），`REQ-HAR-003` Tool Adapter已完成详细设计（v0.1-designed），`REQ-HAR-004` Hook Registry已完成详细设计（v0.1-designed），`REQ-HAR-005` LSP/MCP/Skill统一路由已完成详细设计（v0.1-designed），`REQ-HAR-006` Harness契约测试已完成详细设计（v0.1-designed），待跨模块评审与冻结；详见专项设计文档。**
+**`REQ-HAR-001` Harness生命周期已完成详细设计（v0.2-designed），`REQ-HAR-002` Context Compaction已完成详细设计（v0.2-designed），`REQ-HAR-003` Tool Adapter已完成详细设计（v0.2-designed），`REQ-HAR-004` Hook Registry已完成详细设计（v0.2-designed），`REQ-HAR-005` LSP/MCP/Skill统一路由已完成详细设计（v0.2-designed），`REQ-HAR-006` Harness契约测试已完成详细设计（v0.2-designed），待跨模块评审与冻结；详见专项设计文档。**
 
 | 编号 | 需求 | 优先级 | 前置依赖 | 关键交付物 | 状态 |
 |------|------|--------|----------|-----------|------|
 | `REQ-HAR-001` | Harness 生命周期 | P0 | RT-001、SEC-003 | ✅ [已完成详细设计](./REQ-HAR-001-harness-lifecycle.md) | ✅ v0.1-designed |
-| `REQ-HAR-002` | Context Compaction | P0 | CTX-008、REL-004 | ✅ [已完成详细设计](./REQ-HAR-002-context-compaction.md) | ✅ v0.1-designed |
+| `REQ-HAR-002` | Context Compaction | P0 | CTX-008、REL-004 | ✅ [已完成详细设计](./REQ-HAR-002-context-compaction.md) | ✅ v0.2-designed |
 | `REQ-HAR-003` | Tool Adapter | P0 | RT-001、SEC-003 | ✅ [已完成详细设计](./REQ-HAR-003-tool-adapter.md) | ✅ v0.1-designed |
 | `REQ-HAR-004` | Hook Registry | P0 | HAR-001、SEC-001 | ✅ [已完成详细设计](./REQ-HAR-004-hook-registry.md) | ✅ v0.1-designed |
 | `REQ-HAR-005` | LSP/MCP/Skill 统一路由 | P0 | HAR-003、SEC-007 | ✅ [已完成详细设计](./REQ-HAR-005-unified-routing.md) | ✅ v0.1-designed |
@@ -330,3 +330,10 @@
 **文档创建时间**：2026-09-23  
 **最后更新时间**：2026-10-08（REQ-EVA-007 生产反馈、数据集更新和版本回滚已完成详细设计；EVA 模块进度更新为 7/7 = 100%；**总进度 60/60 = 100%，全部正式基线需求已完成详细设计**）  
 **维护团队**：架构组
+
+
+## G-CTX 2026-10-29 引用同步记录
+
+用户已确认 `gctx-review-20261029-r2`，见 [契约与交付记录](../development/contracts/context.md) §9～15。CTX-001/004/006/007/008 与 HAR-002 为 v0.2-designed，CTX-005 为 v1.1-designed；规则加载失败为 DENY；CTX-008 缺失章节为批准重建，并非历史原稿恢复。以上仅为限定文档基线，不代表整项 REQ 冻结、生产实现或 G-CTX 用户验收。原历史统计和未涉及模块状态不由本记录更新。
+
+变更：G-CTX 引用修订 r1；日期 2026-10-29；仅同步上述版本、完整性和安全语义，不改变正式需求总数。

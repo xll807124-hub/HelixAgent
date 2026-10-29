@@ -1,0 +1,88 @@
+{
+  "scope": "Synthetic file-hash manifests only; excludes parsing, disk, DB and LSP",
+  "python": "3.13.18",
+  "platform": "Windows",
+  "repeats": 15,
+  "correctness": [
+    {
+      "case": "unchanged",
+      "changed": [],
+      "visited_nodes": 1
+    },
+    {
+      "case": "addition",
+      "changed": [
+        "pkg/new.go"
+      ],
+      "visited_nodes": 6
+    },
+    {
+      "case": "deletion",
+      "changed": [
+        "pkg/a.py"
+      ],
+      "visited_nodes": 5
+    },
+    {
+      "case": "rename",
+      "changed": [
+        "pkg/a.py",
+        "pkg/renamed.py"
+      ],
+      "visited_nodes": 6
+    },
+    {
+      "case": "reorder",
+      "changed": [],
+      "visited_nodes": 1
+    },
+    {
+      "case": "edit",
+      "changed": [
+        "pkg/b.py"
+      ],
+      "visited_nodes": 5
+    },
+    {
+      "case": "empty",
+      "changed": [
+        "other/c.ts",
+        "pkg/a.py",
+        "pkg/b.py"
+      ],
+      "visited_nodes": 6
+    },
+    {
+      "case": "file_to_directory",
+      "changed": [
+        "other/c.ts",
+        "pkg/a.py",
+        "pkg/a.py/child.go",
+        "pkg/b.py"
+      ],
+      "visited_nodes": 7
+    }
+  ],
+  "legacy_new_sibling_omitted": true,
+  "measurements": [
+    {
+      "files": 1000,
+      "changes": 1,
+      "flat_diff_median_ms": 0.068,
+      "merkle_diff_median_ms": 0.0235,
+      "full_tree_build_median_ms": 0.9117,
+      "merkle_visited_nodes": 111,
+      "tree_build_peak_python_bytes": 297284
+    },
+    {
+      "files": 10000,
+      "changes": 1,
+      "flat_diff_median_ms": 1.2525,
+      "merkle_diff_median_ms": 0.0425,
+      "full_tree_build_median_ms": 12.6837,
+      "merkle_visited_nodes": 201,
+      "tree_build_peak_python_bytes": 3259048
+    }
+  ],
+  "limits": "Merkle timing assumes prebuilt trees; build cost is reported separately"
+}

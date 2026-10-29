@@ -24,9 +24,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from src.runtime.common.types import ActorRef, ActorType, ResourceRef, ResourceType
 from src.runtime.trace.audit_correlation import AuditCorrelation, AuditRecord
 from src.runtime.trace.context import TraceContext
-from src.runtime.common.types import ActorRef, ActorType, ResourceRef, ResourceType
 
 logger = logging.getLogger(__name__)
 

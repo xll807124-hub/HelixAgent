@@ -1,11 +1,26 @@
 # REQ-CTX-001 索引实体和关系 Schema 详细设计
 
-> 版本：v0.1-designed  
+> 版本：v0.2-designed
 > 优先级：P1  
 > 状态：详细设计已完成，待跨模块评审与冻结  
 > 所属模块：上下文管理（CTX）  
 > 前置依赖：REQ-RT-001（核心运行时实体 Schema）  
 > 下游依赖：REQ-CTX-002~009、REQ-HAR-003、REQ-EVA-003
+
+
+## G-CTX 2026-10-29 批准修订
+
+版本：v0.2-designed；限定基线：`gctx-review-20261029-r2`；批准依据：[G-CTX 确认记录及完整方案](../development/contracts/context.md) §9～14。用户先确认四项原则，再确认完整 r2 方案；未批准本需求全项冻结或生产实现。
+
+保留原 RetrievalResult/Query 字段；跨 CTX-004 的显式映射遵循批准方案 §11。total_hits 仅表示授权后、去重且分页前的有限候选命中数，外层标明 count_scope=bounded_candidates；不从 total_candidates 复制，不宣称全库精确总数。默认 top_k=10，允许 1～100，latest 在可信入口解析一次并绑定 SHA/index_version。
+
+本节为上述涉及内容的现行修订，原文算法/存储/厂商示例不构成生产已实现或新依赖授权。其余未涉及契约保持原要求。
+
+### 变更记录
+
+| 版本 | 日期 | 原因与影响 |
+|---|---|---|
+| v0.2-designed | 2026-10-29 | 用户确认 r2 后同步跨模块契约，保留源 DTO 和 Runtime 冻结字段；更新内容与验证见 G-CTX §15 |
 
 ---
 
@@ -551,7 +566,7 @@ interface RetrievalFilters {
 interface RetrievalResult {
     // 检索结果
     chunks: RetrievedChunk[];
-    total_hits: number;
+    total_hits: number;                 // 授权后有限候选去重总数，分页前；外层声明计数范围
     
     // 查询元数据
     query_embedding?: number[];         // 查询向量

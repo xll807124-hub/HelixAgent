@@ -19,6 +19,7 @@ import subprocess
 from pathlib import Path
 
 from .npm_scanner import SCAResult, Vulnerability, VulnerabilitySeverity
+from .process import run_scanner_process
 
 logger = logging.getLogger(__name__)
 
@@ -145,12 +146,18 @@ class PipScanner:
     async def _run_pip_audit(self, repo_path: Path) -> list[Vulnerability]:
         """运行 pip-audit 命令"""
         try:
-            # 使用 python -m pip_audit 方式运行
             cmd = [
-                "python", "-m", "pip_audit",
+                self.pip_audit_path,
                 "--format", "json",
                 "--desc"  # 包含漏洞描述
             ]
+            requirements = repo_path / "requirements.txt"
+            if requirements.exists():
+                cmd.extend(["-r", str(requirements.resolve())])
+            elif (repo_path / "pyproject.toml").exists():
+                cmd.append(str(repo_path.resolve()))
+            else:
+                raise ValueError("A requirements.txt or pyproject.toml audit target is required")
             
             result = await asyncio.wait_for(
                 self._run_subprocess(cmd, cwd=str(repo_path)),
@@ -158,21 +165,23 @@ class PipScanner:
             )
             
             # pip-audit 返回 JSON
-            if result.stdout:
-                data = json.loads(result.stdout)
-                return self._parse_pip_audit_output(data)
-            
-            return []
+            if result.returncode not in (0, 1) or not result.stdout.strip():
+                raise RuntimeError(f"pip-audit failed (exit {result.returncode})")
+            data = json.loads(result.stdout)
+            findings = self._parse_pip_audit_output(data)
+            if result.returncode == 1 and not findings:
+                raise ValueError("pip-audit failed without usable findings")
+            return findings
         
         except TimeoutError:
             logger.error("[Pip] 扫描超时")
-            return []
+            raise RuntimeError("pip-audit timed out") from None
         except json.JSONDecodeError:
             logger.error("[Pip] JSON 解析失败")
-            return []
+            raise ValueError("Invalid pip-audit JSON") from None
         except Exception as e:
             logger.error(f"[Pip] 审计执行失败: {e}")
-            return []
+            raise
     
     def _parse_pip_audit_output(self, data: dict | list) -> list[Vulnerability]:
         """解析 pip-audit JSON 输出"""
@@ -193,7 +202,32 @@ class PipScanner:
         #   ]
         # }
         
-        vulns = data if isinstance(data, list) else data.get("vulnerabilities", [])
+        # pip-audit 2.x JSON: dependencies[].vulns[]. Keep the earlier flattened
+        # report shape readable for stored reports, but reject unknown schemas.
+        if isinstance(data, dict) and isinstance(data.get("dependencies"), list):
+            dependencies = data["dependencies"]
+        elif isinstance(data, list) and all("vulns" in item for item in data):
+            dependencies = data
+        elif isinstance(data, dict) and isinstance(data.get("vulnerabilities"), list):
+            dependencies = None
+        else:
+            raise ValueError("Invalid pip-audit report")
+
+        if dependencies is not None:
+            vulns = []
+            for dependency in dependencies:
+                if dependency.get("skip_reason") or not isinstance(dependency.get("vulns"), list):
+                    raise ValueError("pip-audit did not audit every dependency")
+                for vuln in dependency["vulns"]:
+                    vulns.append({
+                        "name": dependency["name"], "version": dependency["version"],
+                        "vulnerability_id": vuln["id"],
+                        "advisory": vuln.get("description", "Unknown vulnerability"),
+                        "fixed_in": vuln.get("fix_versions", []),
+                    })
+        else:
+            assert isinstance(data, dict)
+            vulns = data["vulnerabilities"]
         
         for vuln in vulns:
             # 推断严重程度 (pip-audit 不总是提供 severity)
@@ -236,13 +270,4 @@ class PipScanner:
         cwd: str | None = None
     ) -> subprocess.CompletedProcess:
         """异步运行子进程"""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
-            lambda: subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=cwd
-            )
-        )
+        return await run_scanner_process(cmd, cwd=cwd)

@@ -7,8 +7,9 @@ FastAPI 应用配置（src/api/config.py）。
 from __future__ import annotations
 
 from functools import lru_cache
+from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -45,8 +46,19 @@ class APISettings(BaseSettings):
     # 限流（粗粒度，MVP 用全局内存计数器；生产应替换为 Redis）
     rate_limit_per_minute: int = Field(default=120, ge=1, le=10000)
 
-    # 鉴权占位（MVP 仅校验 bearer token 非空；SEC-002 接入后替换为 RBAC）
+    # 单组织部署使用显式配置的 token -> principal 映射；空配置时拒绝业务请求。
     auth_required: bool = Field(default=True)
+    auth_tokens: dict[str, str] = Field(default_factory=dict, repr=False)
+    tool_allowed_paths: list[str] = Field(default_factory=list)
+
+    @field_validator("auth_tokens")
+    @classmethod
+    def validate_auth_tokens(cls, tokens: dict[str, str]) -> dict[str, str]:
+        if any(not token.strip() or not principal.strip() for token, principal in tokens.items()):
+            raise ValueError("Auth tokens and principal IDs must be non-empty")
+        for principal in tokens.values():
+            UUID(principal)  # Task.creator_id uses the Runtime EntityId contract.
+        return tokens
 
     @property
     def cors_origin_list(self) -> list[str]:

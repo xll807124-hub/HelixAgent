@@ -19,6 +19,8 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
 
+from .process import run_scanner_process
+
 logger = logging.getLogger(__name__)
 
 
@@ -129,29 +131,35 @@ class GitleaksScanner:
             # 构建命令
             cmd = [self.gitleaks_path, "detect"]
             cmd.extend([f"--source={repo_path}"])
-            cmd.append("--verbose")
+            cmd.append("--report-format=json")
             
             # 使用系统临时目录
             import tempfile
-            report_path = Path(tempfile.gettempdir()) / "gitleaks-report.json"
+            report_dir = tempfile.TemporaryDirectory(prefix="gitleaks-report-")
+            report_path = Path(report_dir.name) / "report.json"
             cmd.append(f"--report-path={report_path}")
             
-            if scan_all_history:
-                cmd.append("--no-git")  # 扫描整个目录
+            if not scan_all_history:
+                cmd.append("--log-opts=-1")
             
             # 执行扫描
-            await asyncio.wait_for(
+            result = await asyncio.wait_for(
                 self._run_subprocess(cmd),
                 timeout=self.timeout_seconds
             )
             
             # 解析结果
-            secrets = []
-            if report_path.exists():
-                with open(report_path) as f:
-                    data = json.load(f)
-                    secrets = self._parse_results(data)
-                report_path.unlink(missing_ok=True)
+            if result.returncode not in (0, 1) or not report_path.is_file():
+                raise RuntimeError(f"Gitleaks failed or report missing (exit {result.returncode})")
+            with report_path.open(encoding="utf-8") as f:
+                data = json.load(f)
+            if not isinstance(data, list) and not (
+                isinstance(data, dict) and isinstance(data.get("Secrets"), list)
+            ):
+                raise ValueError("Invalid Gitleaks report")
+            secrets = self._parse_results(data)
+            if result.returncode == 1 and not secrets:
+                raise ValueError("Gitleaks failed without usable findings")
             
             logger.info(
                 f"[Gitleaks] 扫描完成: {len(secrets)} 个密钥检测"
@@ -180,6 +188,9 @@ class GitleaksScanner:
                 secrets=[],
                 error_message=str(e)
             )
+        finally:
+            if "report_dir" in locals():
+                report_dir.cleanup()
     
     def _parse_results(self, data: dict | list) -> list[GitleaksSecret]:
         """解析 Gitleaks JSON 结果"""
@@ -198,7 +209,7 @@ class GitleaksScanner:
                 rule_id=rule_id,
                 file_path=item.get("File", "unknown"),
                 commit_hash=item.get("Commit", "unknown"),
-                line_number=item.get("Line", 0),
+                line_number=item.get("StartLine", item.get("Line", 0)),
                 secret_value_hash=self._hash_secret(item.get("Secret", "")),
                 rule_description=item.get("Rule", ""),
                 remediation=(
@@ -245,8 +256,4 @@ class GitleaksScanner:
     @staticmethod
     async def _run_subprocess(cmd: list[str]) -> subprocess.CompletedProcess:
         """异步运行子进程"""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
-            lambda: subprocess.run(cmd, capture_output=True, text=True)
-        )
+        return await run_scanner_process(cmd)

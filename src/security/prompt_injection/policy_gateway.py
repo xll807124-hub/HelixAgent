@@ -275,7 +275,13 @@ class PromptInjectionPolicyGateway:
 
         # 验证权限级别
         required_level = current_evaluation.required_approval_level
-        if required_level == "senior_admin" and approval_level != "senior_admin":
+        approval_ranks = {"admin": 1, "senior_admin": 2}
+        if (
+            required_level not in approval_ranks
+            or approval_ranks.get(approval_level, 0) < approval_ranks[required_level]
+            or not approved_by.strip()
+            or not business_reason.strip()
+        ):
             logger.warning(
                 f"Kill Switch override denied: {approval_level} insufficient for "
                 f"{required_level} requirement by {approved_by}"

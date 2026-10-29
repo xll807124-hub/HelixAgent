@@ -318,7 +318,7 @@ class InMemoryEventStore(EventStore):
 
     async def get_latest_sequence(self, task_id: TaskId) -> int:
         """获取最新序列号"""
-        return self._next_sequence.get(task_id, 0)
+        return self._next_sequence.get(task_id, 1) - 1
 
     async def count(
         self,

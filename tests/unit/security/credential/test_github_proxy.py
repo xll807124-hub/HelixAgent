@@ -1,9 +1,15 @@
 """
 GitHub 凭据代理单元测试
 """
-from datetime import datetime, timedelta
+import json
+from datetime import UTC, datetime, timedelta
 
+import httpx
+import jwt
 import pytest
+import pytest_asyncio
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 from src.security.credential.github_proxy import (
     CredentialToken,
@@ -11,6 +17,26 @@ from src.security.credential.github_proxy import (
     GitHubCredentialProxy,
     TokenType,
 )
+
+
+@pytest_asyncio.fixture
+async def github_proxy():
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    pem = key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+                            serialization.NoEncryption()).decode()
+    requests = []
+
+    def respond(request):
+        requests.append(request)
+        return httpx.Response(201, json={
+            "token": "installation-test-token",
+            "expires_at": (datetime.now(UTC) + timedelta(minutes=30)).isoformat(),
+            "permissions": {"contents": "read"},
+        })
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+        proxy = GitHubCredentialProxy(GitHubAppConfig("123", pem, "secret", "456"), client)
+        yield proxy, key.public_key(), requests
 
 
 class TestCredentialToken:
@@ -224,14 +250,18 @@ class TestGitHubCredentialProxyIntegration:
     """集成测试（需要 PyJWT 和 httpx）"""
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Requires PyJWT and network access")
-    async def test_get_installation_token(self):
-        """测试获取安装令牌"""
-        # 这个测试需要实际的 GitHub App 配置和网络访问
-        pass
+    async def test_get_installation_token(self, github_proxy):
+        proxy, public_key, requests = github_proxy
+        token = await proxy.get_installation_token(scopes=["contents:read"])
+        assert token.token == "installation-test-token"
+        assert token.scopes == ["contents:read"]
+        assert json.loads(requests[0].content) == {"permissions": {"contents": "read"}}
+        assert requests[0].url.path == "/app/installations/456/access_tokens"
+        jwt.decode(requests[0].headers["Authorization"].split()[1], public_key,
+                   algorithms=["RS256"], issuer="123")
+        assert token.token not in str(proxy.get_audit_log())
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Requires installation_id")
     async def test_token_issuance_without_installation_id(self):
         """测试没有安装 ID 时的令牌签发"""
         proxy = GitHubCredentialProxy(
@@ -248,11 +278,13 @@ class TestGitHubCredentialProxyIntegration:
             await proxy.get_installation_token()
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Requires PyJWT")
-    async def test_jwt_token_generation(self):
-        """测试 JWT 令牌生成"""
-        # 这个测试需要 PyJWT 包
-        pass
+    async def test_jwt_token_generation(self, github_proxy):
+        proxy, public_key, requests = github_proxy
+        token = await proxy._get_jwt_token()
+        claims = jwt.decode(token, public_key, algorithms=["RS256"], issuer="123")
+        assert claims["exp"] - claims["iat"] == 600
+        assert await proxy._get_jwt_token() == token
+        assert requests == []
 
 
 class TestGitHubCredentialProxyProperties:

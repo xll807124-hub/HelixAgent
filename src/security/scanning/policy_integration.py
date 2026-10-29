@@ -199,7 +199,7 @@ def to_github_check_status(policy_decision: ScanPolicyDecision) -> dict:
     conclusion_map = {
         PolicyDecision.APPROVE: "success",
         PolicyDecision.REJECT: "failure",
-        PolicyDecision.NEUTRAL: "neutral",
+        PolicyDecision.NEUTRAL: "failure",  # An incomplete scan cannot satisfy a merge gate.
     }
     
     return {

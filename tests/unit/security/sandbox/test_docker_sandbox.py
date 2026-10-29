@@ -2,6 +2,11 @@
 Docker 沙箱隔离单元测试
 """
 
+import os
+import sys
+from unittest.mock import MagicMock
+from uuid import uuid4
+
 import pytest
 
 from src.security.sandbox.docker_sandbox import (
@@ -28,7 +33,7 @@ class TestContainerConfig:
         assert config.cpu_limit == "2"
         assert config.memory_limit == "4g"
         assert config.timeout_seconds == 900
-        assert config.network_mode == "bridge"
+        assert config.network_mode == "none"
 
     def test_config_custom_values(self):
         """测试自定义配置"""
@@ -183,10 +188,15 @@ class TestDockerSandboxInitialization:
         sandbox = DockerSandbox(docker_url=custom_url)
         assert sandbox.docker_url == custom_url
 
-    def test_sandbox_client_lazy_initialization(self):
-        """测试客户端延迟初始化"""
-        # 跳过：需要 docker 包安装
-        pytest.skip("Requires docker package")
+    def test_sandbox_client_lazy_initialization(self, monkeypatch):
+        docker_module = MagicMock()
+        monkeypatch.setitem(sys.modules, "docker", docker_module)
+        sandbox = DockerSandbox()
+        assert sandbox._client is None
+        docker_module.DockerClient.assert_not_called()
+        assert sandbox.client is docker_module.DockerClient.return_value
+        assert sandbox.client is docker_module.DockerClient.return_value
+        docker_module.DockerClient.assert_called_once_with(base_url=sandbox.docker_url)
 
 
 class TestDockerSandboxBuildContainerKwargs:
@@ -194,17 +204,14 @@ class TestDockerSandboxBuildContainerKwargs:
 
     def test_build_basic_kwargs(self):
         """测试基础参数构建"""
-        DockerSandbox()
-        ContainerConfig(
-            image="python:3.11",
-            name="test",
-            command=["python", "app.py"],
-        )
-        
-        # 这个测试会失败因为没有 Docker 客户端
-        # 但我们可以测试静态方法
-        assert DockerSandbox._parse_cpu_limit("2") == 2.0
-        assert DockerSandbox._parse_memory_limit("4g") == 4 * 1024 * 1024 * 1024
+        sandbox = DockerSandbox()
+        config = ContainerConfig(image="python:3.11", name="test", command=["python", "app.py"])
+        kwargs = sandbox._build_container_kwargs(config, None)
+        assert kwargs["nano_cpus"] == 2_000_000_000
+        assert kwargs["mem_limit"] == 4 * 1024**3
+        assert kwargs["network_mode"] == "none"
+        assert "host_config" not in kwargs
+        assert sandbox._client is None
 
     def test_build_kwargs_with_volumes(self):
         """测试带卷的参数构建"""
@@ -229,37 +236,66 @@ class TestDockerSandboxEscapeDetection:
     """沙箱逃逸检测测试"""
 
     @pytest.mark.asyncio
-    async def test_escape_detection_returns_false_by_default(self):
-        """测试逃逸检测默认返回 False"""
+    async def test_unavailable_escape_detection_does_not_report_safe(self):
         sandbox = DockerSandbox()
-        # TODO: 实现后期补充测试逻辑
-        result = await sandbox.check_sandbox_escape("container-id")
-        assert result is False
+        with pytest.raises(NotImplementedError, match="host monitoring"):
+            await sandbox.check_sandbox_escape("container-id")
 
 
+@pytest.fixture
+def docker_integration_sandbox():
+    if os.environ.get("AI_AGENT_RUN_DOCKER_TESTS") != "1":
+        pytest.skip("Set AI_AGENT_RUN_DOCKER_TESTS=1 with a running Docker daemon")
+    docker = pytest.importorskip("docker", reason="Install project sandbox extra")
+    client = docker.from_env(timeout=5)
+    try:
+        client.ping()
+        sandbox = DockerSandbox()
+        sandbox._client = client
+        yield sandbox
+    finally:
+        client.close()
+
+
+@pytest.mark.integration
 class TestDockerSandboxIntegration:
-    """集成测试（需要 Docker）"""
+    @pytest.mark.asyncio
+    async def test_run_command_successful(self, docker_integration_sandbox):
+        config = ContainerConfig(
+            image=os.environ.get("AI_AGENT_DOCKER_TEST_IMAGE", "python:3.12-alpine"),
+            name=f"ai-agent-test-{uuid4().hex}", working_dir="/tmp",
+            command=["python", "-c", "print('sandbox-ok')"], timeout_seconds=30,
+        )
+        result = await docker_integration_sandbox.run_command(config)
+        assert result.exit_code == 0
+        assert result.stdout.strip() == "sandbox-ok"
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Requires Docker environment")
-    async def test_run_command_successful(self):
-        """测试成功运行命令"""
-        # 这个测试需要真实 Docker 环境
-        pass
+    async def test_run_command_with_timeout(self, docker_integration_sandbox):
+        config = ContainerConfig(
+            image=os.environ.get("AI_AGENT_DOCKER_TEST_IMAGE", "python:3.12-alpine"),
+            name=f"ai-agent-test-{uuid4().hex}", working_dir="/tmp",
+            command=["python", "-c", "import time; time.sleep(60)"], timeout_seconds=1,
+        )
+        result = await docker_integration_sandbox.run_command(config)
+        assert result.exit_code == 124
+        assert "timed out" in result.stderr
+        assert docker_integration_sandbox._containers == {}
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Requires Docker environment")
-    async def test_run_command_with_timeout(self):
-        """测试命令超时"""
-        # 这个测试需要真实 Docker 环境
-        pass
+    async def test_run_command_cleanup(self, docker_integration_sandbox):
+        import docker
 
-    @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Requires Docker environment")
-    async def test_run_command_cleanup(self):
-        """测试容器清理"""
-        # 这个测试需要真实 Docker 环境
-        pass
+        config = ContainerConfig(
+            image=os.environ.get("AI_AGENT_DOCKER_TEST_IMAGE", "python:3.12-alpine"),
+            name=f"ai-agent-test-{uuid4().hex}", working_dir="/tmp",
+            command=["python", "-c", "raise SystemExit(3)"], timeout_seconds=30,
+        )
+        result = await docker_integration_sandbox.run_command(config)
+        assert result.exit_code == 3
+        assert docker_integration_sandbox._containers == {}
+        with pytest.raises(docker.errors.NotFound):
+            docker_integration_sandbox.client.containers.get(config.name)
 
 
 class TestDockerSandboxProperties:

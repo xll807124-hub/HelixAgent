@@ -1,0 +1,1134 @@
+{
+  "task": "SEC-007 工具批准与 Schema 变更复审",
+  "board_task": "S0-SCHEMA",
+  "owner": "codex-schema-20261029-a942yseg",
+  "date": "2026-10-29",
+  "timezone": "Asia/Shanghai",
+  "design_approved": true,
+  "approval_evidence": "本会话用户：确认三点，开始实施；docs/review/sec007-tool-approval-schema-design-2026-10-29.md",
+  "status": "delivered_pending_acceptance",
+  "implementation_complete": true,
+  "user_acceptance": false,
+  "task_complete": false,
+  "next_task_started": false,
+  "environment": {
+    "python": "3.13.18",
+    "docker_server": "29.9.2",
+    "real_docker_tests_enabled": true,
+    "new_dependencies": []
+  },
+  "test_results": {
+    "passed": 2217,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "new_task_tests": 65,
+    "concurrent_coordination_tests": 6,
+    "docker_integration_tests": 3,
+    "warnings": 3564,
+    "duration_seconds": 71.261
+  },
+  "static_checks": {
+    "ruff": "passed",
+    "mypy": "passed: 197 source files",
+    "pip_check": "passed"
+  },
+  "coverage": {
+    "src": {
+      "covered_lines": 11433,
+      "num_statements": 13066,
+      "percent_covered": 85.67095815795989,
+      "percent_covered_display": "86",
+      "missing_lines": 1633,
+      "excluded_lines": 83,
+      "percent_statements_covered": 87.50191336292669,
+      "percent_statements_covered_display": "88",
+      "num_branches": 3090,
+      "num_partial_branches": 366,
+      "covered_branches": 2408,
+      "missing_branches": 682,
+      "percent_branches_covered": 77.92880258899676,
+      "percent_branches_covered_display": "78"
+    },
+    "src_line_percent": 87.50191336292669,
+    "src_branch_percent": 77.92880258899676,
+    "changed_core_modules": [
+      "src/security/mcp_connector_governance/models/tool_schema.py",
+      "src/security/mcp_connector_governance/registry/tool_registry.py",
+      "src/security/mcp_connector_governance/registry/tool_governance.py",
+      "src/security/mcp_connector_governance/registry/connector_registry.py",
+      "src/security/mcp_connector_governance/lifecycle/lifecycle_manager.py",
+      "src/security/mcp_connector_governance/protocol/mcp_handler.py",
+      "src/security/mcp_connector_governance/execution/tool_executor_v2.py"
+    ],
+    "core_lines": 1192,
+    "core_statements": 1307,
+    "core_line_percent": 91.20122417750574,
+    "critical_methods": [
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager.__init__",
+        "covered_lines": 17,
+        "statements": 17,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager.prepare_credentials",
+        "covered_lines": 24,
+        "statements": 24,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager._dispatch_credentials",
+        "covered_lines": 16,
+        "statements": 16,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager._prepare_oauth_credentials",
+        "covered_lines": 23,
+        "statements": 23,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager._prepare_api_key_credentials",
+        "covered_lines": 21,
+        "statements": 21,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager._prepare_bearer_token_credentials",
+        "covered_lines": 7,
+        "statements": 7,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager._prepare_mtls_credentials",
+        "covered_lines": 7,
+        "statements": 7,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager._refresh_oauth_token",
+        "covered_lines": 40,
+        "statements": 40,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager._is_token_valid",
+        "covered_lines": 5,
+        "statements": 5,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager.store_oauth_token",
+        "covered_lines": 12,
+        "statements": 12,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager.revoke_credentials",
+        "covered_lines": 4,
+        "statements": 4,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager.check_authorization_status",
+        "covered_lines": 12,
+        "statements": 12,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager._scope",
+        "covered_lines": 4,
+        "statements": 4,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager.get_credential_generation",
+        "covered_lines": 3,
+        "statements": 3,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager.begin_invalidation",
+        "covered_lines": 33,
+        "statements": 33,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager.invalidate_connector_credentials",
+        "covered_lines": 5,
+        "statements": 5,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager.finish_invalidation",
+        "covered_lines": 46,
+        "statements": 46,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/auth_manager.py",
+        "method": "AuthorizationManager.resume_credentials",
+        "covered_lines": 19,
+        "statements": 19,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/credential_adapter.py",
+        "method": "SEC005CredentialProxyClient.__init__",
+        "covered_lines": 26,
+        "statements": 26,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/credential_adapter.py",
+        "method": "SEC005CredentialProxyClient._scope",
+        "covered_lines": 4,
+        "statements": 4,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/credential_adapter.py",
+        "method": "SEC005CredentialProxyClient.issue_short_lived_credential",
+        "covered_lines": 19,
+        "statements": 19,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/credential_adapter.py",
+        "method": "SEC005CredentialProxyClient.get_revocation_status",
+        "covered_lines": 5,
+        "statements": 5,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/credential_adapter.py",
+        "method": "SEC005CredentialProxyClient.resume_connector_credentials",
+        "covered_lines": 7,
+        "statements": 7,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/credential_adapter.py",
+        "method": "SEC005CredentialProxyClient.revoke_connector_credentials",
+        "covered_lines": 8,
+        "statements": 8,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/credential_adapter.py",
+        "method": "SEC005CredentialProxyClient._revoke_handle",
+        "covered_lines": 15,
+        "statements": 15,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/credential_adapter.py",
+        "method": "SEC005CredentialProxyClient._revoke_worker",
+        "covered_lines": 11,
+        "statements": 11,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/credential_adapter.py",
+        "method": "SEC005CredentialProxyClient._issue_short_lived_credential",
+        "covered_lines": 31,
+        "statements": 31,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/oauth_handler.py",
+        "method": "TokenManager.__init__",
+        "covered_lines": 7,
+        "statements": 7,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/oauth_handler.py",
+        "method": "TokenManager.get_generation",
+        "covered_lines": 3,
+        "statements": 3,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/oauth_handler.py",
+        "method": "TokenManager.store_token",
+        "covered_lines": 6,
+        "statements": 6,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/oauth_handler.py",
+        "method": "TokenManager.invalidate_connector",
+        "covered_lines": 5,
+        "statements": 5,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/authorization/oauth_handler.py",
+        "method": "TokenManager.get_valid_token",
+        "covered_lines": 16,
+        "statements": 16,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/execution/tool_executor_v2.py",
+        "method": "ToolExecutor.execute_tool",
+        "covered_lines": 41,
+        "statements": 41,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/execution/tool_executor_v2.py",
+        "method": "ToolExecutor._prepare_injection",
+        "covered_lines": 17,
+        "statements": 17,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/execution/tool_executor_v2.py",
+        "method": "ToolExecutor._audit",
+        "covered_lines": 5,
+        "statements": 5,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/lifecycle/lifecycle_manager.py",
+        "method": "LifecycleManager.__init__",
+        "covered_lines": 9,
+        "statements": 9,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/lifecycle/lifecycle_manager.py",
+        "method": "LifecycleManager._audit",
+        "covered_lines": 7,
+        "statements": 7,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/lifecycle/lifecycle_manager.py",
+        "method": "LifecycleManager.transition_to",
+        "covered_lines": 44,
+        "statements": 44,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/lifecycle/lifecycle_manager.py",
+        "method": "LifecycleManager.complete_credential_invalidation",
+        "covered_lines": 13,
+        "statements": 13,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/lifecycle/lifecycle_manager.py",
+        "method": "LifecycleManager.get_credential_invalidation_status",
+        "covered_lines": 18,
+        "statements": 18,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/lifecycle/lifecycle_manager.py",
+        "method": "LifecycleManager._transition_state",
+        "covered_lines": 26,
+        "statements": 26,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/lifecycle/lifecycle_manager.py",
+        "method": "LifecycleManager._log_transition",
+        "covered_lines": 2,
+        "statements": 2,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/connector_registry.py",
+        "method": "ConnectorRegistry.register",
+        "covered_lines": 5,
+        "statements": 5,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/connector_registry.py",
+        "method": "ConnectorRegistry.update_status",
+        "covered_lines": 12,
+        "statements": 12,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/connector_registry.py",
+        "method": "ConnectorRegistry.remove",
+        "covered_lines": 5,
+        "statements": 5,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/models/tool_schema.py",
+        "method": "canonical_digest",
+        "covered_lines": 15,
+        "statements": 15,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/models/tool_schema.py",
+        "method": "as_utc",
+        "covered_lines": 2,
+        "statements": 2,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/models/tool_schema.py",
+        "method": "ToolInputSchema.to_dict",
+        "covered_lines": 10,
+        "statements": 10,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/models/tool_schema.py",
+        "method": "ToolSchema.compute_full_hash",
+        "covered_lines": 3,
+        "statements": 3,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/models/tool_schema.py",
+        "method": "ToolSchema.compute_definition_digest",
+        "covered_lines": 6,
+        "statements": 6,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/models/tool_schema.py",
+        "method": "ToolSchema.from_mcp_tool_definition",
+        "covered_lines": 13,
+        "statements": 13,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/models/tool_schema.py",
+        "method": "ToolApproval.is_valid",
+        "covered_lines": 6,
+        "statements": 6,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_registry.py",
+        "method": "ToolRegistry.bind_governance",
+        "covered_lines": 15,
+        "statements": 15,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_registry.py",
+        "method": "ToolRegistry._replace_local",
+        "covered_lines": 11,
+        "statements": 11,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_registry.py",
+        "method": "ToolRegistry.register_tool",
+        "covered_lines": 4,
+        "statements": 4,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_registry.py",
+        "method": "ToolRegistry._register_local",
+        "covered_lines": 16,
+        "statements": 16,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_registry.py",
+        "method": "ToolRegistry.register_tools_batch",
+        "covered_lines": 5,
+        "statements": 5,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_registry.py",
+        "method": "ToolRegistry.get_tool_for_connector",
+        "covered_lines": 3,
+        "statements": 3,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_registry.py",
+        "method": "ToolRegistry.unregister_connector",
+        "covered_lines": 8,
+        "statements": 8,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_registry.py",
+        "method": "ToolRegistry._unregister_local",
+        "covered_lines": 10,
+        "statements": 10,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/protocol/mcp_handler.py",
+        "method": "MCPProtocolHandler.__init__",
+        "covered_lines": 12,
+        "statements": 12,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/protocol/mcp_handler.py",
+        "method": "MCPProtocolHandler._handle_tools_list",
+        "covered_lines": 20,
+        "statements": 20,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/protocol/mcp_handler.py",
+        "method": "MCPProtocolHandler._handle_tools_call",
+        "covered_lines": 37,
+        "statements": 37,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/protocol/mcp_handler.py",
+        "method": "MCPProtocolHandler._tool_unavailable",
+        "covered_lines": 2,
+        "statements": 2,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/protocol/mcp_handler.py",
+        "method": "MCPProtocolHandler._available_connector",
+        "covered_lines": 16,
+        "statements": 16,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/protocol/mcp_handler.py",
+        "method": "MCPProtocolHandler._apply_capability_trim",
+        "covered_lines": 23,
+        "statements": 23,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "GovernanceError.__init__",
+        "covered_lines": 3,
+        "statements": 3,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "connector_revision",
+        "covered_lines": 4,
+        "statements": 4,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.__init__",
+        "covered_lines": 9,
+        "statements": 9,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance._owned",
+        "covered_lines": 7,
+        "statements": 7,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance._state",
+        "covered_lines": 6,
+        "statements": 6,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance._digest",
+        "covered_lines": 2,
+        "statements": 2,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance._snapshot",
+        "covered_lines": 2,
+        "statements": 2,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance._audit",
+        "covered_lines": 7,
+        "statements": 7,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance._invalidate",
+        "covered_lines": 9,
+        "statements": 9,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance._finish_cleanup",
+        "covered_lines": 3,
+        "statements": 3,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.snapshot",
+        "covered_lines": 13,
+        "statements": 13,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance._expected",
+        "covered_lines": 8,
+        "statements": 8,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.synchronize",
+        "covered_lines": 34,
+        "statements": 34,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.mark_dirty",
+        "covered_lines": 9,
+        "statements": 9,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.upsert",
+        "covered_lines": 15,
+        "statements": 15,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance._authorize",
+        "covered_lines": 20,
+        "statements": 20,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.approve",
+        "covered_lines": 26,
+        "statements": 26,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance._grant",
+        "covered_lines": 5,
+        "statements": 5,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.get_grant",
+        "covered_lines": 7,
+        "statements": 7,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.revoke",
+        "covered_lines": 10,
+        "statements": 10,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.complete_review",
+        "covered_lines": 22,
+        "statements": 22,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.can_activate",
+        "covered_lines": 3,
+        "statements": 3,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.check_call",
+        "covered_lines": 15,
+        "statements": 15,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.revalidate",
+        "covered_lines": 2,
+        "statements": 2,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.replace_connector",
+        "covered_lines": 13,
+        "statements": 13,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      },
+      {
+        "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+        "method": "ToolGovernance.remove_connector",
+        "covered_lines": 13,
+        "statements": 13,
+        "line_percent": 100.0,
+        "missing_lines": [],
+        "excluded_lines": []
+      }
+    ],
+    "critical_statements": 1169,
+    "critical_missing_lines": 0,
+    "critical_excluded_lines": 0
+  },
+  "security": {
+    "status": "passed",
+    "tools": {
+      "bandit": "1.9.4",
+      "pip-audit": "2.9.0",
+      "gitleaks": {
+        "version": "8.30.1",
+        "assets": {
+          "Windows": {
+            "filename": "gitleaks_8.30.1_windows_x64.zip",
+            "sha256": "d29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e"
+          },
+          "Linux": {
+            "filename": "gitleaks_8.30.1_linux_x64.tar.gz",
+            "sha256": "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+          }
+        }
+      }
+    },
+    "scans": {
+      "sast": {
+        "blocked": false,
+        "high": 0,
+        "medium": 0,
+        "low": 44,
+        "files": 201,
+        "lines": 31457
+      },
+      "sca": {
+        "blocked": false,
+        "vulnerabilities": 0,
+        "dependencies": 92,
+        "skipped": [
+          "ai-agent-platform"
+        ]
+      },
+      "secret-worktree": {
+        "blocked": false,
+        "raw_findings": 21,
+        "reviewed_fixtures": 21,
+        "unreviewed": 0,
+        "files": 680
+      },
+      "secret-history": {
+        "blocked": false,
+        "raw_findings": 19,
+        "reviewed_fixtures": 19,
+        "unreviewed": 0
+      }
+    }
+  },
+  "initial_failures_and_fixes": [
+    "扩展Schema测试错误修改了被类型字段覆盖的raw字段：改为按新清单解析，保留原始输入不可变断言。",
+    "旧合法调用无范围化批准、登记后修改配置：显式批准夹具，配置先于登记；生产门禁保持启用。",
+    "旧跨组织可见预期：改为拒绝其他组织目标，为其他组织登记独立已批准提供方验证裁剪。",
+    "普通暂停恢复保留定义批准；旧在途请求由凭据代次拦截，复审和显式撤销使批准失效。",
+    "新审计事件导致旧测试读取错误位置：按get_events倒序契约读取首项。",
+    "复审恢复误用只支持暂停状态的resume：改用受治理门禁保护的transition_to。",
+    "覆盖率核查补充管理错误、审批线程启动失败和审计异常用例；执行审计异常仅记录异常类型。"
+  ],
+  "limits": [
+    "单进程内存状态，无分布式失效或批准持久化迁移。",
+    "可信审批回调由宿主核验真实身份与审批依据；无管理UI或完整调用PDP/RBAC。",
+    "只接收已有清单/已知变更信号，未实现远端通知发现客户端。",
+    "字段保真与指纹不等于实现所有JSON Schema执行语义或输出校验。",
+    "无真实外部OAuth/Vault撤销；unsupported/unconfigured/partial继续阻止恢复。",
+    "主HTTP API尚未装配该模块；完整SEC-007、HAR-006和REL-009仍待验收。",
+    "不承诺取消已交给远端执行的请求。"
+  ],
+  "prior_accepted_evidence_unchanged": [
+    {
+      "path": "docs/delivery-reports/sec007-credential-invalidation-acceptance-2026-10-29.json",
+      "digest": "ada8db00f718caf3c04c62eb1b5cfc68f50828e7429a27fa5ac038b1ea6e2392"
+    },
+    {
+      "path": "docs/delivery-reports/sec007-lifecycle-acceptance-2026-10-29.json",
+      "digest": "bf9f5ea8d4363b5edaf7d0fb5d42d2f589b5f45d93c0676ecf33f79a8e27a81d"
+    },
+    {
+      "path": "docs/test-reports/sec007-credential-invalidation-2026-10-29.json",
+      "digest": "eaa85a1ac9d8b79c5cd9207ed27ff922f0bfdf53d23111570d14e8d70545ec0b"
+    },
+    {
+      "path": "docs/test-reports/sec007-credential-invalidation-2026-10-29.md",
+      "digest": "2dcb18d42a3efb237fe6e29bd1b82702019f42ade31c63fd247940aa25b0e068"
+    },
+    {
+      "path": "docs/test-reports/sec007-lifecycle-2026-10-28.json",
+      "digest": "e284a0c31be015206c8d4cce4d306d2508cd924ae2ed3bba61732764cfbf8f5d"
+    },
+    {
+      "path": "docs/test-reports/sec007-lifecycle-2026-10-28.md",
+      "digest": "3eab3bf53c3d65c00fa019d6d85fa937a023e1cf1f60c6f68000b377c5e3a543"
+    },
+    {
+      "path": "docs/test-reports/sec007-lifecycle-design-2026-10-28.json",
+      "digest": "7021aa5eb6e2c7097cc8d30b099e0b715d3576ff278929c5f452110b6ffe40f4"
+    }
+  ],
+  "shared_workspace": {
+    "external_files": [
+      "AGENTS.md",
+      "docs/development/TASKS.md",
+      "docs/development/task-board.json",
+      "docs/development/coordination-verification-2026-10-29.md",
+      "scripts/task_board.py",
+      "tests/test_task_board_coordination.py"
+    ],
+    "note": "其他会话新增协调机制和6项测试；本任务仅经命令交接legacy-schema-session并提交自身状态，保留其他会话实现与手册改动。"
+  },
+  "code_and_test_files": [
+    {
+      "path": "src/security/mcp_connector_governance/models/tool_schema.py",
+      "lines": 328,
+      "digest": "168a998c4025fc9cf3640aed9a4a9a54de7f2164c54c73254e57f5b8e05285dc"
+    },
+    {
+      "path": "src/security/mcp_connector_governance/registry/tool_registry.py",
+      "lines": 395,
+      "digest": "5d4d9397ff00c8afa180c8669ccfcab4f20ff9f8ff3d35fafd355ce467d8c961"
+    },
+    {
+      "path": "src/security/mcp_connector_governance/registry/tool_governance.py",
+      "lines": 580,
+      "digest": "9321a60b016ceffb6328e08f41c4bcfeec5b233798a2fb01790dcd7d1999d621"
+    },
+    {
+      "path": "src/security/mcp_connector_governance/registry/connector_registry.py",
+      "lines": 252,
+      "digest": "a3f591cd7b37be7f5493117714f55042365ae9ac21a7ad547065b8c6bd49984b"
+    },
+    {
+      "path": "src/security/mcp_connector_governance/lifecycle/lifecycle_manager.py",
+      "lines": 611,
+      "digest": "460c1b0f959285f21cfa4c3f8c9b9965af2e3d07d94cc8237ca3f6322e587f41"
+    },
+    {
+      "path": "src/security/mcp_connector_governance/protocol/mcp_handler.py",
+      "lines": 600,
+      "digest": "c64842412e13e2e5612d614de503a1b259073759d639c7059f3f29fe38558119"
+    },
+    {
+      "path": "src/security/mcp_connector_governance/execution/tool_executor_v2.py",
+      "lines": 576,
+      "digest": "f5ce7c43c26c0310ea9d9dd74e61a989f2fb4866d1cbd244152df17893cbc5b6"
+    },
+    {
+      "path": "tests/mcp_approval_helpers.py",
+      "lines": 37,
+      "digest": "1b4bf22acf4b222fa492393bf83b3967ec7efa9632f5dba808c5c99865749fd0"
+    },
+    {
+      "path": "tests/test_mcp_tool_approval_schema.py",
+      "lines": 733,
+      "digest": "56e84b926922aacfb42afdd2fe5ead9081ea33d8c56ef753d59c3278ee15313d"
+    },
+    {
+      "path": "tests/test_mcp_capability_trim.py",
+      "lines": 421,
+      "digest": "a0c23ca0d5a6caf17992d3f454163ac44e68a0d9f8d40ed820b6585e0df6c3a3"
+    },
+    {
+      "path": "tests/test_mcp_credential_invalidation.py",
+      "lines": 663,
+      "digest": "e47611fe9bb1417cf3d9a6bd381bc3e1eb6dcb807c3cada9d7d1073f61e4b402"
+    },
+    {
+      "path": "tests/test_mcp_egress_guard.py",
+      "lines": 295,
+      "digest": "1be500aa3e98eba7ef2b538064f10d4d5849d5f079e9903812d1b38c4d4d4dd4"
+    },
+    {
+      "path": "tests/test_mcp_governance_day2.py",
+      "lines": 440,
+      "digest": "9d911ddafff3e16a5ca2955599eedfcde6d7105c5f71986d5da10609cf2677a9"
+    },
+    {
+      "path": "tests/test_mcp_handler_blacklist.py",
+      "lines": 217,
+      "digest": "b97822d8ede0f131db1e4d786550684da7ae1455c62953013a7b6fdc15c4016d"
+    },
+    {
+      "path": "tests/test_mcp_l4_environment_gate.py",
+      "lines": 192,
+      "digest": "053a3502c260e6d901147aee1379bed74a605145ba5687323b8d84f8f0dca51e"
+    },
+    {
+      "path": "tests/test_mcp_lifecycle_discovery.py",
+      "lines": 513,
+      "digest": "6e2e070378d9eb35093132853bb9fa475c0d38bd0ebf27ee7d311e40ba074859"
+    },
+    {
+      "path": "tests/test_mcp_tool_executor_v2.py",
+      "lines": 434,
+      "digest": "464507c50c8ce59b567b9136e03de4cecffaf9471730266dcf7087e7bc247198"
+    },
+    {
+      "path": "tests/test_mcp_http_executor.py",
+      "lines": 210,
+      "digest": "304d1f15ec44126cd461407618bb65b0c1bc43c33c597ea29734599ed7fe0af0"
+    }
+  ],
+  "evidence_directory": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-tool-approval-20261029-a942yseg",
+  "evidence": [
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-tool-approval-20261029-a942yseg\\junit.xml",
+      "digest": "eb00053eb0aa1f4a6ae9237f3d63893fa51072cdc8f033b172d3dda146cbba44"
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-tool-approval-20261029-a942yseg\\full-tests.txt",
+      "digest": "8e33dce556a2a19c8f159450a64295072685dc20d9606aab8b9e0723cc715a06"
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-tool-approval-20261029-a942yseg\\coverage.json",
+      "digest": "62ca9ef2b432105f0d4e614bf8ffb5ad83f901aef4b2b4408600179d4d16eb7a"
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-tool-approval-20261029-a942yseg\\critical-coverage.json",
+      "digest": "10ecb34b0b68aa27624d5b53ad6397443bdc6557bc7fa3e42d0dd46a65a44d3f"
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-tool-approval-20261029-a942yseg\\static-checks.txt",
+      "digest": "be95859ea6e45ac901e8143c3eb3994c9de24602986f66403bc5c271cd632d55"
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-tool-approval-20261029-a942yseg\\pip-check.txt",
+      "digest": "672aec65a45bed50e70229c70934a7eebf0462595c459b83023027645d57cccf"
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-tool-approval-20261029-a942yseg\\security\\summary.json",
+      "digest": "2e1b98e103555bf5986a09ef06e6de4cb3b330f6162a4963cedd6597bf1f0d98"
+    }
+  ]
+}

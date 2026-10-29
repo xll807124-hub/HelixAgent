@@ -8,20 +8,20 @@ Prompt 注入 Policy Gateway + 审计日志集成测试 - Task 2.3 Day 2
 - PR Comment 生成
 - 端到端集成
 """
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
-from src.security.prompt_injection.policy_gateway import (
-    PromptInjectionPolicyGateway,
-    PromptInjectionPolicyDecision,
-    PromptInjectionPolicyEvaluation,
-    to_pr_comment,
-    to_policy_decision_event,
-)
+import pytest
+
 from src.security.prompt_injection.audit_logger import (
-    PromptInjectionAuditLogger,
     PromptInjectionAuditContext,
     PromptInjectionAuditEventType,
+    PromptInjectionAuditLogger,
+)
+from src.security.prompt_injection.policy_gateway import (
+    PromptInjectionPolicyDecision,
+    PromptInjectionPolicyGateway,
+    to_policy_decision_event,
+    to_pr_comment,
 )
 
 

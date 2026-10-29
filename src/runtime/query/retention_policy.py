@@ -9,7 +9,6 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class EventTypeCategory(str, Enum):
@@ -38,7 +37,7 @@ class RetentionPolicy:
     cold_storage_days: int
     """冷存储期限（天数）- 总保留期"""
     
-    legal_hold_days: Optional[int]
+    legal_hold_days: int | None
     """法定保留期限（天数）- None 表示永久保留"""
     
     def is_in_hot_storage(self, age_days: int) -> bool:

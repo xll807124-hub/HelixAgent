@@ -258,7 +258,9 @@ class TestPolicyGateway:
             action_id="action_003",
             action_name="manage_members",
             operation=Operation.MANAGE_MEMBERS,
-            rbac_result=allow_rbac_result,
+            rbac_result=allow_rbac_result.model_copy(
+                update={"operation": Operation.MANAGE_MEMBERS},
+            ),
             risk_level=RiskLevel.HIGH,
             resource_id="repo_001",
         )
@@ -277,7 +279,9 @@ class TestPolicyGateway:
             action_id="action_004",
             action_name="manage_policies",
             operation=Operation.MANAGE_POLICIES,
-            rbac_result=allow_rbac_result,
+            rbac_result=allow_rbac_result.model_copy(
+                update={"operation": Operation.MANAGE_POLICIES},
+            ),
             risk_level=RiskLevel.LOW,  # 风险等级低，但操作需要审批
             resource_id="repo_001",
         )
@@ -307,7 +311,7 @@ class TestPolicyGateway:
         # 第二次应该命中缓存
         result2 = await policy_gateway.evaluate(request)
         assert result2.decision == PolicyDecision.ALLOW
-        assert len(policy_gateway.audit_log) == 1  # 只有一条审计记录
+        assert len(policy_gateway.audit_log) == 2  # 缓存命中也必须留下审计记录
     
     @pytest.mark.asyncio
     async def test_audit_logging(self, policy_gateway, allow_rbac_result):

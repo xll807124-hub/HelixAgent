@@ -9,7 +9,6 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 
 class AccessLevel(str, Enum):
@@ -24,8 +23,8 @@ class UserContext:
     """用户上下文"""
     user_id: str
     organization_id: str
-    project_id: Optional[str] = None
-    repository_id: Optional[str] = None
+    project_id: str | None = None
+    repository_id: str | None = None
     roles: list[str] = field(default_factory=list)
 
 
@@ -44,7 +43,7 @@ class AccessController:
         "VIEWER": AccessLevel.BASIC,
     }
     
-    def __init__(self):
+    def __init__(self) -> None:
         pass
     
     def check_event_access(

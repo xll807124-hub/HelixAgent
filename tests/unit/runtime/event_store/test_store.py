@@ -300,9 +300,9 @@ class TestInMemoryEventStore:
             )
             await store.append(event)
 
-        # 最新序列应为4（下一个要分配的）
+        # 最新序列是已追加事件的序列号，不是下一个要分配的值
         seq = await store.get_latest_sequence(task_id)
-        assert seq == 4
+        assert seq == 3
 
     @pytest.mark.asyncio
     async def test_count_all_events(self, store):

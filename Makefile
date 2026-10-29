@@ -12,7 +12,7 @@ PYTEST   ?= $(PY) -m pytest
 COV      ?= --cov=src --cov-report=term-missing
 PYTHONSRC ?= src
 
-.PHONY: help setup install dev test test-fast test-unit test-integration lint format typecheck coverage clean check pre-commit
+.PHONY: help setup install dev test test-fast test-unit test-integration lint format typecheck coverage clean check security security-setup pre-commit
 
 help:
 	@echo.  目标：
@@ -30,15 +30,20 @@ help:
 setup:
 	@if not exist .venv (python -m venv .venv)
 	$(PIP) install --upgrade pip
-	$(PIP) install -r requirements-dev.txt
+	$(PY) -m pip install -e ".[dev]"
 	@echo.✅ setup 完成
 
 install:
-	$(PIP) install -r requirements.txt
-	$(PIP) install -r requirements-dev.txt
+	$(PY) -m pip install -e ".[dev]"
+
+security-setup:
+	$(PY) scripts/install_security_tools.py
+
+security:
+	$(PY) scripts/security_gate.py
 
 lint:
-	$(RUFF) check $(PYTHONSRC) tests
+	$(RUFF) check .
 
 format:
 	$(RUFF) format $(PYTHONSRC) tests

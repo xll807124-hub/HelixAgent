@@ -20,6 +20,8 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
 
+from .process import run_scanner_process
+
 logger = logging.getLogger(__name__)
 
 
@@ -198,21 +200,28 @@ class NPMScanner:
             )
             
             # npm audit 总是返回 JSON (即使出错)
-            if result.stdout:
-                data = json.loads(result.stdout)
-                return self._parse_npm_audit_output(data)
-            
-            return []
+            if result.returncode not in (0, 1) or not result.stdout.strip():
+                raise RuntimeError(f"npm audit failed (exit {result.returncode})")
+            data = json.loads(result.stdout)
+            if (
+                not isinstance(data, dict) or "error" in data
+                or not isinstance(data.get("vulnerabilities"), dict)
+            ):
+                raise ValueError("Invalid npm audit report")
+            findings = self._parse_npm_audit_output(data)
+            if result.returncode == 1 and not findings:
+                raise ValueError("npm audit failed without usable findings")
+            return findings
         
         except TimeoutError:
             logger.error("[NPM] 扫描超时")
-            return []
+            raise RuntimeError("npm audit timed out") from None
         except json.JSONDecodeError:
             logger.error("[NPM] JSON 解析失败")
-            return []
+            raise ValueError("Invalid npm audit JSON") from None
         except Exception as e:
             logger.error(f"[NPM] 审计执行失败: {e}")
-            return []
+            raise
     
     def _parse_npm_audit_output(self, data: dict) -> list[Vulnerability]:
         """解析 npm audit JSON 输出"""
@@ -242,7 +251,7 @@ class NPMScanner:
         vulns_by_package = data.get("vulnerabilities", {})
         
         for package_name, package_info in vulns_by_package.items():
-            via = package_info.get("via", [])
+            via = package_info.get("via", []) or [{}]
             
             for advisory in via:
                 if isinstance(advisory, dict):
@@ -253,7 +262,9 @@ class NPMScanner:
                     advisory = {}
                 
                 severity_str = package_info.get("severity", "low").lower()
-                severity = VulnerabilitySeverity[severity_str.upper()]
+                severity = VulnerabilitySeverity[
+                    "MEDIUM" if severity_str == "moderate" else severity_str.upper()
+                ]
                 
                 vulnerability = Vulnerability(
                     id=cve_id,
@@ -277,13 +288,4 @@ class NPMScanner:
         cwd: str | None = None
     ) -> subprocess.CompletedProcess:
         """异步运行子进程"""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
-            lambda: subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=cwd
-            )
-        )
+        return await run_scanner_process(cmd, cwd=cwd)

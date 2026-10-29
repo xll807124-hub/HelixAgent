@@ -213,6 +213,9 @@ class FileSearchTool(BaseTool):
         context: ExecutionContext,
     ) -> ToolResult:
         """执行文件搜索"""
+        validation = self.validate_input(params, context)
+        if not validation.valid:
+            return ToolResult(success=False, output=None, error="; ".join(validation.errors))
         try:
             # validate_input 已保证以下字段类型正确（params: dict 显式 cast）
             search_path = cast(str, params.get("search_path"))
@@ -296,6 +299,8 @@ class FileSearchTool(BaseTool):
         glob_pattern = f"**/*{pattern}*" if not pattern.startswith("*") else f"**/{pattern}"
 
         for match in root.glob(glob_pattern):
+            if not self._safe_search_target(match, root):
+                continue
             if self._should_exclude(match):
                 continue
 
@@ -345,6 +350,9 @@ class FileSearchTool(BaseTool):
             if not file_path.is_file():
                 continue
 
+            if not self._safe_search_target(file_path, root):
+                continue
+
             if self._should_exclude(file_path):
                 continue
 
@@ -380,6 +388,18 @@ class FileSearchTool(BaseTool):
                 continue  # 跳过无法读取的文件
 
         return results
+
+    def _safe_search_target(self, path: Path, root: Path) -> bool:
+        """Check the resolved target as well as the visible name before opening it."""
+        try:
+            resolved = path.resolve(strict=True)
+            return (
+                resolved.is_relative_to(root)
+                and not self._should_exclude(resolved)
+                and not self._is_sensitive_file(resolved)
+            )
+        except (OSError, ValueError, RuntimeError):
+            return False
 
     def _should_exclude(self, path: Path) -> bool:
         """检查路径是否应该被排除"""

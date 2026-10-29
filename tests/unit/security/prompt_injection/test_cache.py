@@ -1,11 +1,12 @@
 """
 LRU 缓存测试 - Task 2.3 Day 3
 """
-import pytest
 import threading
 import time
 
-from src.security.prompt_injection.cache import LRUCache, CacheStats
+import pytest
+
+from src.security.prompt_injection.cache import LRUCache
 
 
 class TestLRUCache:

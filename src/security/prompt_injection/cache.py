@@ -15,8 +15,7 @@ import logging
 import threading
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ class CacheEntry(Generic[V]):
     value: V
     timestamp: float = field(default_factory=time.time)
     access_count: int = 0
-    ttl_seconds: Optional[float] = None
+    ttl_seconds: float | None = None
 
     def is_expired(self) -> bool:
         """检查是否过期"""
@@ -86,7 +85,7 @@ class LRUCache(Generic[K, V]):
     def __init__(
         self,
         max_size: int = 1000,
-        ttl_seconds: Optional[float] = None,
+        ttl_seconds: float | None = None,
         thread_safe: bool = True,
     ):
         """
@@ -106,12 +105,12 @@ class LRUCache(Generic[K, V]):
         self._access_order: list[K] = []  # 访问顺序（从旧到新）
 
         # 线程安全
-        self._lock = threading.RLock() if thread_safe else None
+        self._lock = threading.RLock()
 
         # 统计
         self.stats = CacheStats(max_size=max_size)
 
-    def get(self, key: K) -> Optional[V]:
+    def get(self, key: K) -> V | None:
         """
         获取缓存值
 
@@ -127,7 +126,7 @@ class LRUCache(Generic[K, V]):
         else:
             return self._get_impl(key)
 
-    def _get_impl(self, key: K) -> Optional[V]:
+    def _get_impl(self, key: K) -> V | None:
         """实现获取逻辑"""
         if key not in self._cache:
             self.stats.total_misses += 1
@@ -153,7 +152,7 @@ class LRUCache(Generic[K, V]):
         self.stats.total_hits += 1
         return entry.value
 
-    def put(self, key: K, value: V, ttl_seconds: Optional[float] = None) -> None:
+    def put(self, key: K, value: V, ttl_seconds: float | None = None) -> None:
         """
         放入缓存值
 
@@ -168,7 +167,7 @@ class LRUCache(Generic[K, V]):
         else:
             self._put_impl(key, value, ttl_seconds)
 
-    def _put_impl(self, key: K, value: V, ttl_seconds: Optional[float]) -> None:
+    def _put_impl(self, key: K, value: V, ttl_seconds: float | None) -> None:
         """实现放入逻辑"""
         ttl = ttl_seconds if ttl_seconds is not None else self.ttl_seconds
 

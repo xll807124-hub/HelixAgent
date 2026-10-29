@@ -167,7 +167,17 @@ class TestGitleaksScanner:
         with patch.object(
             scanner, "_run_subprocess", new_callable=AsyncMock
         ) as mock_run:
-            mock_run.return_value = Mock(returncode=0)
+            async def write_empty_report(cmd):
+                import json
+                from pathlib import Path
+
+                report = next(
+                    arg.split("=", 1)[1] for arg in cmd if arg.startswith("--report-path=")
+                )
+                Path(report).write_text(json.dumps([]), encoding="utf-8")
+                return Mock(returncode=0)
+
+            mock_run.side_effect = write_empty_report
             
             result = await scanner.scan("/path/to/repo")
             

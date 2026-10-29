@@ -1,0 +1,799 @@
+{
+  "task": "Stage 0 / Step 2 / SEC-007 lifecycle + dependency/security-gate extension",
+  "date": "2026-10-28",
+  "user_authorized_scope_extension": true,
+  "user_acceptance": false,
+  "task_complete": false,
+  "next_task_started": false,
+  "status": "security-gates-passed-awaiting-user-acceptance",
+  "environment": {
+    "platform": "win32",
+    "python": "3.13.18 (main, Oct 26 2026, 14:10:48) [MSC v.1944 64 bit (AMD64)]",
+    "head": "f4bdbb58964beae49a1455b0524fc402a772b4fa",
+    "worktree_dirty": true,
+    "remote_ci_executed": false
+  },
+  "test_results": {
+    "passed": 2100,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 3,
+    "duration_seconds": 53.412,
+    "new_gate_tests": 53,
+    "lifecycle_tests": 46,
+    "warnings": 2126,
+    "skip_reason": "Existing real Docker tests require a running daemon"
+  },
+  "static_checks": {
+    "ruff_repository_exit": 0,
+    "ruff_new_scripts_exit": 0,
+    "mypy_exit": 0,
+    "mypy_files": 196,
+    "pip_check_exit": 0
+  },
+  "coverage": {
+    "src": {
+      "covered_lines": 10557,
+      "num_statements": 12274,
+      "covered_branches": 2081,
+      "num_branches": 2794,
+      "line_percent": 86.01108033240997,
+      "branch_percent": 74.48103078024337
+    },
+    "gate_scripts": {
+      "scripts\\install_security_tools.py": {
+        "covered_lines": 39,
+        "num_statements": 41,
+        "percent_covered": 92.15686274509804,
+        "percent_covered_display": "92",
+        "missing_lines": 2,
+        "excluded_lines": 0,
+        "percent_statements_covered": 95.1219512195122,
+        "percent_statements_covered_display": "95",
+        "num_branches": 10,
+        "num_partial_branches": 2,
+        "covered_branches": 8,
+        "missing_branches": 2,
+        "percent_branches_covered": 80.0,
+        "percent_branches_covered_display": "80"
+      },
+      "scripts\\security_gate.py": {
+        "covered_lines": 166,
+        "num_statements": 171,
+        "percent_covered": 96.01593625498008,
+        "percent_covered_display": "96",
+        "missing_lines": 5,
+        "excluded_lines": 0,
+        "percent_statements_covered": 97.07602339181287,
+        "percent_statements_covered_display": "97",
+        "num_branches": 80,
+        "num_partial_branches": 5,
+        "covered_branches": 75,
+        "missing_branches": 5,
+        "percent_branches_covered": 93.75,
+        "percent_branches_covered_display": "94"
+      }
+    },
+    "lifecycle_critical_methods": [
+      {
+        "file": "src\\security\\mcp_connector_governance\\execution\\tool_executor_v2.py",
+        "method": "ToolExecutor.execute_tool",
+        "covered_lines": 26,
+        "statements": 26
+      },
+      {
+        "file": "src\\security\\mcp_connector_governance\\execution\\tool_executor_v2.py",
+        "method": "ToolExecutor.execute_tool.denied",
+        "covered_lines": 2,
+        "statements": 2
+      },
+      {
+        "file": "src\\security\\mcp_connector_governance\\policies\\policy_engine.py",
+        "method": "PolicyEngine.evaluate_connector_access",
+        "covered_lines": 30,
+        "statements": 30
+      },
+      {
+        "file": "src\\security\\mcp_connector_governance\\protocol\\mcp_handler.py",
+        "method": "MCPProtocolHandler._handle_tools_list",
+        "covered_lines": 19,
+        "statements": 19
+      },
+      {
+        "file": "src\\security\\mcp_connector_governance\\protocol\\mcp_handler.py",
+        "method": "MCPProtocolHandler._handle_tools_call",
+        "covered_lines": 31,
+        "statements": 31
+      },
+      {
+        "file": "src\\security\\mcp_connector_governance\\protocol\\mcp_handler.py",
+        "method": "MCPProtocolHandler._handle_tools_call.unavailable",
+        "covered_lines": 2,
+        "statements": 2
+      },
+      {
+        "file": "src\\security\\mcp_connector_governance\\protocol\\mcp_handler.py",
+        "method": "MCPProtocolHandler._available_connector",
+        "covered_lines": 13,
+        "statements": 13
+      },
+      {
+        "file": "src\\security\\mcp_connector_governance\\protocol\\mcp_handler.py",
+        "method": "MCPProtocolHandler._apply_capability_trim",
+        "covered_lines": 18,
+        "statements": 18
+      },
+      {
+        "file": "src\\security\\mcp_connector_governance\\registry\\tool_registry.py",
+        "method": "ToolRegistry.register_tool",
+        "covered_lines": 15,
+        "statements": 15
+      },
+      {
+        "file": "src\\security\\mcp_connector_governance\\registry\\tool_registry.py",
+        "method": "ToolRegistry.get_tool_for_connector",
+        "covered_lines": 2,
+        "statements": 2
+      },
+      {
+        "file": "src\\security\\mcp_connector_governance\\registry\\tool_registry.py",
+        "method": "ToolRegistry.unregister_connector",
+        "covered_lines": 9,
+        "statements": 9
+      }
+    ]
+  },
+  "security": {
+    "status": "passed",
+    "tools": {
+      "bandit": "1.9.4",
+      "pip-audit": "2.9.0",
+      "gitleaks": {
+        "version": "8.30.1",
+        "assets": {
+          "Windows": {
+            "filename": "gitleaks_8.30.1_windows_x64.zip",
+            "sha256": "d29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e"
+          },
+          "Linux": {
+            "filename": "gitleaks_8.30.1_linux_x64.tar.gz",
+            "sha256": "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+          }
+        }
+      }
+    },
+    "scans": {
+      "sast": {
+        "blocked": false,
+        "high": 0,
+        "medium": 0,
+        "low": 44,
+        "files": 199,
+        "lines": 30105
+      },
+      "sca": {
+        "blocked": false,
+        "vulnerabilities": 0,
+        "dependencies": 92,
+        "skipped": [
+          "ai-agent-platform"
+        ]
+      },
+      "secret-worktree": {
+        "blocked": false,
+        "raw_findings": 20,
+        "reviewed_fixtures": 20,
+        "unreviewed": 0,
+        "files": 660
+      },
+      "secret-history": {
+        "blocked": false,
+        "raw_findings": 19,
+        "reviewed_fixtures": 19,
+        "unreviewed": 0
+      }
+    }
+  },
+  "sca_dependencies": [
+    {
+      "name": "ai-agent-platform",
+      "skip_reason": "distribution marked as editable"
+    },
+    {
+      "name": "aiohappyeyeballs",
+      "version": "2.7.1",
+      "vulns": []
+    },
+    {
+      "name": "aiohttp",
+      "version": "3.14.5",
+      "vulns": []
+    },
+    {
+      "name": "aiosignal",
+      "version": "1.4.0",
+      "vulns": []
+    },
+    {
+      "name": "annotated-doc",
+      "version": "0.0.5",
+      "vulns": []
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.8.0",
+      "vulns": []
+    },
+    {
+      "name": "anyio",
+      "version": "4.15.1",
+      "vulns": []
+    },
+    {
+      "name": "argcomplete",
+      "version": "3.7.2",
+      "vulns": []
+    },
+    {
+      "name": "attrs",
+      "version": "26.1.0",
+      "vulns": []
+    },
+    {
+      "name": "bandit",
+      "version": "1.9.4",
+      "vulns": []
+    },
+    {
+      "name": "boolean-py",
+      "version": "5.0",
+      "vulns": []
+    },
+    {
+      "name": "cachecontrol",
+      "version": "0.14.4",
+      "vulns": []
+    },
+    {
+      "name": "certifi",
+      "version": "2026.10.23",
+      "vulns": []
+    },
+    {
+      "name": "cffi",
+      "version": "2.1.1",
+      "vulns": []
+    },
+    {
+      "name": "cfgv",
+      "version": "3.5.0",
+      "vulns": []
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.2",
+      "vulns": []
+    },
+    {
+      "name": "click",
+      "version": "8.5.0",
+      "vulns": []
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6",
+      "vulns": []
+    },
+    {
+      "name": "colorlog",
+      "version": "6.12.0",
+      "vulns": []
+    },
+    {
+      "name": "coverage",
+      "version": "7.17.0",
+      "vulns": []
+    },
+    {
+      "name": "cryptography",
+      "version": "50.0.2",
+      "vulns": []
+    },
+    {
+      "name": "cyclonedx-python-lib",
+      "version": "9.1.0",
+      "vulns": []
+    },
+    {
+      "name": "defusedxml",
+      "version": "0.7.1",
+      "vulns": []
+    },
+    {
+      "name": "deprecated",
+      "version": "3.0.0",
+      "vulns": []
+    },
+    {
+      "name": "distlib",
+      "version": "0.4.4",
+      "vulns": []
+    },
+    {
+      "name": "docker",
+      "version": "7.1.0",
+      "vulns": []
+    },
+    {
+      "name": "fastapi",
+      "version": "0.135.4",
+      "vulns": []
+    },
+    {
+      "name": "filelock",
+      "version": "4.2.4",
+      "vulns": []
+    },
+    {
+      "name": "frozenlist",
+      "version": "1.8.0",
+      "vulns": []
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "vulns": []
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9",
+      "vulns": []
+    },
+    {
+      "name": "httptools",
+      "version": "0.9.0",
+      "vulns": []
+    },
+    {
+      "name": "httpx",
+      "version": "0.27.2",
+      "vulns": []
+    },
+    {
+      "name": "identify",
+      "version": "2.6.20",
+      "vulns": []
+    },
+    {
+      "name": "idna",
+      "version": "3.20",
+      "vulns": []
+    },
+    {
+      "name": "importlib-metadata",
+      "version": "8.4.0",
+      "vulns": []
+    },
+    {
+      "name": "iniconfig",
+      "version": "2.3.1",
+      "vulns": []
+    },
+    {
+      "name": "license-expression",
+      "version": "30.4.4",
+      "vulns": []
+    },
+    {
+      "name": "markdown-it-py",
+      "version": "4.2.0",
+      "vulns": []
+    },
+    {
+      "name": "mdurl",
+      "version": "0.1.2",
+      "vulns": []
+    },
+    {
+      "name": "msgpack",
+      "version": "1.2.4",
+      "vulns": []
+    },
+    {
+      "name": "multidict",
+      "version": "6.9.1",
+      "vulns": []
+    },
+    {
+      "name": "mypy",
+      "version": "1.13.0",
+      "vulns": []
+    },
+    {
+      "name": "mypy-extensions",
+      "version": "1.1.0",
+      "vulns": []
+    },
+    {
+      "name": "nodeenv",
+      "version": "1.11.0",
+      "vulns": []
+    },
+    {
+      "name": "nox",
+      "version": "2024.4.15",
+      "vulns": []
+    },
+    {
+      "name": "opentelemetry-api",
+      "version": "1.45.1",
+      "vulns": []
+    },
+    {
+      "name": "opentelemetry-sdk",
+      "version": "1.45.1",
+      "vulns": []
+    },
+    {
+      "name": "opentelemetry-semantic-conventions",
+      "version": "0.66b1",
+      "vulns": []
+    },
+    {
+      "name": "packageurl-python",
+      "version": "0.17.6",
+      "vulns": []
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "vulns": []
+    },
+    {
+      "name": "pip",
+      "version": "26.2.2",
+      "vulns": []
+    },
+    {
+      "name": "pip-api",
+      "version": "0.0.35",
+      "vulns": []
+    },
+    {
+      "name": "pip-audit",
+      "version": "2.9.0",
+      "vulns": []
+    },
+    {
+      "name": "pip-requirements-parser",
+      "version": "32.0.1",
+      "vulns": []
+    },
+    {
+      "name": "platformdirs",
+      "version": "4.13.7",
+      "vulns": []
+    },
+    {
+      "name": "pluggy",
+      "version": "1.7.0",
+      "vulns": []
+    },
+    {
+      "name": "pre-commit",
+      "version": "3.8.0",
+      "vulns": []
+    },
+    {
+      "name": "propcache",
+      "version": "0.5.4",
+      "vulns": []
+    },
+    {
+      "name": "py-serializable",
+      "version": "2.1.0",
+      "vulns": []
+    },
+    {
+      "name": "pycparser",
+      "version": "3.12",
+      "vulns": []
+    },
+    {
+      "name": "pydantic",
+      "version": "2.9.2",
+      "vulns": []
+    },
+    {
+      "name": "pydantic-core",
+      "version": "2.23.4",
+      "vulns": []
+    },
+    {
+      "name": "pydantic-settings",
+      "version": "2.6.1",
+      "vulns": []
+    },
+    {
+      "name": "pygments",
+      "version": "2.21.0",
+      "vulns": []
+    },
+    {
+      "name": "pyjwt",
+      "version": "2.15.1",
+      "vulns": []
+    },
+    {
+      "name": "pyparsing",
+      "version": "3.3.3",
+      "vulns": []
+    },
+    {
+      "name": "pytest",
+      "version": "9.0.3",
+      "vulns": []
+    },
+    {
+      "name": "pytest-asyncio",
+      "version": "1.4.1",
+      "vulns": []
+    },
+    {
+      "name": "pytest-cov",
+      "version": "5.0.0",
+      "vulns": []
+    },
+    {
+      "name": "python-discovery",
+      "version": "1.6.7",
+      "vulns": []
+    },
+    {
+      "name": "python-dotenv",
+      "version": "1.2.4",
+      "vulns": []
+    },
+    {
+      "name": "pywin32",
+      "version": "312",
+      "vulns": []
+    },
+    {
+      "name": "pyyaml",
+      "version": "6.0.3",
+      "vulns": []
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2",
+      "vulns": []
+    },
+    {
+      "name": "rich",
+      "version": "15.0.0",
+      "vulns": []
+    },
+    {
+      "name": "ruff",
+      "version": "0.7.4",
+      "vulns": []
+    },
+    {
+      "name": "sniffio",
+      "version": "1.3.1",
+      "vulns": []
+    },
+    {
+      "name": "sortedcontainers",
+      "version": "2.4.0",
+      "vulns": []
+    },
+    {
+      "name": "starlette",
+      "version": "1.3.1",
+      "vulns": []
+    },
+    {
+      "name": "stevedore",
+      "version": "5.9.1",
+      "vulns": []
+    },
+    {
+      "name": "toml",
+      "version": "0.10.2",
+      "vulns": []
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0",
+      "vulns": []
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.4",
+      "vulns": []
+    },
+    {
+      "name": "urllib3",
+      "version": "2.8.0",
+      "vulns": []
+    },
+    {
+      "name": "uvicorn",
+      "version": "0.32.1",
+      "vulns": []
+    },
+    {
+      "name": "virtualenv",
+      "version": "21.15.1",
+      "vulns": []
+    },
+    {
+      "name": "watchfiles",
+      "version": "1.3.0",
+      "vulns": []
+    },
+    {
+      "name": "websockets",
+      "version": "17.3",
+      "vulns": []
+    },
+    {
+      "name": "wrapt",
+      "version": "2.5.1",
+      "vulns": []
+    },
+    {
+      "name": "yarl",
+      "version": "1.25.1",
+      "vulns": []
+    },
+    {
+      "name": "zipp",
+      "version": "4.1.2",
+      "vulns": []
+    }
+  ],
+  "positive_controls": {
+    "sast": {
+      "exit": 1,
+      "high": 1
+    },
+    "secret": {
+      "exit": 1,
+      "findings": 1,
+      "fully_redacted": true
+    }
+  },
+  "actual_network_failure": {
+    "scanner_exit": 1,
+    "report_exists": false,
+    "gate_rejects_scan": true
+  },
+  "source_sha256": {
+    "pyproject.toml": "9aff4f3ab0ea9e25342708be962abc95a154e73b29b311721e8cf9acc8304b65",
+    "requirements.txt": "1d95b6b9d4198ca01cced897cdf2dc7ffcb6d6353a94b46115b3cc37dd659dc5",
+    "requirements-dev.txt": "276ad465e9115e71700d52e03d05cb709646ec22b61fc670e2b6852f75bcbf3f",
+    "scripts/security_gate.py": "94f8b7833c65d55794932fe322587fdd3b7eb081582fc876938f7cc9dbd2fca6",
+    "scripts/install_security_tools.py": "7af341caa05842431e1acbf3ab21b7e3b7269d01494a814354de289b890f4737",
+    "tests/test_security_gate.py": "ed1fa1cc109a0c13caea2e8b3fa17c1531c14f981701c598a7b7b2a8a760ff5f",
+    "security/gitleaks.toml": "b097ab2d8c12418462eb861fe13e4d74928087d5de23cb168bd7d5932744b7cf",
+    "security/secret-fixtures.json": "0a67e566f3c0018f203f54d3997c201fa9aaa676466481248aca790ba0db8d67",
+    "security/tools.json": "99f90fd70e0643102645696b3b1b220512398cc2208d9af37cac74a6153f389f",
+    "noxfile.py": "38bc963c2a5bd9b5bd5f0d8b9243d128d0274ac575029cd254e95214f6448dbd",
+    "scripts/make.ps1": "02dea7ec1d3fe55f23a675ab95c3dcbc9bbe4dff48d865212be4442693808d06",
+    "Makefile": "92f20668ade65a3bdc072e9a42751f95b22aef3d773db4bc5d6d8c555503ab4d",
+    ".github/workflows/sca-security-scan.yml": "bc50eb241829a4ecf65741524d9ede01b07ceed2a066303df04709a6c1829e1f"
+  },
+  "evidence": [
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-security-gate-20261028-00mx_vmo\\all-tests-final.xml",
+      "sha256": "5023f989a6530d25a2ff46f470cb6a21deb0d28a0b7c727d4f335e3e47248514",
+      "bytes": 299837
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-security-gate-20261028-00mx_vmo\\coverage-final.json",
+      "sha256": "d36eef56294fd6dad5f681c57af763aee92488c9d466a1366942425f28833cd5",
+      "bytes": 1565700
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-security-gate-20261028-00mx_vmo\\tests-final.log",
+      "sha256": "499b8f56a5062677a5d7f801a7304033cadf2d6c374ff0c96ca96ae38e78c6f1",
+      "bytes": 54397
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-security-gate-20261028-00mx_vmo\\ruff.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "bytes": 19
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-security-gate-20261028-00mx_vmo\\ruff-security-scripts.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "bytes": 19
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-security-gate-20261028-00mx_vmo\\mypy.log",
+      "sha256": "200e1c1f307f8c59f14b6e80a0061909a35a6be31a479ec4725e5319c3f44845",
+      "bytes": 46
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-security-gate-20261028-00mx_vmo\\pip-check.log",
+      "sha256": "672aec65a45bed50e70229c70934a7eebf0462595c459b83023027645d57cccf",
+      "bytes": 31
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-security-gate-20261028-00mx_vmo\\positive-controls.json",
+      "sha256": "533a51cc6728113d78b2795d9ab6f617677044c102eaa3b47dc0581a4c4ae4b2",
+      "bytes": 138
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-security-gate-20261028-00mx_vmo\\network-failure-probe.json",
+      "sha256": "7e42f3144349cb571cdad9765a05dbbb3d8032c936337b7a78cdb14852c7ce04",
+      "bytes": 82
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-security-gate-20261028-00mx_vmo\\document-validation.json",
+      "sha256": "909d759fb395c9b636cbd4f2df8fe4ac33665ff89afe3d12406fdecb9dca3f84",
+      "bytes": 834
+    },
+    {
+      "path": "C:\\Users\\93478\\AppData\\Local\\Temp\\ai-agent-security-gate-20261028-00mx_vmo\\freeze-before.txt",
+      "sha256": "ba3b7b968d29dae733bd8ce706dffc1b113a625cff0a008e0de54cfc2bc4932b",
+      "bytes": 1785
+    },
+    {
+      "path": "D:\\project\\Ai_agent\\.security-reports\\sast.json",
+      "sha256": "94b70c90fc7c32713d2e74917cf49172f09f224837daf8c15c322d38e08a29c4",
+      "bytes": 108902
+    },
+    {
+      "path": "D:\\project\\Ai_agent\\.security-reports\\sast.log",
+      "sha256": "131dd70bb69446cabfcb5b347810321a0f18bbd52882d81425e8c53b8902dfa7",
+      "bytes": 246
+    },
+    {
+      "path": "D:\\project\\Ai_agent\\.security-reports\\sca.json",
+      "sha256": "be9fc568528bdefc1869c43cc5b6a229030b471dbb01864cccebf6335624270f",
+      "bytes": 5314
+    },
+    {
+      "path": "D:\\project\\Ai_agent\\.security-reports\\sca.log",
+      "sha256": "b98c73e7aebf3fcd1988420a44a53c68e9a9ace6dbb551bde3a7ecf1886c7ba3",
+      "bytes": 429
+    },
+    {
+      "path": "D:\\project\\Ai_agent\\.security-reports\\secret-history.json",
+      "sha256": "8b2d01739be76f31973d55c791e1ba39bf70f181fb5540bc8b03717e608247a3",
+      "bytes": 30731
+    },
+    {
+      "path": "D:\\project\\Ai_agent\\.security-reports\\secret-history.log",
+      "sha256": "4cfa199441d730aaf0034f40d491746036a66a6b131313f31cbcf88f63ddc7c5",
+      "bytes": 117
+    },
+    {
+      "path": "D:\\project\\Ai_agent\\.security-reports\\secret-worktree.json",
+      "sha256": "7bbadd0f8a92a50217699b0cfc56605ed4a2bfc982825b48256d324aba16259e",
+      "bytes": 14059
+    },
+    {
+      "path": "D:\\project\\Ai_agent\\.security-reports\\secret-worktree.log",
+      "sha256": "d2e5bbc4032a4304303ad24f248b9225674113827616c1eba9f9185ebe4dc17a",
+      "bytes": 84
+    },
+    {
+      "path": "D:\\project\\Ai_agent\\.security-reports\\summary.json",
+      "sha256": "a966a0856cafafb6e8cf355e6d422d0c745103de5bf1ff1b5d3f9441fa630731",
+      "bytes": 1166
+    }
+  ],
+  "historical_lifecycle_json_preserved": true,
+  "remaining_scope_limits": [
+    "3 Docker integration tests not executed",
+    "Linux/Python 3.12 CI not executed remotely",
+    "44 low-severity SAST findings retained; zero high/medium",
+    "Full HAR-006 / REL-009 and remaining SEC-007 features outside this slice",
+    "Secret scan covers repository-managed/non-ignored files and local Git history; not local ignored .env, external submodule history or entire machine"
+  ]
+}

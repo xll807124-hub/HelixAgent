@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import subprocess
+from pathlib import Path
 
 from ..base import (
     BaseTool,
@@ -114,6 +115,16 @@ class SafeShellTool(BaseTool):
             return ValidationResult(valid=False, errors=errors)
 
         command = params.get("command", "")
+        cwd = params.get("cwd")
+        timeout = params.get("timeout", 60)
+        if not isinstance(command, str) or not isinstance(cwd, str):
+            return ValidationResult(valid=False, errors=["command and cwd must be strings"])
+        if type(timeout) is not int or timeout <= 0:
+            return ValidationResult(valid=False, errors=["timeout must be a positive integer"])
+        if not isinstance(params.get("env", {}), dict):
+            return ValidationResult(valid=False, errors=["env must be an object"])
+        if context.read_only:
+            errors.append("Shell execution is not allowed in read-only mode")
 
         # 命令白名单检查
         cmd_parts = command.split()
@@ -134,15 +145,15 @@ class SafeShellTool(BaseTool):
                     break
 
         # 工作目录权限检查
-        cwd = params.get("cwd")
         if context.allowed_paths:
-            allowed = False
-            for allowed_path in context.allowed_paths:
-                if str(cwd).startswith(str(allowed_path)):
-                    allowed = True
-                    break
-            if not allowed:
-                errors.append(f"Working directory not in allowed_paths: {cwd}")
+            try:
+                resolved = Path(cwd).resolve()
+                if not any(
+                    resolved.is_relative_to(Path(p).resolve()) for p in context.allowed_paths
+                ):
+                    errors.append(f"Working directory not in allowed_paths: {cwd}")
+            except (OSError, ValueError, RuntimeError):
+                errors.append("Invalid working directory")
 
         return ValidationResult(valid=not bool(errors), errors=errors)
 
@@ -152,10 +163,13 @@ class SafeShellTool(BaseTool):
         context: ExecutionContext,
     ) -> ToolResult:
         """执行命令"""
+        validation = await self.validate_input(params, context)
+        if not validation.valid:
+            return ToolResult(success=False, output=None, error="; ".join(validation.errors))
         try:
             command = params.get("command", "")
             cwd = params.get("cwd")
-            timeout = params.get("timeout", 60)
+            timeout = min(params.get("timeout", 60), context.timeout_seconds)
             env_vars = params.get("env", {})
 
             # 限制环境变量（仅允许安全的变量）

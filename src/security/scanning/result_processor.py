@@ -118,10 +118,6 @@ class ScanResultProcessor:
           - 否则 → ALLOW
         """
         
-        # 扫描失败
-        if not codeql_result.success or not gitleaks_result.success:
-            return ScanDecision.NEUTRAL
-        
         # 密钥检测 (任何 Secret 都拦截)
         if gitleaks_count > 0:
             return ScanDecision.BLOCK
@@ -131,6 +127,10 @@ class ScanResultProcessor:
             return ScanDecision.BLOCK
         if codeql_high >= 3:
             return ScanDecision.BLOCK
+
+        # Preserve confirmed findings even when the other scanner failed.
+        if not codeql_result.success or not gitleaks_result.success:
+            return ScanDecision.NEUTRAL
         
         return ScanDecision.ALLOW
     

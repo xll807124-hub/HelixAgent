@@ -1,8 +1,10 @@
-<<<<<<< HEAD
-# AI Agent 平台项目
+# AI Agent 平台项目（HelixAgent）
 
-> **项目状态**: 设计阶段  
-> **最后更新**: 2026-09-27
+> **项目状态**: 开发进行中；整体阶段完成状态以执行手册正文为准
+> **最后核验**: 测试及用户验收 2026-10-29
+> **当前阶段**: 阶段 0 / 步骤 2；生命周期切片、依赖/扫描配置及凭据失效联动均 ✅ 已于 2026-10-29 验收。当前本会话任务为[工具批准与 Schema 变更复审](./docs/review/sec007-tool-approval-schema-design-2026-10-29.md)，三点方案已于 2026-10-29 获用户确认，实现与完整验证完成，已交付待用户验收。
+> **本轮验证**: [工具批准与 Schema 复审报告](./docs/test-reports/sec007-tool-approval-schema-2026-10-29.md)：2217 通过 / 0 失败 / 0 跳过，65 项专项，92 个关键方法 100% 行覆盖。Ruff/mypy/pip check及SAST/SCA/Secret全部通过；当前已交付待用户验收。
+> **已验收基线**: [凭据失效验收记录](./docs/delivery-reports/sec007-credential-invalidation-acceptance-2026-10-29.json)：2146 通过 / 0 失败 / 0 跳过，SAST/SCA/Secret 通过。[原始交付报告](./docs/test-reports/sec007-credential-invalidation-2026-10-29.md)保留；下文里程碑数字仅作历史背景。
 
 ---
 
@@ -17,10 +19,60 @@
 
 ## 🚀 快速开始
 
-### 核心文档
+### 项目文档
 
-- **[需求设计方案](./需求设计方案.md)** - 项目总体需求、架构设计和开发路线图
+- **[项目开发执行手册](./项目开发执行手册.md)** - 详细开发路线图与验收标准
+- **[需求设计方案](./需求设计方案.md)** - 项目总体需求与架构设计
+- **[代码与文档对齐分析](./CODE_DOCUMENTATION_ALIGNMENT_ANALYSIS_2026-10-12.md)** - 现有代码 vs 文档状态分析
 - **[详细设计规范目录](./docs/design-specs/README.md)** - 所有详细设计文档的入口
+
+文档按以下用途阅读：
+
+| 文档类型 | 位置 | 用途 |
+|---|---|---|
+| 当前进度与执行计划 | `项目开发执行手册.md` 顶部 | 当前阶段、最新核验结果与下一步工作 |
+| 需求与设计规范 | `需求设计方案.md`、`docs/design-specs/` | 需求边界、模块设计、验收标准 |
+| API 与实现说明 | `docs/api/`、`docs/implementation/`、`docs/runtime/` | 接口配置、实现细节和使用方式 |
+| 测试证据与验收差距 | `docs/test-reports/`、`docs/delivery-reports/` | 实测结果、已知限制及未完成项 |
+| 历史阶段记录 | 根目录带日期的报告、`docs/testing/` | 保留阶段背景；与最新核验冲突时以最新实测为准 |
+
+### 本地质量检查（Windows）
+
+使用 Python 3.12/3.13。现有 `.venv` 已恢复为 Python 3.13.18；原损坏环境保存在
+`.venv.pre-repair-20261028`。重新安装及检查：
+
+```powershell
+.\scripts\make.ps1 install
+.\scripts\make.ps1 check
+# 也可使用同一环境运行 Nox
+.\.venv\Scripts\python.exe -m nox -s lint typecheck test
+```
+
+`check` 依次运行全仓 Ruff、源码 mypy 和测试，任一步失败立即返回非零退出码。
+新建环境可运行 `scripts/make.ps1 setup -Python <Python3.13完整路径>`。
+
+安全扫描单独运行（SAST/SCA/Secret，工具错误和超时均阻塞）：
+
+```powershell
+.\scripts\make.ps1 security-setup
+.\scripts\make.ps1 security
+# 同一入口也可使用 Nox
+.\.venv\Scripts\python.exe -m nox -s security
+```
+
+工具版本、扫描范围、样例误报复核和报告格式见[安全门禁说明](./docs/security-gate.md)。
+
+Docker SDK 为可选依赖。真实容器测试需先启动 Docker，再显式启用：
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e '.[dev,sandbox]'
+$env:AI_AGENT_RUN_DOCKER_TESTS = '1'
+.\.venv\Scripts\python.exe -m pytest tests/unit/security/sandbox/test_docker_sandbox.py -m integration
+```
+
+首次真实容器测试会按需拉取 `python:3.12-alpine`，可用 `AI_AGENT_DOCKER_TEST_IMAGE` 指定镜像。
+GitHub 凭据测试使用本地生成的 RSA 密钥和 HTTP 模拟服务，不访问真实 GitHub App。
+`EventQueryService.query_events` 现在是异步接口，调用方须使用 `await`；默认不返回载荷。
 
 ### 项目目标
 
@@ -115,7 +167,47 @@ Ai_agent/
 
 ---
 
-## 🏗️ 总体架构
+## 📊 当前实现进度（2026-10-12）
+
+### 代码统计
+
+| 指标 | 数值 | 状态 |
+|------|------|------|
+| **实现代码行数** | ~16,500 行 | ✅ 生产级 |
+| **单元测试** | 885+ 个 | ✅ 100% 通过 |
+| **代码覆盖率** | 90-96% | ✅ 优秀 |
+| **Lint 错误** | 0 | ✅ |
+| **Type 错误** | 0 | ✅ |
+
+### 阶段完成情况
+
+- ✅ **阶段 1.1** Walking Skeleton (2026-09-30)：Event Store + 状态投影 (~2,500 行，150+ 测试)
+- ✅ **阶段 1.2** 核心运行时 (2026-10-07)：7 个运行时模块 (~10,724 行，675+ 测试)
+- ✅ **阶段 1.3** 基础安全 (2026-10-09)：RBAC + Kill Switch (~1,523 行，20+ 测试)
+- ✅ **阶段 1.4** 工具集：File/Git/Test/Shell 完全实现（超前完成）
+- 🔄 **阶段 2** 可控上线：Task 2.1 SAST/Secret 完成，Task 2.2 SCA 进行中
+
+### 模块实现对标
+
+| 模块 | 设计完成 | 代码实现 | 对齐度 |
+|------|---------|---------|--------|
+| 运行时基础 (RT-001~008) | ✅ | 95% | ⚠️ 缺 RT-008 脱敏 |
+| 安全体系 (SEC-001~010) | ✅ | 70% | ⚠️ 缺 SEC-007/010 |
+| 可靠性 (REL-001~009) | ✅ | 60% | ⚠️ 缺补偿工作流 |
+| 其他 (CTX/MEM/HAR/OBS/EVA) | ✅ | 0-50% | 📋 后续阶段 |
+
+### 后续计划（优先级）
+
+**【P0 - 本周】**
+- 补完 RT-008 脱敏与权限过滤（1 天）
+- 补完 SEC-007 MCP 连接器治理（1.5 天）
+- 完成设计-代码对齐评审
+
+**【P1 - 下周】**
+- 继续推进阶段 2（Task 2.2~2.8）
+- 补完其他高优先级缺失项
+
+---
 
 ### 核心设计原则
 
@@ -312,7 +404,3 @@ Ai_agent/
 
 **文档维护**: 架构团队  
 **最后更新**: 2026-10-08
-=======
-# HelixAgent
-agent 项目
->>>>>>> 96c0c212620050d95e49ef7a6ce1c12fed81a1de

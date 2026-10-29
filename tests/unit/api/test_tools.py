@@ -28,6 +28,27 @@ class TestListTools:
 class TestInvokeTool:
     """POST /api/v1/tools/{name}/invoke。"""
 
+    def test_successful_read_returns_tool_output(self, client, auth_headers, tmp_path):
+        path = tmp_path / "hello.txt"
+        path.write_text("verified-output", encoding="utf-8")
+        response = client.post(
+            "/api/v1/tools/file-read/invoke",
+            json={"params": {"file_path": str(path)}}, headers=auth_headers,
+        )
+        assert response.status_code == 200
+        assert response.json()["data"]["success"]
+        assert response.json()["data"]["output"]["content"] == "verified-output"
+
+    def test_search_cannot_access_outside_configured_workspace(
+        self, client, auth_headers, tmp_path,
+    ):
+        response = client.post(
+            "/api/v1/tools/file-search/invoke",
+            json={"params": {"search_path": str(tmp_path.parent), "pattern": "private"}},
+            headers=auth_headers,
+        )
+        assert response.status_code == 403
+
     def test_invoke_existing_tool_with_missing_path(
         self, client: TestClient, auth_headers: dict[str, str]
     ) -> None:

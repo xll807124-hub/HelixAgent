@@ -556,6 +556,11 @@ class ActionExecutor:
             # 记录执行时间
             result.execution_time_ms = int((end_time - start_time).total_seconds() * 1000)
 
+            if not result.success:
+                raise ToolExecutionError(
+                    result.error or f"Tool '{action.tool_name}' reported failure"
+                )
+
             return result
 
         except TimeoutError as err:

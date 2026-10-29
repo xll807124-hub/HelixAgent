@@ -36,7 +36,7 @@ class ContainerConfig:
     timeout_seconds: int = 900           # 执行超时（15 分钟）
     environment: dict[str, str] | None = None  # 环境变量
     volumes: dict[str, str] | None = None      # 卷挂载 {host: container}
-    network_mode: str = "bridge"         # 网络模式
+    network_mode: str = "none"           # 默认禁止网络
 
 
 @dataclass
@@ -109,11 +109,11 @@ class DockerSandbox:
         """
         container = None
         try:
-            # 验证镜像是否存在
-            await self._ensure_image(config.image)
-
             # 构建容器参数
             container_kwargs = self._build_container_kwargs(config, network_policy)
+
+            # 参数校验完成后才访问 Docker。
+            await self._ensure_image(config.image)
 
             # 创建容器
             container = self.client.containers.create(**container_kwargs)
@@ -169,27 +169,38 @@ class DockerSandbox:
         network_policy: NetworkPolicy | None,
     ) -> dict[str, Any]:
         """构建容器创建参数"""
+        if config.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        cpu_limit = self._parse_cpu_limit(config.cpu_limit)
+        memory_limit = self._parse_memory_limit(config.memory_limit)
+        if cpu_limit <= 0 or memory_limit <= 0:
+            raise ValueError("CPU and memory limits must be positive")
+        network_mode = "none"
+        if network_policy and network_policy.allow_outbound:
+            if network_policy.allowed_hosts or network_policy.allowed_ports:
+                raise NotImplementedError("Docker backend cannot enforce egress allowlists")
+            if config.network_mode not in ("none", "bridge"):
+                raise ValueError("Only none or bridge network modes are supported")
+            network_mode = config.network_mode
         kwargs = {
             "image": config.image,
             "name": config.name,
             "command": config.command,
             "working_dir": config.working_dir,
             "environment": config.environment or {},
-            "volumes": config.volumes or {},
-            "network_mode": network_policy and "none" or config.network_mode,
-            "host_config": self.client.api.create_host_config(
-                cpu_limit=self._parse_cpu_limit(config.cpu_limit),
-                mem_limit=self._parse_memory_limit(config.memory_limit),
-                memswap_limit=self._parse_memory_limit(config.memory_limit),
-                read_only=False,
-                cap_drop=["ALL"],  # 移除所有 Linux Capabilities
-                cap_add=["NET_BIND_SERVICE"],  # 仅添加必要的 capability
-                security_opt=["no-new-privileges:true"],  # 防止提权
-            ),
+            "volumes": {
+                host: {"bind": target, "mode": "rw"}
+                for host, target in (config.volumes or {}).items()
+            },
+            "network_mode": network_mode,
+            # containers.create 使用高层 SDK 参数，由 SDK 生成 HostConfig。
+            "nano_cpus": int(cpu_limit * 1_000_000_000),
+            "mem_limit": memory_limit,
+            "memswap_limit": memory_limit,
+            "cap_drop": ["ALL"],
+            "security_opt": ["no-new-privileges:true"],
             "detach": True,
             "stdin_open": False,
-            "stdout": True,
-            "stderr": True,
         }
         return kwargs
 
@@ -202,18 +213,20 @@ class DockerSandbox:
         import asyncio
         import time
 
-        start_time = time.time()
+        start_time = time.monotonic()
 
-        while time.time() - start_time < timeout_seconds:
+        while time.monotonic() - start_time < timeout_seconds:
             # 检查容器状态
             container.reload()
-            if container.state["Status"] in ["exited", "dead"]:
+            state = container.attrs["State"]
+            if state["Status"] in ["exited", "dead"]:
                 # 获取输出
-                logs = container.logs(stdout=True, stderr=True)
+                stdout = container.logs(stdout=True, stderr=False)
+                stderr = container.logs(stdout=False, stderr=True)
                 return {
-                    "StatusCode": container.state.get("ExitCode", 1),
-                    "stdout": logs.decode("utf-8", errors="ignore") if logs else "",
-                    "stderr": "",
+                    "StatusCode": state.get("ExitCode", 1),
+                    "stdout": stdout.decode("utf-8", errors="replace") if stdout else "",
+                    "stderr": stderr.decode("utf-8", errors="replace") if stderr else "",
                 }
 
             await asyncio.sleep(0.5)
@@ -230,11 +243,12 @@ class DockerSandbox:
     async def _cleanup_container(self, container: Any) -> None:
         """清理容器"""
         try:
-            container.stop(timeout=5)
             container.remove(force=True)
+            self._containers.pop(container.id, None)
             logger.info(f"Cleaned up container: {container.id[:12]}")
         except Exception as e:
             logger.error(f"Cleanup failed: {e}")
+            raise
 
     @staticmethod
     def _parse_cpu_limit(cpu_str: str) -> float:
@@ -258,8 +272,4 @@ class DockerSandbox:
         Returns:
             True if escape detected, False otherwise
         """
-        # TODO: 实现逃逸检测逻辑
-        # - 检查是否访问了 /proc/sysrq-trigger
-        # - 检查是否加载了内核模块
-        # - 检查是否访问了 docker.sock
-        return False
+        raise NotImplementedError("Sandbox escape detection requires a host monitoring backend")

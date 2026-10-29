@@ -3,10 +3,25 @@
 > **需求编号**: REQ-HAR-002  
 > **需求名称**: Context Compaction（上下文压缩）  
 > **优先级**: P0  
-> **状态**: v0.1-designed（待跨模块评审与冻结）  
+> **状态**: v0.2-designed（待跨模块评审与冻结）
 > **创建日期**: 2026-09-27  
 > **依赖**: REQ-CTX-008（上下文压缩与分层加载）、REQ-REL-004（Checkpoint 保存与保留策略）  
 > **被依赖**: REQ-HAR-003、REQ-HAR-004、REQ-HAR-005、REQ-HAR-006
+
+
+## G-CTX 2026-10-29 批准修订
+
+版本：v0.2-designed；限定基线：`gctx-review-20261029-r2`；批准依据：[G-CTX 确认记录及完整方案](../development/contracts/context.md) §9～14。用户先确认四项原则，再确认完整 r2 方案；未批准本需求全项冻结或生产实现。
+
+HAR 保持70%/85%/95%，CTX保持70%/80%/95%；压力使用窗口扣除输出/工具预留后的输入预算。对话压力交由 HAR，检索压力交由 CTX，混合先 HAR 后重算。协调按租户/task/workflow 使用单操作租约、fencing token 和 context_version CAS；活跃工具调用先等边界，过期/重复/取消回调不发布。必需约束及完整工具对不能因摘要或截断丢失；快照失败不允许破坏性替换，不能将应用压缩资产当作 Runtime WorkflowCheckpoint 本体。
+
+本节为上述涉及内容的现行修订，原文算法/存储/厂商示例不构成生产已实现或新依赖授权。其余未涉及契约保持原要求。
+
+### 变更记录
+
+| 版本 | 日期 | 原因与影响 |
+|---|---|---|
+| v0.2-designed | 2026-10-29 | 用户确认 r2 后同步跨模块契约，保留源 DTO 和 Runtime 冻结字段；更新内容与验证见 G-CTX §15 |
 
 ---
 
@@ -946,7 +961,8 @@ class CompactionDegradation {
     context: Context,
     config: CompactionConfig
   ): Promise<CompactionResult> {
-    // 简单截断：保留最后 N 条消息
+    // 历史不安全示例：不能按消息数直接截断；生产实现须保留 required 项和完整调用对并验证预算。
+    // 本段 slice 仅作旧流程说明，不是 v0.2 可执行契约。
     const retainCount = config.retain_tool_pairs * 2;
     const retained = context.messages.slice(-retainCount);
     

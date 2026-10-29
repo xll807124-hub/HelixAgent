@@ -8,11 +8,12 @@ RT-008 脱敏引擎单元测试
 """
 
 import pytest
+
 from src.runtime.query.redaction_engine import (
     AccessLevel,
     RedactionEngine,
-    SensitivityLevel,
     SensitivePatternMatcher,
+    SensitivityLevel,
 )
 
 

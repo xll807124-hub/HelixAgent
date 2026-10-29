@@ -1,0 +1,2344 @@
+{
+  "version": 1,
+  "baseline_date": "2026-10-29",
+  "coordination_scope": "同一绝对路径下共享台账；不同克隆/工作树必须显式使用同一协调台账，否则不保证互斥",
+  "tasks": [
+    {
+      "id": "G-RT",
+      "title": "运行时共享契约核对",
+      "stage": "0",
+      "requirements": [
+        "RT-001",
+        "RT-002",
+        "RT-003",
+        "RT-004",
+        "RT-005",
+        "RT-006",
+        "RT-007",
+        "RT-008"
+      ],
+      "implementation_dependencies": [],
+      "interface": "既有冻结实体、事件、状态、Checkpoint、幂等和Trace契约；输出版本及兼容矩阵",
+      "acceptance": "保留2026-10-07冻结版本；调用方字段、错误码、版本及兼容测试清单明确",
+      "write_scopes": [
+        "docs/development/contracts/runtime.md"
+      ],
+      "status": "待验收",
+      "owner": "codex-grt-20261029-01a185ef",
+      "mode": "implementation",
+      "implementation_ready": true,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": "2026-10-29T04:37:58.914771+00:00",
+      "last_note": "运行时共享契约核对文档交付：保留8份冻结版本，字段/调用方/错误语义及10组兼容验证清单明确；843既有Runtime测试通过，143告警；11本地链接通过。未改生产代码或冻结REQ，未执行生产门禁与真实持久化验收，待用户验收。",
+      "claimed_at": "2026-10-29T04:35:58.133410+00:00",
+      "delivery_evidence": "docs/development/contracts/runtime.md"
+    },
+    {
+      "id": "G-SEC",
+      "title": "安全与租户共享契约",
+      "stage": "0",
+      "requirements": [
+        "SEC-001",
+        "SEC-002",
+        "SEC-003",
+        "SEC-004",
+        "SEC-005",
+        "SEC-007",
+        "SEC-008",
+        "SEC-009",
+        "SEC-010"
+      ],
+      "implementation_dependencies": [],
+      "interface": "身份/组织/项目/资源范围，授权决策、审批、凭据、撤销、阻断及安全审计接口",
+      "acceptance": "逐项界定安全冻结范围；失败关闭语义、租户传播和调用方明确；用户确认基线",
+      "write_scopes": [
+        "docs/development/contracts/security.md"
+      ],
+      "status": "开发中",
+      "owner": "codex-gmem-20261029-01a185f7",
+      "mode": "implementation",
+      "implementation_ready": true,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": "2026-10-29T05:07:42.761395+00:00",
+      "last_note": "已核对9项安全契约及SEC006协作边界；保留SEC004 Q1-Q6、SEC009 Q1-Q7与G-MEM D01-D09既有确认。53项既有专项测试通过，另只读内存探针复现CDP请求max_ttl_seconds=60但返回3600；仅记录缺口，不越界修生产代码。正在整理租户/审批/撤销/降级/审计的兼容边界和待确认建议。",
+      "claimed_at": "2026-10-29T05:02:37.314779+00:00"
+    },
+    {
+      "id": "G-CTX",
+      "title": "索引与上下文契约",
+      "stage": "0",
+      "requirements": [
+        "CTX-001",
+        "CTX-002",
+        "CTX-003",
+        "CTX-004",
+        "CTX-005",
+        "CTX-006",
+        "CTX-007",
+        "CTX-008",
+        "CTX-009",
+        "HAR-002"
+      ],
+      "implementation_dependencies": [],
+      "interface": "仓库快照、索引实体、检索请求/结果、权限过滤、预算及压缩接口",
+      "acceptance": "恢复并核对CTX-008完整性；固定数据可独立验证；用户确认基线",
+      "write_scopes": [
+        "docs/development/contracts/context.md",
+        "docs/design-specs/REQ-CTX-001-index-entities-schema.md",
+        "docs/design-specs/REQ-CTX-004-hybrid-retrieval-ranking.md",
+        "docs/design-specs/REQ-CTX-005-retrieval-permissions-sensitive-paths.md",
+        "docs/design-specs/REQ-CTX-006-context-selector-budget.md",
+        "docs/design-specs/REQ-CTX-007-incremental-index-consistency.md",
+        "docs/design-specs/REQ-CTX-008-context-compression-tiered-loading.md",
+        "docs/design-specs/REQ-HAR-002-context-compaction.md",
+        "docs/design-specs/00-integrated-design-baseline.md",
+        "docs/design-specs/04-context-and-code-indexing.md",
+        "docs/design-specs/INDEX.md",
+        "docs/design-specs/PENDING-REQUIREMENTS.md"
+      ],
+      "status": "待验收",
+      "owner": "codex-gctx-20261029-01a185f8",
+      "mode": "implementation",
+      "implementation_ready": true,
+      "approval_evidence": "本聊天2026-10-29：上一答复明确请求确认gctx-review-20261029-r2新增具体方案，用户紧接回复确认；docs/development/contracts/context.md §9至14",
+      "completion_evidence": null,
+      "updated_at": "2026-10-29T05:02:34.897401+00:00",
+      "last_note": "限定契约文档交付待用户验收，不标记完成；6份CTX/HAR-002源版本及4份引用同步。未改生产/正式测试/Runtime冻结字段，保留其他会话修改。全仓静态门禁尚未通过，详见§15。",
+      "claimed_at": "2026-10-29T04:56:54.427769+00:00",
+      "design_evidence": "docs/development/contracts/context.md#10-ctx-008-缺失章节补拟供确认不声称恢复原文；候选基线gctx-review-20261029-r2；§9记录Q1至Q4真实确认",
+      "delivery_evidence": "docs/development/contracts/context.md §15：r2批准记录、12份文档同步、309链接/结构/diff通过、pytest2218通过3跳过、mypy202通过；全仓Ruff7处他任务E501，SCA复扫超时如实保留，Secret专项复测通过"
+    },
+    {
+      "id": "G-HAR",
+      "title": "Worker与Harness契约",
+      "stage": "0",
+      "requirements": [
+        "HAR-001",
+        "HAR-003",
+        "HAR-004",
+        "HAR-005",
+        "HAR-006"
+      ],
+      "implementation_dependencies": [
+        "G-RT"
+      ],
+      "interface": "Worker生命周期、工具调用、Artifact版本、Hook、调度与路由接口",
+      "acceptance": "SDK与Worker调用边界一致；兼容规则、失败传播及契约测试清单确认",
+      "write_scopes": [
+        "docs/development/contracts/harness.md"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": true,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "G-MEM",
+      "title": "记忆契约",
+      "stage": "0",
+      "requirements": [
+        "MEM-001",
+        "MEM-002",
+        "MEM-003",
+        "MEM-004"
+      ],
+      "implementation_dependencies": [],
+      "interface": "记忆Schema、范围、来源、审批、冲突、保留及检索接口",
+      "acceptance": "明确三类记忆与检索后端边界；用户确认基线",
+      "write_scopes": [
+        "docs/development/contracts/memory.md"
+      ],
+      "status": "已完成",
+      "owner": "codex-gmem-20261029-01a185f7",
+      "mode": "implementation",
+      "implementation_ready": true,
+      "approval_evidence": null,
+      "completion_evidence": "本会话2026-10-29（Asia/Shanghai）：用户在G-MEM技术验收结论及待确认事项说明后回复“确认”。验收材料：docs/development/contracts/memory.md（第4节D01-D09、第12节复核记录）；确认版本SHA256=ad4144eb02495fc45619645c81ede166f71c4f4976548169b18ee3f08cfea11d。范围：接受修正后的契约评审文档及D01-D09作为后续方案细化依据；不包含P-MEM具体实施批准、整项MEM冻结或生产验收。",
+      "updated_at": "2026-10-29T05:01:06.253634+00:00",
+      "last_note": "✅ 2026-10-29用户验收完成（Asia/Shanghai）。确认范围为G-MEM契约核对文档及D01-D09建议，后续不重复询问已确认取舍；原交付文件保持不变，确认状态以本台账为准。测试摘要：16本地链接、4份REQ哈希、5个源码枚举和台账校验通过；3个审批评分反例已记录；生产测试/安全扫描未执行。G-SEC及共享映射、具体保留数值和质量口径继续开放；P-MEM自身实施基线尚未批准。",
+      "claimed_at": "2026-10-29T04:47:42.151938+00:00",
+      "delivery_evidence": "docs/development/contracts/memory.md#12-验收复核记录2026-10-29",
+      "completed_at": "2026-10-29T05:01:06.253621+00:00"
+    },
+    {
+      "id": "G-OBS",
+      "title": "遥测与审计契约",
+      "stage": "0",
+      "requirements": [
+        "OBS-001",
+        "OBS-002",
+        "OBS-003",
+        "OBS-004",
+        "OBS-005",
+        "OBS-006",
+        "OBS-007"
+      ],
+      "implementation_dependencies": [
+        "G-RT"
+      ],
+      "interface": "Trace/Event/Evidence关联、指标字典、审计写查、脱敏和告警接口",
+      "acceptance": "身份字段、基数限制、留存完整性及错误策略明确；用户确认基线",
+      "write_scopes": [
+        "docs/development/contracts/observability.md"
+      ],
+      "status": "开发中",
+      "owner": "codex-geva-20261029-01a185f6",
+      "mode": "design",
+      "implementation_ready": true,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": "2026-10-29T05:12:55.936139+00:00",
+      "last_note": "OBS001-007及RT/SEC/EVA接口核对、官方对标完成；既有专项188通过/2弃用告警，3只读Trace边界探针发现待修复缺口。开始编写G-OBS专属设计；不改生产代码、正式测试或其他任务文件。",
+      "claimed_at": "2026-10-29T05:05:00.370045+00:00"
+    },
+    {
+      "id": "G-EVA",
+      "title": "评估与发布契约",
+      "stage": "0",
+      "requirements": [
+        "EVA-001",
+        "EVA-002",
+        "EVA-003",
+        "EVA-004",
+        "EVA-005",
+        "EVA-006",
+        "EVA-007"
+      ],
+      "implementation_dependencies": [],
+      "interface": "数据集版本、标注、评分、失败归因、发布决策、例外及回滚接口",
+      "acceptance": "可复现输入输出、阈值、版本和证据格式明确；用户确认基线",
+      "write_scopes": [
+        "docs/development/contracts/evaluation.md"
+      ],
+      "status": "待验收",
+      "owner": "codex-geva-20261029-01a185f6",
+      "mode": "implementation",
+      "implementation_ready": true,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": "2026-10-29T05:02:42.752898+00:00",
+      "last_note": "按用户“请你进行验收”完成技术复核；修正预算50%精度、人审闭环、漂移定义域3项文档问题。53既有门禁测试、19链接、20合成场景及3/3变异检出通过；9份既有EVA文件未变。文档技术检查通过；Q1-Q8未获真实用户确认，保留待验收，未批准下游实现或执行accept。",
+      "claimed_at": "2026-10-29T04:48:07.286962+00:00",
+      "delivery_evidence": "docs/development/contracts/evaluation.md §12; SHA256=aa5700135619fbd76f4de12a2c330e739c04626eea19b20df22003912766e83a"
+    },
+    {
+      "id": "G-WEB",
+      "title": "控制台API与UI契约",
+      "stage": "0",
+      "requirements": [
+        "WEB"
+      ],
+      "implementation_dependencies": [
+        "G-RT"
+      ],
+      "interface": "创建/审批/暂停/恢复/取消、事件流、Diff、Evidence和PR查询API",
+      "acceptance": "状态与错误映射、身份校验、分页及UI方案确认；提供模拟数据",
+      "write_scopes": [
+        "docs/development/contracts/web.md"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": true,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "G-MODEL",
+      "title": "模型网关契约",
+      "stage": "0",
+      "requirements": [
+        "WKR-001"
+      ],
+      "implementation_dependencies": [],
+      "interface": "统一模型请求/输出、工具调用、流式响应、预算、超时及取消接口",
+      "acceptance": "单模型MVP和多模型扩展兼容；供应商异常及凭据边界明确",
+      "write_scopes": [
+        "docs/development/contracts/model.md"
+      ],
+      "status": "已完成",
+      "owner": "codex-grt-20261029-01a185ef",
+      "mode": "implementation",
+      "implementation_ready": true,
+      "approval_evidence": null,
+      "completion_evidence": "docs/development/contracts/model.md；2026-10-29本聊天，交付后请用户确认接口方案，用户回复：确认。验收范围为契约文档和接口方案，不包含W-MODEL生产实现。",
+      "updated_at": "2026-10-29T04:48:39.947276+00:00",
+      "last_note": "用户已验收G-MODEL契约文档及接口方案；历史验证64测试通过、9链接及签名字段核对通过，未重跑。G-MODEL依赖解除；供应商选择与W-MODEL实施基线另行确认。",
+      "claimed_at": "2026-10-29T04:41:55.859960+00:00",
+      "delivery_evidence": "docs/development/contracts/model.md",
+      "completed_at": "2026-10-29T04:48:39.947254+00:00"
+    },
+    {
+      "id": "S0-SCHEMA",
+      "title": "MCP工具批准与Schema变更复审",
+      "stage": "0",
+      "requirements": [
+        "SEC-007"
+      ],
+      "implementation_dependencies": [],
+      "interface": "逐组织/连接器/工具定义批准；发现、调用和副作用前复核",
+      "acceptance": "定义变化旧批准失效；竞态、同名工具、跨组织及真实调用回归通过",
+      "write_scopes": [
+        "src/security/mcp_connector_governance",
+        "tests/test_mcp_tool_approval_schema.py"
+      ],
+      "status": "待验收",
+      "owner": "codex-schema-20261029-a942yseg",
+      "mode": "implementation",
+      "implementation_ready": true,
+      "approval_evidence": "docs/review/sec007-tool-approval-schema-design-2026-10-29.md：页首用户确认记录",
+      "completion_evidence": null,
+      "updated_at": "2026-10-29T04:32:09.228508+00:00",
+      "last_note": "代码、接口、已确认方案与对标、测试报告已交付；全量2217通过/0失败/0跳过，65专项，92关键方法100%行覆盖，静态与安全门禁均通过。仅本切片待用户验收；不标记已完成。",
+      "delivery_evidence": "docs/test-reports/sec007-tool-approval-schema-2026-10-29.md"
+    },
+    {
+      "id": "S0-MCP",
+      "title": "MCP其余生产闭环",
+      "stage": "0",
+      "requirements": [
+        "SEC-007"
+      ],
+      "implementation_dependencies": [
+        "G-SEC",
+        "S0-SCHEMA"
+      ],
+      "interface": "生产启动装配、目的地限制、持久审计、跨实例失效及外部撤销适配",
+      "acceptance": "逐条关闭合规报告剩余缺口；跨实例、重启、外部撤销及失败关闭有证据",
+      "write_scopes": [
+        "src/security/mcp_connector_governance",
+        "tests/integration/mcp"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "S0-RED",
+      "title": "安全验证场景与红队框架",
+      "stage": "0",
+      "requirements": [
+        "SEC-010"
+      ],
+      "implementation_dependencies": [
+        "G-SEC"
+      ],
+      "interface": "控制项到对抗用例、故障场景和证据的映射",
+      "acceptance": "可复用场景可执行；未接入组件如实标记待验证；真实控制验收归M2",
+      "write_scopes": [
+        "tests/security_controls",
+        "docs/security-controls"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "S0-FREEZE",
+      "title": "阶段0补缺与冻结验收",
+      "stage": "0",
+      "requirements": [
+        "SEC-001",
+        "SEC-007",
+        "SEC-010"
+      ],
+      "implementation_dependencies": [
+        "G-RT",
+        "G-SEC",
+        "S0-MCP",
+        "S0-RED"
+      ],
+      "interface": "冻结范围、开放风险、验收记录与后续任务映射",
+      "acceptance": "阶段0缺口逐项关闭或明确批准移交；用户确认；不阻塞无关模块独立开发",
+      "write_scopes": [
+        "docs/development/stage0-acceptance.md"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "R-EVENT",
+      "title": "PostgreSQL事件持久化",
+      "stage": "1.1",
+      "requirements": [
+        "RT-001",
+        "RT-003"
+      ],
+      "implementation_dependencies": [
+        "G-RT"
+      ],
+      "interface": "追加写、分页过滤读、Schema版本与事务接口",
+      "acceptance": "重启数据不丢失；非法事件拒绝；并发顺序及版本兼容验证",
+      "write_scopes": [
+        "src/runtime/event_store",
+        "tests/unit/runtime/event_store"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": true,
+      "approval_evidence": "user-confirmed 2026-10-29 21:01 chat reply: 确认 (approves docs/review/R-EVENT-design-2026-10-29.md baseline, Q1-Q5 as recommended)",
+      "completion_evidence": null,
+      "updated_at": "2026-10-29T13:01:29.978441+00:00",
+      "last_note": "baseline approved, Q1-Q5 per recommendations",
+      "claimed_at": "2026-10-29T12:49:44.068957+00:00",
+      "design_evidence": "docs/review/R-EVENT-design-2026-10-29.md"
+    },
+    {
+      "id": "R-PROJ",
+      "title": "持久化投影与重放",
+      "stage": "1.1",
+      "requirements": [
+        "RT-004"
+      ],
+      "implementation_dependencies": [
+        "G-RT"
+      ],
+      "interface": "事件消费、投影仓储、重放游标及一致性接口",
+      "acceptance": "使用契约数据验证重复消费与重放一致；真实存储接入归R-RECOVER",
+      "write_scopes": [
+        "src/runtime/projection",
+        "tests/unit/runtime/projection"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "R-CHECK",
+      "title": "Checkpoint持久化与保留",
+      "stage": "1.2",
+      "requirements": [
+        "RT-005",
+        "REL-004"
+      ],
+      "implementation_dependencies": [
+        "G-RT"
+      ],
+      "interface": "检查点写读、校验、版本、保留和清理接口",
+      "acceptance": "崩溃边界、损坏检测、保留清理及恢复数据验证",
+      "write_scopes": [
+        "src/runtime/checkpoint",
+        "tests/unit/runtime/checkpoint"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "R-IDEM",
+      "title": "跨进程幂等与写操作封装",
+      "stage": "1.2",
+      "requirements": [
+        "RT-007",
+        "REL-006"
+      ],
+      "implementation_dependencies": [
+        "G-RT"
+      ],
+      "interface": "幂等键、持久结果、执行占用、过期和副作用对账接口",
+      "acceptance": "跨进程并发无重复副作用；冲突、超时和重试可对账",
+      "write_scopes": [
+        "src/runtime/idempotency",
+        "tests/unit/runtime/idempotency"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "R-QUERY",
+      "title": "事件查询留存权限完整闭环",
+      "stage": "1.2",
+      "requirements": [
+        "RT-008"
+      ],
+      "implementation_dependencies": [
+        "G-RT",
+        "G-SEC"
+      ],
+      "interface": "持久查询、范围授权、递归脱敏和留存执行接口",
+      "acceptance": "持久查询权限正确；留存实际执行；脱敏无泄漏；与R-EVENT接入归R-RECOVER",
+      "write_scopes": [
+        "src/runtime/query",
+        "tests/unit/runtime/query"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "R-FAIL",
+      "title": "失败分类与工具错误治理",
+      "stage": "1.2",
+      "requirements": [
+        "REL-001",
+        "REL-008"
+      ],
+      "implementation_dependencies": [
+        "G-RT"
+      ],
+      "interface": "失败类别、工具结果、可重试性和升级信号接口",
+      "acceptance": "分类确定且可追溯；pytest/Jest/Go工具结果有一致映射",
+      "write_scopes": [
+        "src/reliability/classification",
+        "tests/unit/reliability/classification"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "R-RETRY",
+      "title": "重试策略与决策引擎",
+      "stage": "1.2",
+      "requirements": [
+        "REL-002",
+        "REL-003"
+      ],
+      "implementation_dependencies": [
+        "R-FAIL"
+      ],
+      "interface": "失败输入到重试/退避/停止/升级的决策接口",
+      "acceptance": "预算、退避、截止时间、不可重试及重复调用边界验证",
+      "write_scopes": [
+        "src/reliability/retry",
+        "tests/unit/reliability/retry"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "R-COMP",
+      "title": "恢复决策与补偿",
+      "stage": "1.2",
+      "requirements": [
+        "REL-005",
+        "REL-007"
+      ],
+      "implementation_dependencies": [
+        "G-RT",
+        "R-FAIL"
+      ],
+      "interface": "恢复点选择、补偿步骤和执行结果接口",
+      "acceptance": "部分成功、补偿失败、重复补偿与人工升级契约验证",
+      "write_scopes": [
+        "src/reliability/recovery",
+        "tests/unit/reliability/recovery"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "R-RECOVER",
+      "title": "运行时集成与故障恢复",
+      "stage": "1.2",
+      "requirements": [
+        "RT-001",
+        "RT-002",
+        "RT-003",
+        "RT-004",
+        "RT-005",
+        "RT-007",
+        "RT-008",
+        "REL-009"
+      ],
+      "implementation_dependencies": [
+        "R-EVENT",
+        "R-PROJ",
+        "R-CHECK",
+        "R-IDEM",
+        "R-QUERY",
+        "R-RETRY",
+        "R-COMP"
+      ],
+      "interface": "真实事件存储、状态迁移、投影、恢复及副作用共同执行",
+      "acceptance": "杀进程重启、重复事件、断连、部分写入和恢复演练通过",
+      "write_scopes": [
+        "tests/integration/runtime",
+        "docs/test-reports/runtime-recovery.md"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "S-RBAC",
+      "title": "权限模型与策略网关补齐",
+      "stage": "1.3",
+      "requirements": [
+        "SEC-001",
+        "SEC-002",
+        "SEC-003"
+      ],
+      "implementation_dependencies": [
+        "G-SEC"
+      ],
+      "interface": "资源级授权、前后置策略、审批与拒绝审计接口",
+      "acceptance": "拒绝优先；跨组织与路径越权被拦截；策略异常失败关闭",
+      "write_scopes": [
+        "src/security/rbac",
+        "src/security/policy_gateway",
+        "tests/unit/security/rbac",
+        "tests/unit/security/policy_gateway"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "S-BOX",
+      "title": "沙箱隔离与资源控制",
+      "stage": "1.3",
+      "requirements": [
+        "SEC-004"
+      ],
+      "implementation_dependencies": [
+        "G-SEC"
+      ],
+      "interface": "沙箱生命周期、网络白名单、CPU/内存/磁盘及取消接口",
+      "acceptance": "真实容器默认拒绝出站；限制生效；逃逸与资源回收测试通过",
+      "write_scopes": [
+        "src/security/sandbox",
+        "tests/unit/security/sandbox"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "S-CRED",
+      "title": "生产凭据签发与撤销",
+      "stage": "1.3",
+      "requirements": [
+        "SEC-005"
+      ],
+      "implementation_dependencies": [
+        "G-SEC"
+      ],
+      "interface": "GitHub App短期凭据、轮换、撤销及租约接口",
+      "acceptance": "真实授权提供方验证；长期密钥不暴露；撤销失败保持阻断",
+      "write_scopes": [
+        "src/security/credential",
+        "tests/unit/security/credential"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "T-FILE",
+      "title": "文件与Shell工具完善",
+      "stage": "1.4",
+      "requirements": [
+        "HAR-003"
+      ],
+      "implementation_dependencies": [
+        "G-SEC",
+        "G-HAR"
+      ],
+      "interface": "授权文件读写搜索、受限命令和标准工具结果",
+      "acceptance": "路径穿越、危险命令、超时、取消与输出脱敏验证",
+      "write_scopes": [
+        "src/tools/file",
+        "src/tools/shell",
+        "tests/unit/tools/file",
+        "tests/unit/tools/shell"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "T-GIT",
+      "title": "真实GitHub与PR工具",
+      "stage": "1.4",
+      "requirements": [
+        "HAR-003"
+      ],
+      "implementation_dependencies": [
+        "G-SEC",
+        "G-HAR"
+      ],
+      "interface": "仓库/分支/提交/PR及凭据注入接口",
+      "acceptance": "测试仓库创建分支和PR；重试幂等；无权限及远端失败处理",
+      "write_scopes": [
+        "src/tools/git",
+        "tests/unit/tools/git"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "T-TEST",
+      "title": "多语言测试适配器",
+      "stage": "1.4",
+      "requirements": [
+        "REL-008",
+        "HAR-003"
+      ],
+      "implementation_dependencies": [
+        "G-HAR"
+      ],
+      "interface": "pytest/Jest/Go Test执行、结果解析、超时及取消接口",
+      "acceptance": "三种真实测试进程通过/失败/异常/超时结果正确；受控执行",
+      "write_scopes": [
+        "src/tools/test",
+        "tests/unit/tools/test"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "W-MODEL",
+      "title": "模型网关与单模型接入",
+      "stage": "1.5",
+      "requirements": [
+        "WKR-001"
+      ],
+      "implementation_dependencies": [
+        "G-MODEL"
+      ],
+      "interface": "统一模型客户端和工具调用协议",
+      "acceptance": "真实模型冒烟、异常、超时、取消、预算与秘密保护验证",
+      "write_scopes": [
+        "src/workers/common/model_client.py",
+        "src/workers/common/__init__.py",
+        "src/workers/common/model_gateway",
+        "tests/unit/workers/model_gateway",
+        "tests/integration/model",
+        "pyproject.toml",
+        "requirements.txt",
+        "docs/review/W-MODEL-design-2026-10-29.md",
+        "docs/development/prototypes/W-MODEL"
+      ],
+      "status": "开发中",
+      "owner": "codex-grt-20261029-01a185ef",
+      "mode": "implementation",
+      "implementation_ready": true,
+      "approval_evidence": "docs/review/W-MODEL-design-2026-10-29.md；2026-10-29本聊天用户在具体实施方案交付后回复：确认。批准本机SQLite账本、jsonschema依赖、扩展写入范围及完整限定实施基线。",
+      "completion_evidence": null,
+      "updated_at": "2026-10-29T05:03:52.684738+00:00",
+      "last_note": "核心网关与 SQLite 预算实现已落地，正在补齐 HTTP/SSE、取消与异常验证；用户明确先完成实现和本地验证，真实冒烟暂缓。",
+      "claimed_at": "2026-10-29T04:55:33.225555+00:00",
+      "design_evidence": "docs/review/W-MODEL-design-2026-10-29.md"
+    },
+    {
+      "id": "W-CODER",
+      "title": "Coder执行与恢复接入",
+      "stage": "1.5",
+      "requirements": [
+        "WKR-001"
+      ],
+      "implementation_dependencies": [
+        "G-HAR",
+        "G-MODEL"
+      ],
+      "interface": "ReAct、Action提议、审批等待、结果消费、暂停恢复接口",
+      "acceptance": "固定模型结果验证循环边界与恢复；真实全链路归M1",
+      "write_scopes": [
+        "src/workers/coder",
+        "tests/unit/workers/coder"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "O-TRACE",
+      "title": "全链路Trace与关联",
+      "stage": "2.2",
+      "requirements": [
+        "RT-006",
+        "OBS-001",
+        "OBS-002"
+      ],
+      "implementation_dependencies": [
+        "G-OBS"
+      ],
+      "interface": "采集、导出、采样及Event/Evidence关联接口",
+      "acceptance": "跨异步/工具边界Trace可关联；导出失败不泄密；实际链路归M1/M2",
+      "write_scopes": [
+        "src/observability/tracing",
+        "src/runtime/trace",
+        "tests/unit/observability/tracing"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "O-AUDIT",
+      "title": "审计查询留存与完整性",
+      "stage": "2.2",
+      "requirements": [
+        "OBS-004",
+        "OBS-006",
+        "OBS-007"
+      ],
+      "implementation_dependencies": [
+        "G-OBS",
+        "G-SEC"
+      ],
+      "interface": "审计写查、脱敏、保留、完整性校验和外部锚定接口",
+      "acceptance": "篡改/缺失可检测；权限、留存和敏感信息保护真实存储验证",
+      "write_scopes": [
+        "src/observability/audit",
+        "tests/unit/observability/audit"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "O-METRIC",
+      "title": "指标仪表盘与告警",
+      "stage": "2.2",
+      "requirements": [
+        "OBS-003",
+        "OBS-004",
+        "OBS-005"
+      ],
+      "implementation_dependencies": [
+        "G-OBS"
+      ],
+      "interface": "指标字典、基数控制、仪表盘、告警事件及通知接口",
+      "acceptance": "固定负载可观测；告警可触发；无高基数与敏感标签泄漏",
+      "write_scopes": [
+        "src/observability/metrics",
+        "infra/monitoring",
+        "tests/unit/observability/metrics"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "S-SCAN",
+      "title": "扫描与注入防护生产接入",
+      "stage": "2.1",
+      "requirements": [
+        "SEC-006",
+        "SEC-010"
+      ],
+      "implementation_dependencies": [
+        "G-SEC"
+      ],
+      "interface": "SAST/SCA/Secret、Prompt与恶意仓库防护、远端CI证据接口",
+      "acceptance": "复用历史成果；真实远端CI阻止违规输入/发布；对抗和误报用例通过",
+      "write_scopes": [
+        "src/security/scanning",
+        "src/security/prompt_injection",
+        ".github/workflows",
+        "tests/unit/security/scanning",
+        "tests/unit/security/prompt_injection"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "S-KILL",
+      "title": "完整Kill Switch",
+      "stage": "2.3",
+      "requirements": [
+        "SEC-009"
+      ],
+      "implementation_dependencies": [
+        "G-SEC",
+        "G-RT"
+      ],
+      "interface": "M0-M5、三态、六级作用域、传播、恢复及Break-Glass接口",
+      "acceptance": "状态机与模拟适配器验证；真实传播≤10秒及恢复演练归M2",
+      "write_scopes": [
+        "src/security/kill_switch",
+        "tests/unit/security/kill_switch"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "S-TENANT",
+      "title": "多租户数据与计算隔离",
+      "stage": "2.4",
+      "requirements": [
+        "SEC-008"
+      ],
+      "implementation_dependencies": [
+        "G-SEC",
+        "G-RT"
+      ],
+      "interface": "租户上下文、存储/索引分区、Pool与配额接口",
+      "acceptance": "真实多租户存储与计算隔离用例通过；跨模块泄漏验证归M2/M4",
+      "write_scopes": [
+        "src/security/tenancy",
+        "tests/integration/tenancy"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "E-DATA",
+      "title": "Golden Dataset与标注",
+      "stage": "2.5",
+      "requirements": [
+        "EVA-001",
+        "EVA-002"
+      ],
+      "implementation_dependencies": [
+        "G-EVA"
+      ],
+      "interface": "数据集入集、版本、标注与来源追溯接口",
+      "acceptance": "固定版本可重现；标注一致性、权限、去重及数据泄漏检查",
+      "write_scopes": [
+        "src/evaluation/datasets",
+        "tests/unit/evaluation/datasets"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "E-SCORE",
+      "title": "评分器与失败归因",
+      "stage": "2.5",
+      "requirements": [
+        "EVA-003",
+        "EVA-004"
+      ],
+      "implementation_dependencies": [
+        "G-EVA"
+      ],
+      "interface": "标准结果、评分、失败分类与归因报告接口",
+      "acceptance": "已知结果样本评分正确；不确定结果明确；版本与归因可追溯",
+      "write_scopes": [
+        "src/evaluation/scoring",
+        "tests/unit/evaluation/scoring"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "E-GATE",
+      "title": "回归流水线与发布门禁",
+      "stage": "2.5",
+      "requirements": [
+        "EVA-005",
+        "EVA-006"
+      ],
+      "implementation_dependencies": [
+        "E-DATA",
+        "E-SCORE"
+      ],
+      "interface": "数据集运行、质量/安全门禁、例外审批与发布决策接口",
+      "acceptance": "可重复运行；缺失证据拒绝放行；不合格版本自动阻断",
+      "write_scopes": [
+        "src/evaluation/gates",
+        "tests/integration/release_gate"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "E-FEED",
+      "title": "生产反馈与回滚机制",
+      "stage": "2.5",
+      "requirements": [
+        "EVA-007"
+      ],
+      "implementation_dependencies": [
+        "G-EVA"
+      ],
+      "interface": "反馈入集、数据集更新、版本回滚及审计接口",
+      "acceptance": "模拟发布和回滚验证；真实上线反馈演练归M2及后续发布",
+      "write_scopes": [
+        "src/evaluation/feedback",
+        "tests/integration/feedback"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "C-INDEX",
+      "title": "多语言索引与增量一致性",
+      "stage": "3.1",
+      "requirements": [
+        "CTX-001",
+        "CTX-002",
+        "CTX-003",
+        "CTX-007"
+      ],
+      "implementation_dependencies": [
+        "G-CTX"
+      ],
+      "interface": "快照、AST/LSP符号与依赖解析、增量更新接口",
+      "acceptance": "Python/TS/Go基准；中型仓库索引<30秒；召回>90%；增量与全量一致",
+      "write_scopes": [
+        "src/context/indexing",
+        "tests/unit/context/indexing",
+        "docs/review/C-INDEX-design-2026-10-29.md",
+        "docs/development/prototypes/C-INDEX"
+      ],
+      "status": "待确认",
+      "owner": "codex-cindex-20261029-01a185f8",
+      "mode": "design",
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": "2026-10-29T05:12:29.903899+00:00",
+      "last_note": "方案待用户确认；生产依赖/SourceRange/存储发布等范围见§11。G-CTX仍待验收，本方案批准也不能绕过硬依赖。LSP工具版本/ABI/真实DB/三语言正式基准未验证，原型非生产验收。",
+      "claimed_at": "2026-10-29T05:03:47.928003+00:00",
+      "design_evidence": "docs/review/C-INDEX-design-2026-10-29.md（cindex-20261029-r1）；docs/development/prototypes/C-INDEX/spike.py及results.json"
+    },
+    {
+      "id": "C-SEARCH",
+      "title": "混合检索与权限过滤",
+      "stage": "3.2",
+      "requirements": [
+        "CTX-004",
+        "CTX-005"
+      ],
+      "implementation_dependencies": [
+        "G-CTX",
+        "G-SEC"
+      ],
+      "interface": "BM25F/向量/图检索、RRF与检索前权限过滤接口",
+      "acceptance": "固定索引验证三通道与越权阻断；真实索引性能与召回归M3",
+      "write_scopes": [
+        "src/context/retrieval",
+        "tests/unit/context/retrieval"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "C-SELECT",
+      "title": "预算分层加载与压缩",
+      "stage": "3.3",
+      "requirements": [
+        "CTX-006",
+        "CTX-008",
+        "HAR-002"
+      ],
+      "implementation_dependencies": [
+        "G-CTX"
+      ],
+      "interface": "预算分配、L1-L3加载、摘要压缩及引用保留接口",
+      "acceptance": "固定检索结果验证预算边界、缺失降级与引用；端到端效果归M3",
+      "write_scopes": [
+        "src/context/selection",
+        "tests/unit/context/selection"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "C-EVAL",
+      "title": "检索评测与A/B工具",
+      "stage": "3.4",
+      "requirements": [
+        "CTX-009"
+      ],
+      "implementation_dependencies": [
+        "G-CTX",
+        "G-EVA"
+      ],
+      "interface": "检索标注集、Recall/延迟与任务A/B评测接口",
+      "acceptance": "固定样本指标可复现；真实任务增益与基线冻结归M3",
+      "write_scopes": [
+        "src/context/evaluation",
+        "tests/unit/context/evaluation"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "H-SDK",
+      "title": "Harness生命周期工具Hook路由",
+      "stage": "4.4",
+      "requirements": [
+        "HAR-001",
+        "HAR-003",
+        "HAR-004",
+        "HAR-005",
+        "HAR-006"
+      ],
+      "implementation_dependencies": [
+        "G-HAR"
+      ],
+      "interface": "生命周期、工具适配、Hook顺序/签名/失败、LSP/MCP/Skill路由接口",
+      "acceptance": "适配器契约测试、取消恢复、版本兼容和失败策略通过；真实集成归M4",
+      "write_scopes": [
+        "src/harness",
+        "tests/unit/harness"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "P-DAG",
+      "title": "DAG调度与Artifact通信",
+      "stage": "4.1",
+      "requirements": [
+        "RT-002",
+        "HAR-001"
+      ],
+      "implementation_dependencies": [
+        "G-HAR"
+      ],
+      "interface": "依赖调度、并行汇聚、结构化Artifact版本和冲突接口",
+      "acceptance": "固定Worker验证无环、失败传播、取消、重放和Artifact冲突",
+      "write_scopes": [
+        "src/workflows",
+        "tests/unit/workflows"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "P-EXPERT",
+      "title": "五种专家Worker",
+      "stage": "4.2",
+      "requirements": [
+        "WKR-001",
+        "HAR-001"
+      ],
+      "implementation_dependencies": [
+        "G-HAR",
+        "G-MODEL"
+      ],
+      "interface": "Explorer/Planner/Tester/Reviewer/Resolver的标准输入输出与工具能力",
+      "acceptance": "五类各有契约和独立测试；协作任务成功率>85%归M4",
+      "write_scopes": [
+        "src/workers/experts",
+        "tests/unit/workers/experts"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "P-MEM",
+      "title": "记忆存储审批检索与生命周期",
+      "stage": "4.3",
+      "requirements": [
+        "MEM-001",
+        "MEM-002",
+        "MEM-003",
+        "MEM-004"
+      ],
+      "implementation_dependencies": [
+        "G-MEM",
+        "G-SEC"
+      ],
+      "interface": "三类记忆、写入审批、检索、冲突、衰减和清理接口",
+      "acceptance": "任务/项目隔离、审批、来源、冲突及清理验证；使用独立检索适配器避免强依赖C-SEARCH",
+      "write_scopes": [
+        "src/memory",
+        "tests/unit/memory"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "WEB",
+      "title": "Web任务控制台",
+      "stage": "MVP",
+      "requirements": [
+        "WEB"
+      ],
+      "implementation_dependencies": [
+        "G-WEB"
+      ],
+      "interface": "任务创建/审批/执行/暂停/恢复/取消、Diff/证据/PR展示接口",
+      "acceptance": "模拟API完成页面与交互测试；真实后端权限与状态联调归M2",
+      "write_scopes": [
+        "web",
+        "tests/e2e/web"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "A-IDE",
+      "title": "IDE与CLI集成",
+      "stage": "5",
+      "requirements": [
+        "ADV-IDE"
+      ],
+      "implementation_dependencies": [
+        "G-WEB"
+      ],
+      "interface": "稳定API客户端、任务进度、审批、取消与证据展示接口",
+      "acceptance": "模拟API契约与本地交互验证；真实后端联调后单项发布",
+      "write_scopes": [
+        "integrations",
+        "tests/integration/clients"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "A-SSO",
+      "title": "SSO与SCIM",
+      "stage": "5",
+      "requirements": [
+        "ADV-SSO"
+      ],
+      "implementation_dependencies": [
+        "G-SEC"
+      ],
+      "interface": "身份提供方、会话、组织映射及用户生命周期接口",
+      "acceptance": "提供方联调与撤权验证；不得绕过租户和资源授权",
+      "write_scopes": [
+        "src/identity",
+        "tests/integration/identity"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "A-POOL",
+      "title": "WarmPool优化",
+      "stage": "5",
+      "requirements": [
+        "ADV-POOL"
+      ],
+      "implementation_dependencies": [
+        "S-BOX"
+      ],
+      "interface": "沙箱预热、租约、回收、配额与清理接口",
+      "acceptance": "真实负载下对比冷启动；无跨任务残留；取消异常资源回收通过",
+      "write_scopes": [
+        "src/execution/warm_pool",
+        "tests/integration/warm_pool"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "A-ROUTE",
+      "title": "多模型路由优化",
+      "stage": "5",
+      "requirements": [
+        "ADV-ROUTE"
+      ],
+      "implementation_dependencies": [
+        "W-MODEL",
+        "E-SCORE"
+      ],
+      "interface": "按任务成本/质量/延迟路由、降级和预算接口",
+      "acceptance": "版本化评测对比成本/成功率；故障降级不突破权限与预算",
+      "write_scopes": [
+        "src/models/routing",
+        "tests/integration/model_routing"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "A-ORGMEM",
+      "title": "长期组织记忆",
+      "stage": "5",
+      "requirements": [
+        "ADV-ORGMEM"
+      ],
+      "implementation_dependencies": [
+        "P-MEM",
+        "S-TENANT"
+      ],
+      "interface": "组织记忆提升审批、权限继承、来源和删除接口",
+      "acceptance": "长期保留、跨项目权限、撤销删除及污染防护验证",
+      "write_scopes": [
+        "src/memory/organization",
+        "tests/integration/organization_memory"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "M1",
+      "title": "可靠Issue到PR闭环验收",
+      "stage": "里程碑",
+      "requirements": [
+        "RT-001",
+        "RT-002",
+        "RT-003",
+        "RT-004",
+        "RT-005",
+        "RT-006",
+        "RT-007",
+        "RT-008"
+      ],
+      "implementation_dependencies": [
+        "R-RECOVER",
+        "S-RBAC",
+        "S-BOX",
+        "S-CRED",
+        "T-FILE",
+        "T-GIT",
+        "T-TEST",
+        "W-MODEL",
+        "W-CODER",
+        "O-TRACE",
+        "E-DATA",
+        "E-SCORE"
+      ],
+      "interface": "真实任务驱动上述组件；基础审计记录与审批接入",
+      "acceptance": "真实模型和GitHub测试仓库产出可评审PR；暂停/恢复/失败用例；E2E通过率>80%；用户验收",
+      "write_scopes": [
+        "tests/e2e/mvp",
+        "docs/development/milestones/M1.md"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "M2",
+      "title": "可控上线验收",
+      "stage": "里程碑",
+      "requirements": [
+        "SEC-008",
+        "SEC-009",
+        "SEC-010",
+        "OBS-001",
+        "OBS-002",
+        "OBS-003",
+        "OBS-004",
+        "OBS-005",
+        "OBS-006",
+        "OBS-007",
+        "EVA-005",
+        "EVA-006",
+        "EVA-007",
+        "WEB"
+      ],
+      "implementation_dependencies": [
+        "M1",
+        "S0-FREEZE",
+        "O-AUDIT",
+        "O-METRIC",
+        "S-SCAN",
+        "S-KILL",
+        "S-TENANT",
+        "E-GATE",
+        "E-FEED",
+        "WEB"
+      ],
+      "interface": "真实控制台、执行、监控、阻断、租户和发布链路",
+      "acceptance": "红队、真实隔离、Kill传播≤10秒、M5恢复、审计完整性、告警、反馈回滚及远端CI门禁通过；用户验收",
+      "write_scopes": [
+        "tests/e2e/controlled_release",
+        "docs/development/milestones/M2.md"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "M3",
+      "title": "上下文接入评估与冻结",
+      "stage": "里程碑",
+      "requirements": [
+        "CTX-001",
+        "CTX-002",
+        "CTX-003",
+        "CTX-004",
+        "CTX-005",
+        "CTX-006",
+        "CTX-007",
+        "CTX-008",
+        "CTX-009"
+      ],
+      "implementation_dependencies": [
+        "M1",
+        "C-INDEX",
+        "C-SEARCH",
+        "C-SELECT",
+        "C-EVAL"
+      ],
+      "interface": "真实索引→检索→选择→Coder→评分的A/B链路",
+      "acceptance": "p95<500ms、Recall@20>85%、权限泄漏0；Token利用80%-95%、覆盖>85%；任务成功率提升>10%按批准口径报告并冻结",
+      "write_scopes": [
+        "tests/e2e/context",
+        "docs/development/milestones/M3.md"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "M4",
+      "title": "多Worker与记忆平台验收",
+      "stage": "里程碑",
+      "requirements": [
+        "HAR-001",
+        "HAR-002",
+        "HAR-003",
+        "HAR-004",
+        "HAR-005",
+        "HAR-006",
+        "MEM-001",
+        "MEM-002",
+        "MEM-003",
+        "MEM-004"
+      ],
+      "implementation_dependencies": [
+        "M2",
+        "M3",
+        "H-SDK",
+        "P-DAG",
+        "P-EXPERT",
+        "P-MEM"
+      ],
+      "interface": "DAG→五类专家→Harness/上下文/记忆/工具的真实协作链路",
+      "acceptance": "复杂DAG可恢复；协作成功率>85%；记忆质量>80%按批准口径评估；平台权限与审计闭环；用户验收",
+      "write_scopes": [
+        "tests/e2e/platform",
+        "docs/development/milestones/M4.md"
+      ],
+      "status": "待开发",
+      "owner": null,
+      "mode": null,
+      "implementation_ready": false,
+      "approval_evidence": null,
+      "completion_evidence": null,
+      "updated_at": null,
+      "last_note": "已有代码仅作基础；本工作包未完整验收。"
+    },
+    {
+      "id": "DONE-ALIGN",
+      "title": "设计—代码对齐评审",
+      "stage": "0",
+      "requirements": [
+        "BASELINE"
+      ],
+      "implementation_dependencies": [],
+      "interface": "沿用历史验收限定范围与契约",
+      "acceptance": "沿用已记录的用户验收与测试证据，不外推为整项REQ完成",
+      "write_scopes": [
+        "docs/delivery-reports/DONE-ALIGN.md"
+      ],
+      "status": "已完成",
+      "owner": "historical-accepted",
+      "mode": "implementation",
+      "implementation_ready": true,
+      "completion_evidence": "docs/review/roadmap-status-and-stage0-proposal-2026-10-28.md",
+      "completed_at": "2026-10-28",
+      "updated_at": null,
+      "last_note": "历史完成记录；未重新执行测试。"
+    },
+    {
+      "id": "DONE-LIFECYCLE",
+      "title": "MCP生命周期发现与调用一致拒绝及扫描扩展",
+      "stage": "0",
+      "requirements": [
+        "SEC-007"
+      ],
+      "implementation_dependencies": [],
+      "interface": "沿用历史验收限定范围与契约",
+      "acceptance": "沿用已记录的用户验收与测试证据，不外推为整项REQ完成",
+      "write_scopes": [
+        "docs/delivery-reports/DONE-LIFECYCLE.md"
+      ],
+      "status": "已完成",
+      "owner": "historical-accepted",
+      "mode": "implementation",
+      "implementation_ready": true,
+      "completion_evidence": "docs/delivery-reports/sec007-lifecycle-acceptance-2026-10-29.json",
+      "completed_at": "2026-10-29",
+      "updated_at": null,
+      "last_note": "历史完成记录；未重新执行测试。"
+    },
+    {
+      "id": "DONE-CREDENTIAL",
+      "title": "连接器级凭据失效与SEC-005撤销联动",
+      "stage": "0",
+      "requirements": [
+        "SEC-007"
+      ],
+      "implementation_dependencies": [],
+      "interface": "沿用历史验收限定范围与契约",
+      "acceptance": "沿用已记录的用户验收与测试证据，不外推为整项REQ完成",
+      "write_scopes": [
+        "docs/delivery-reports/DONE-CREDENTIAL.md"
+      ],
+      "status": "已完成",
+      "owner": "historical-accepted",
+      "mode": "implementation",
+      "implementation_ready": true,
+      "completion_evidence": "docs/delivery-reports/sec007-credential-invalidation-acceptance-2026-10-29.json",
+      "completed_at": "2026-10-29",
+      "updated_at": null,
+      "last_note": "历史完成记录；未重新执行测试。"
+    },
+    {
+      "id": "DOC-ROUTE",
+      "title": "执行手册依赖路线与多AI领取机制",
+      "stage": "治理",
+      "requirements": [
+        "GOVERNANCE"
+      ],
+      "implementation_dependencies": [],
+      "interface": "执行手册、共享台账、原子领取命令及AI入口规则",
+      "acceptance": "覆盖阶段0～5和60项REQ；依赖无环；并发领取仅一个成功；状态与证据流转验证；交付后待用户验收",
+      "write_scopes": [
+        "项目开发执行手册.md",
+        "AGENTS.md",
+        "scripts/task_board.py",
+        "tests/test_task_board_coordination.py",
+        "docs/development/TASKS.md",
+        "docs/development/task-board.json",
+        "docs/development/coordination-verification-2026-10-29.md"
+      ],
+      "status": "待验收",
+      "owner": "codex-roadmap-20261029",
+      "mode": "implementation",
+      "implementation_ready": true,
+      "approval_evidence": "2026-10-29本聊天：用户要求调整手册并让AI先领取标记任务",
+      "completion_evidence": null,
+      "updated_at": "2026-10-29T04:05:47.412708+00:00",
+      "last_note": "手册、62项台账及原子领取机制交付；6项专项测试通过，待用户验收",
+      "delivery_evidence": "docs/development/coordination-verification-2026-10-29.md"
+    }
+  ],
+  "history": [
+    {
+      "at": "2026-10-29T04:03:57.572328+00:00",
+      "task": "DOC-ROUTE",
+      "action": "migration-register",
+      "actor": "codex-roadmap-20261029",
+      "status": "开发中",
+      "note": "建立台账时登记本次治理工作"
+    },
+    {
+      "at": "2026-10-29T04:05:47.412723+00:00",
+      "task": "DOC-ROUTE",
+      "action": "submit",
+      "actor": "codex-roadmap-20261029",
+      "previous_status": "开发中",
+      "status": "待验收",
+      "note": "手册、62项台账及原子领取机制交付；6项专项测试通过，待用户验收",
+      "evidence": "docs/development/coordination-verification-2026-10-29.md"
+    },
+    {
+      "at": "2026-10-29T04:19:37.532553+00:00",
+      "task": "S0-SCHEMA",
+      "action": "handoff",
+      "actor": "legacy-schema-session",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "本会话即原工具批准与Schema复审实施会话；承接迁移占位负责人，方案三点已有本会话用户明确批准；已完成实现，正在整理交付证据。",
+      "evidence": "docs/review/sec007-tool-approval-schema-design-2026-10-29.md"
+    },
+    {
+      "at": "2026-10-29T04:32:09.228520+00:00",
+      "task": "S0-SCHEMA",
+      "action": "submit",
+      "actor": "codex-schema-20261029-a942yseg",
+      "previous_status": "开发中",
+      "status": "待验收",
+      "note": "代码、接口、已确认方案与对标、测试报告已交付；全量2217通过/0失败/0跳过，65专项，92关键方法100%行覆盖，静态与安全门禁均通过。仅本切片待用户验收；不标记已完成。",
+      "evidence": "docs/test-reports/sec007-tool-approval-schema-2026-10-29.md"
+    },
+    {
+      "at": "2026-10-29T04:35:58.133419+00:00",
+      "task": "G-RT",
+      "action": "claim",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:37:43.969242+00:00",
+      "task": "G-RT",
+      "action": "heartbeat",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "已完成八份冻结契约、字段与调用方矩阵、错误语义及兼容用例核对；既有Runtime测试843通过，正在完成文档验证与交付。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:37:58.914780+00:00",
+      "task": "G-RT",
+      "action": "submit",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "开发中",
+      "status": "待验收",
+      "note": "运行时共享契约核对文档交付：保留8份冻结版本，字段/调用方/错误语义及10组兼容验证清单明确；843既有Runtime测试通过，143告警；11本地链接通过。未改生产代码或冻结REQ，未执行生产门禁与真实持久化验收，待用户验收。",
+      "evidence": "docs/development/contracts/runtime.md"
+    },
+    {
+      "at": "2026-10-29T04:41:55.859973+00:00",
+      "task": "G-MODEL",
+      "action": "claim",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:44:34.348170+00:00",
+      "task": "G-MODEL",
+      "action": "heartbeat",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "已完成接口兼容、流式状态、预算、取消、错误及凭据边界方案；记录用户真实确认的任务分支审批限定解释；64既有测试通过，正在校验文档。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:47:42.151951+00:00",
+      "task": "G-MEM",
+      "action": "claim",
+      "actor": "codex-gmem-20261029-01a185f7",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "按执行手册G类授权领取契约核对，仅写docs/development/contracts/memory.md；读取MEM-001至004、官方对标并形成待验收契约材料，不编写生产记忆代码。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:47:44.383339+00:00",
+      "task": "G-MODEL",
+      "action": "submit",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "开发中",
+      "status": "待验收",
+      "note": "模型网关契约评审文档交付，区分既有与建议接口；兼容/流式/预算/超时取消/凭据/异常及10组验收清单明确。用户已确认任务分支审批限定解释；其他新增接口未批准。64既有测试、9本地链接与签名字段核对通过；无生产代码变更，真实供应商及生产门禁未执行。待用户验收文档并确认接口方案，不自动批准W-MODEL。",
+      "evidence": "docs/development/contracts/model.md"
+    },
+    {
+      "at": "2026-10-29T04:48:07.286979+00:00",
+      "task": "G-EVA",
+      "action": "claim",
+      "actor": "codex-geva-20261029-01a185f6",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:48:21.244493+00:00",
+      "task": "G-CTX",
+      "action": "claim",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:48:39.947279+00:00",
+      "task": "G-MODEL",
+      "action": "accept",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "待验收",
+      "status": "已完成",
+      "note": "用户已验收G-MODEL契约文档及接口方案；历史验证64测试通过、9链接及签名字段核对通过，未重跑。G-MODEL依赖解除；供应商选择与W-MODEL实施基线另行确认。",
+      "evidence": "docs/development/contracts/model.md；2026-10-29本聊天，交付后请用户确认接口方案，用户回复：确认。验收范围为契约文档和接口方案，不包含W-MODEL生产实现。"
+    },
+    {
+      "at": "2026-10-29T04:48:56.361736+00:00",
+      "task": "W-MODEL",
+      "action": "claim",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:49:16.417292+00:00",
+      "task": "G-EVA",
+      "action": "heartbeat",
+      "actor": "codex-geva-20261029-01a185f6",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "已核对EVA-001至007核心Schema和既有006/007用户决策；确认无evaluation生产模块，发现Oracle枚举/结果状态/回滚触发器及门禁阈值差异，正在任务专属文档整理基线与兼容提案。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:49:26.375214+00:00",
+      "task": "G-MEM",
+      "action": "heartbeat",
+      "actor": "codex-gmem-20261029-01a185f7",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "已核对四份MEM草案、执行手册、现有Runtime/RBAC/网关和P-MEM硬依赖；确认无src/memory实现。发现范围/审批/版本/冲突/生命周期语义差异，正在任务专属文档中形成建议与兼容验收矩阵，待用户裁决后方可作为实施基线。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:50:29.945481+00:00",
+      "task": "G-CTX",
+      "action": "block",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "previous_status": "开发中",
+      "status": "阻塞",
+      "note": "契约核对已记录于 docs/development/contracts/context.md；12本地引用复测通过、台账62项无环。等待用户决定Q1缺失原文重建、Q2规则故障默认拒绝、Q3双DTO显式适配、Q4保留独立阈值。未改生产/REQ/测试；确认后完善精确Schema再提交基线。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:51:03.829965+00:00",
+      "task": "W-MODEL",
+      "action": "heartbeat",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "用户已选OpenAI Responses API；准备具体实施方案。预算隔离原型7项通过（含双进程竞争及重开保留），首跑连接未关闭导致Windows清理失败已修复复测；尚无生产代码修改。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:53:43.704832+00:00",
+      "task": "G-CTX",
+      "action": "release",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "previous_status": "阻塞",
+      "status": "待开发",
+      "note": "用户于2026-10-29在本聊天回复确认，批准前一答复列出的Q1至Q4：专属材料重建后再次确认、规则故障拒绝、双DTO显式适配、独立阈值协调。阻塞解除；按脚本状态机释放后立即以同owner领取design，仅补专属方案。",
+      "evidence": "本聊天：四项建议后用户回复‘确认’；docs/development/contracts/context.md §6"
+    },
+    {
+      "at": "2026-10-29T04:53:44.389204+00:00",
+      "task": "G-CTX",
+      "action": "claim",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "恢复设计开发；执行用户已确认Q1至Q4，补拟完整接口供基线确认，禁止生产编码",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:54:20.230179+00:00",
+      "task": "G-MEM",
+      "action": "submit",
+      "actor": "codex-gmem-20261029-01a185f7",
+      "previous_status": "开发中",
+      "status": "待验收",
+      "note": "记忆契约评审材料交付：四份MEM草案与现有代码核对、三组官方对标、D01-D09待确认建议、接口/权限/状态/异常及13组验收用例。文档11节、16本地链接通过；4份REQ哈希未变；台账62项有效。只交付专属文档，生产代码/测试/扫描未执行；共享映射及留存数值继续待决，未批准P-MEM实施或冻结REQ。",
+      "evidence": "docs/development/contracts/memory.md"
+    },
+    {
+      "at": "2026-10-29T04:54:26.802764+00:00",
+      "task": "W-MODEL",
+      "action": "submit-design",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "开发中",
+      "status": "待确认",
+      "note": "用户已选OpenAI Responses API；G-MODEL接口方案已验收。具体实施方案与隔离预算原型交付：7项通过、12本地链接通过、原型Ruff通过。待确认本机SQLite预算账本/部署边界、jsonschema依赖与职责分离写入范围、超时容量及默认单次尝试；未修改生产代码，未执行真实API和生产门禁。",
+      "evidence": "docs/review/W-MODEL-design-2026-10-29.md"
+    },
+    {
+      "at": "2026-10-29T04:55:28.101041+00:00",
+      "task": "G-EVA",
+      "action": "heartbeat",
+      "actor": "codex-geva-20261029-01a185f6",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "已交付evaluation.md：EVA七项版本/接口/权限/错误/门禁/回滚对齐，沿用2026-10-08确认，新增Q1-Q8待用户决定；53既有门禁测试通过，19本地链接/8合成算术场景通过，9份既有EVA文件哈希未变。未改生产代码；真实扫描、EVA产品及里程碑未验收。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:55:28.795738+00:00",
+      "task": "G-EVA",
+      "action": "submit",
+      "actor": "codex-geva-20261029-01a185f6",
+      "previous_status": "开发中",
+      "status": "待验收",
+      "note": "",
+      "evidence": "docs/development/contracts/evaluation.md"
+    },
+    {
+      "at": "2026-10-29T04:55:33.047901+00:00",
+      "task": "W-MODEL",
+      "action": "approved-scope-update",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_scopes": [
+        "src/workers/common/model_client.py",
+        "tests/integration/model"
+      ],
+      "write_scopes": [
+        "src/workers/common/model_client.py",
+        "src/workers/common/__init__.py",
+        "src/workers/common/model_gateway",
+        "tests/unit/workers/model_gateway",
+        "tests/integration/model",
+        "pyproject.toml",
+        "requirements.txt",
+        "docs/review/W-MODEL-design-2026-10-29.md",
+        "docs/development/prototypes/W-MODEL"
+      ],
+      "evidence": "docs/review/W-MODEL-design-2026-10-29.md §3；2026-10-29本聊天用户回复确认，批准本机账本、依赖、文件范围及实施基线"
+    },
+    {
+      "at": "2026-10-29T04:55:33.137587+00:00",
+      "task": "W-MODEL",
+      "action": "approve-design",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "待确认",
+      "status": "待开发",
+      "note": "",
+      "evidence": "docs/review/W-MODEL-design-2026-10-29.md；2026-10-29本聊天用户在具体实施方案交付后回复：确认。批准本机SQLite账本、jsonschema依赖、扩展写入范围及完整限定实施基线。"
+    },
+    {
+      "at": "2026-10-29T04:55:33.225565+00:00",
+      "task": "W-MODEL",
+      "action": "claim",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:55:45.244237+00:00",
+      "task": "G-EVA",
+      "action": "heartbeat",
+      "actor": "codex-geva-20261029-01a185f6",
+      "previous_status": "待验收",
+      "status": "待验收",
+      "note": "契约评审已交付待用户验收：docs/development/contracts/evaluation.md；7项REQ映射、Q1-Q8待确认、AC01-AC12。53既有门禁测试、19链接、8合成算术场景通过；9份既有EVA文件哈希未变。未改生产代码或冻结共享契约；真实扫描及产品/里程碑未验收，下游仍须任务级实施批准。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:55:58.504811+00:00",
+      "task": "G-CTX",
+      "action": "heartbeat",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "用户确认Q1至Q4已记录§9；完成r2补拟§10至14：压缩输入输出/阈值/CAS协调/快照、双DTO字段适配、安全影响及同步清单。12本地引用、8预算样例、RRF精确分数及分页算术通过；仅文档，未跑生产门禁。",
+      "evidence": "docs/development/contracts/context.md §9至14；本聊天用户2026-10-29回复确认"
+    },
+    {
+      "at": "2026-10-29T04:55:58.658599+00:00",
+      "task": "G-CTX",
+      "action": "submit-design",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "previous_status": "开发中",
+      "status": "待确认",
+      "note": "提交完整文档方案待确认；本次确认请求限§10至14新增具体Schema/限额/适配/协调与安全同步方案，不重复请求Q1至Q4原则确认；尚未修改源REQ或生产实现，未验收G-CTX。",
+      "evidence": "docs/development/contracts/context.md#10-ctx-008-缺失章节补拟供确认不声称恢复原文；候选基线gctx-review-20261029-r2；§9记录Q1至Q4真实确认"
+    },
+    {
+      "at": "2026-10-29T04:56:53.312326+00:00",
+      "task": "G-CTX",
+      "action": "approve-design",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "previous_status": "待确认",
+      "status": "待开发",
+      "note": "用户批准r2完整方案及源契约同步步骤；仅文档实施，不批准生产代码或整项REQ验收",
+      "evidence": "本聊天2026-10-29：上一答复明确请求确认gctx-review-20261029-r2新增具体方案，用户紧接回复确认；docs/development/contracts/context.md §9至14"
+    },
+    {
+      "at": "2026-10-29T04:56:53.491189+00:00",
+      "task": "G-CTX",
+      "action": "scope-update",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "previous_scopes": [
+        "docs/development/contracts/context.md"
+      ],
+      "write_scopes": [
+        "docs/development/contracts/context.md",
+        "docs/design-specs/REQ-CTX-001-index-entities-schema.md",
+        "docs/design-specs/REQ-CTX-004-hybrid-retrieval-ranking.md",
+        "docs/design-specs/REQ-CTX-005-retrieval-permissions-sensitive-paths.md",
+        "docs/design-specs/REQ-CTX-006-context-selector-budget.md",
+        "docs/design-specs/REQ-CTX-007-incremental-index-consistency.md",
+        "docs/design-specs/REQ-CTX-008-context-compression-tiered-loading.md",
+        "docs/design-specs/REQ-HAR-002-context-compaction.md"
+      ],
+      "evidence": "用户确认gctx-review-20261029-r2；context.md §12/14批准的源文档同步",
+      "note": "锁内重读/检查所有占用范围，扩展为6份CTX及HAR-002源文档；不改共享索引/Runtime/生产文件"
+    },
+    {
+      "at": "2026-10-29T04:56:54.187511+00:00",
+      "task": "G-MEM",
+      "action": "reopen-for-review",
+      "actor": "codex-gmem-20261029-01a185f7",
+      "previous_status": "待验收",
+      "status": "开发中",
+      "note": "用户2026-10-29要求“请你进行验收”；技术复核发现审批评分与强制人工规则冲突未列入报告，以及冻结状态/生产数据库证据两处表述问题。按执行手册验收退回规则恢复原owner开发中，仅修正专属评审文档并记录复验，不批准基线或用户验收。",
+      "evidence": "本会话用户指令“请你进行验收”；docs/development/contracts/memory.md；复核前SHA256=73bc2cb4274325e5573a527d660ff905bde68f88ea0c129e83218db09b87bc63"
+    },
+    {
+      "at": "2026-10-29T04:56:54.427791+00:00",
+      "task": "G-CTX",
+      "action": "claim",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "按用户确认r2同步源契约；仅登记的8份文档，保留历史及冻结Runtime",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:58:06.131395+00:00",
+      "task": "G-CTX",
+      "action": "heartbeat",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "7份源契约已同步并递增版本；CTX-008重建§1至5.1并修订危险降级。8份文档20个本地引用/围栏检查通过；diff发现8处Markdown硬换行尾空格，正局部修复复测。无生产修改。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T04:58:15.651342+00:00",
+      "task": "G-EVA",
+      "action": "reopen-review",
+      "actor": "codex-geva-20261029-01a185f6",
+      "previous_status": "待验收",
+      "status": "开发中",
+      "note": "用户2026-10-29请求“请你进行验收”：技术复核复现50% Error Budget浮点分支错误，并发现人工审核后续状态未闭合；按执行手册验收退回规则恢复开发中，仅修G-EVA文档与验证样例，不代表用户已批准Q1-Q8。",
+      "evidence": "docs/development/contracts/evaluation.md §6.2/§7.2/§10；本聊天用户验收请求"
+    },
+    {
+      "at": "2026-10-29T04:58:21.468924+00:00",
+      "task": "G-MEM",
+      "action": "submit",
+      "actor": "codex-gmem-20261029-01a185f7",
+      "previous_status": "开发中",
+      "status": "待验收",
+      "note": "用户要求验收后完成技术复核：发现并补充强制人工审批被数值评分覆盖的冲突（3个反例），修正Memory冻结状态和未经DB验证的事实表述。修正后12节/9建议/13组用例/16链接通过，4份REQ哈希未变、5枚举AST匹配、台账62项有效；最终文档SHA256=ad4144eb02495fc45619645c81ede166f71c4f4976548169b18ee3f08cfea11d。结论：文档质量复核通过，基线/生产验收未通过；未执行生产门禁，不代表用户已确认建议或验收通过，P-MEM未解锁。",
+      "evidence": "docs/development/contracts/memory.md#12-验收复核记录2026-10-29"
+    },
+    {
+      "at": "2026-10-29T04:58:41.054167+00:00",
+      "task": "G-CTX",
+      "action": "scope-update",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "added_scopes": [
+        "docs/design-specs/00-integrated-design-baseline.md",
+        "docs/design-specs/04-context-and-code-indexing.md",
+        "docs/design-specs/INDEX.md",
+        "docs/design-specs/PENDING-REQUIREMENTS.md"
+      ],
+      "note": "批准r2 §12源引用同步：扫描发现两处旧安全语义及版本索引；锁内确认无占用，保留其他会话已存在改动，仅精确增补",
+      "evidence": "本聊天用户确认gctx-review-20261029-r2；context.md §12/14"
+    },
+    {
+      "at": "2026-10-29T05:01:06.253636+00:00",
+      "task": "G-MEM",
+      "action": "accept",
+      "actor": "codex-gmem-20261029-01a185f7",
+      "previous_status": "待验收",
+      "status": "已完成",
+      "note": "✅ 2026-10-29用户验收完成（Asia/Shanghai）。确认范围为G-MEM契约核对文档及D01-D09建议，后续不重复询问已确认取舍；原交付文件保持不变，确认状态以本台账为准。测试摘要：16本地链接、4份REQ哈希、5个源码枚举和台账校验通过；3个审批评分反例已记录；生产测试/安全扫描未执行。G-SEC及共享映射、具体保留数值和质量口径继续开放；P-MEM自身实施基线尚未批准。",
+      "evidence": "本会话2026-10-29（Asia/Shanghai）：用户在G-MEM技术验收结论及待确认事项说明后回复“确认”。验收材料：docs/development/contracts/memory.md（第4节D01-D09、第12节复核记录）；确认版本SHA256=ad4144eb02495fc45619645c81ede166f71c4f4976548169b18ee3f08cfea11d。范围：接受修正后的契约评审文档及D01-D09作为后续方案细化依据；不包含P-MEM具体实施批准、整项MEM冻结或生产验收。"
+    },
+    {
+      "at": "2026-10-29T05:01:47.061143+00:00",
+      "task": "G-CTX",
+      "action": "heartbeat",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "12份文档源同步与引用修订完成，309本地链接/围栏/diff检查通过；pytest2218通过3Docker跳过，mypy202通过；全仓Ruff仍有其他W-MODEL占用文件7处E501。安全初检唯一未审命中为本任务Git哈希已核实修正文案，复扫中；报告§15。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T05:02:34.897409+00:00",
+      "task": "G-CTX",
+      "action": "submit",
+      "actor": "codex-gctx-20261029-01a185f8",
+      "previous_status": "开发中",
+      "status": "待验收",
+      "note": "限定契约文档交付待用户验收，不标记完成；6份CTX/HAR-002源版本及4份引用同步。未改生产/正式测试/Runtime冻结字段，保留其他会话修改。全仓静态门禁尚未通过，详见§15。",
+      "evidence": "docs/development/contracts/context.md §15：r2批准记录、12份文档同步、309链接/结构/diff通过、pytest2218通过3跳过、mypy202通过；全仓Ruff7处他任务E501，SCA复扫超时如实保留，Secret专项复测通过"
+    },
+    {
+      "at": "2026-10-29T05:02:37.314791+00:00",
+      "task": "G-SEC",
+      "action": "claim",
+      "actor": "codex-gmem-20261029-01a185f7",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "按执行手册G类授权领取安全与租户契约核对，仅写docs/development/contracts/security.md。复用已验收G-MEM决议及安全历史成果，核对SEC001/002/003/004/005/007/008/009/010、失败关闭、租户传播与调用方；不修改生产代码或共享REQ。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T05:02:42.752907+00:00",
+      "task": "G-EVA",
+      "action": "submit",
+      "actor": "codex-geva-20261029-01a185f6",
+      "previous_status": "开发中",
+      "status": "待验收",
+      "note": "按用户“请你进行验收”完成技术复核；修正预算50%精度、人审闭环、漂移定义域3项文档问题。53既有门禁测试、19链接、20合成场景及3/3变异检出通过；9份既有EVA文件未变。文档技术检查通过；Q1-Q8未获真实用户确认，保留待验收，未批准下游实现或执行accept。",
+      "evidence": "docs/development/contracts/evaluation.md §12; SHA256=aa5700135619fbd76f4de12a2c330e739c04626eea19b20df22003912766e83a"
+    },
+    {
+      "at": "2026-10-29T05:03:47.928017+00:00",
+      "task": "C-INDEX",
+      "action": "claim",
+      "actor": "codex-cindex-20261029-01a185f8",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "用户要求判断是否应编码、否则领取新任务；核对实时台账，无无人占用且基线/硬依赖均满足的生产任务。领取索引设计，G-CTX仍待验收，本任务实施未批准；仅允许任务专属设计文档或隔离原型，不改src/tests。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T05:03:52.684746+00:00",
+      "task": "W-MODEL",
+      "action": "heartbeat",
+      "actor": "codex-grt-20261029-01a185ef",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "核心网关与 SQLite 预算实现已落地，正在补齐 HTTP/SSE、取消与异常验证；用户明确先完成实现和本地验证，真实冒烟暂缓。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T05:05:00.370058+00:00",
+      "task": "G-OBS",
+      "action": "claim",
+      "actor": "codex-geva-20261029-01a185f6",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "用户要求领取新的任务。已核对根AGENTS、执行手册、迭代规则、OBS七项需求概要、实时台账与工作区。领取G-OBS设计模式；G-RT待验收阻止implementation。设计仅允许docs/review/G-OBS-design-2026-10-29.md；计划核对Trace/Event/Evidence关联、身份、指标基数、脱敏、审计留存及EVA接口，保留其他会话改动。G-EVA继续待验收。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T05:06:16.613262+00:00",
+      "task": "G-OBS",
+      "action": "heartbeat",
+      "actor": "codex-geva-20261029-01a185f6",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "恢复G-OBS design：复核owner/依赖/工作区，G-RT待验收、G-SEC由其他会话开发。仅写docs/review/G-OBS-design-2026-10-29.md；本轮核对OBS001-007、现有Trace/查询/脱敏基础、官方对标与跨模块差异，准备可审阅设计。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T05:06:29.114232+00:00",
+      "task": "C-INDEX",
+      "action": "scope-update",
+      "actor": "codex-cindex-20261029-01a185f8",
+      "added_scopes": [
+        "docs/review/C-INDEX-design-2026-10-29.md",
+        "docs/development/prototypes/C-INDEX"
+      ],
+      "note": "用户要求继续设计，登记任务专属方案和标准库隔离原型；不授权src/tests写入，设计模式不变"
+    },
+    {
+      "at": "2026-10-29T05:07:42.761405+00:00",
+      "task": "G-SEC",
+      "action": "heartbeat",
+      "actor": "codex-gmem-20261029-01a185f7",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "已核对9项安全契约及SEC006协作边界；保留SEC004 Q1-Q6、SEC009 Q1-Q7与G-MEM D01-D09既有确认。53项既有专项测试通过，另只读内存探针复现CDP请求max_ttl_seconds=60但返回3600；仅记录缺口，不越界修生产代码。正在整理租户/审批/撤销/降级/审计的兼容边界和待确认建议。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T05:12:29.749026+00:00",
+      "task": "C-INDEX",
+      "action": "heartbeat",
+      "actor": "codex-cindex-20261029-01a185f8",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "设计r1完成：固定SHA/三语言AST+LSP/PG不可变快照CAS/授权隔离/错误恢复/分步验收；官方对标及5项候选依赖精确版本/许可记录。隔离Merkle原型8类正确性通过，两规模15次计时，ruff修复5项B023后通过；9引用/报告数据一致/台账验证通过。未改生产和正式测试。",
+      "evidence": "docs/review/C-INDEX-design-2026-10-29.md；docs/development/prototypes/C-INDEX/results.json"
+    },
+    {
+      "at": "2026-10-29T05:12:29.903908+00:00",
+      "task": "C-INDEX",
+      "action": "submit-design",
+      "actor": "codex-cindex-20261029-01a185f8",
+      "previous_status": "开发中",
+      "status": "待确认",
+      "note": "方案待用户确认；生产依赖/SourceRange/存储发布等范围见§11。G-CTX仍待验收，本方案批准也不能绕过硬依赖。LSP工具版本/ABI/真实DB/三语言正式基准未验证，原型非生产验收。",
+      "evidence": "docs/review/C-INDEX-design-2026-10-29.md（cindex-20261029-r1）；docs/development/prototypes/C-INDEX/spike.py及results.json"
+    },
+    {
+      "at": "2026-10-29T05:12:55.936147+00:00",
+      "task": "G-OBS",
+      "action": "heartbeat",
+      "actor": "codex-geva-20261029-01a185f6",
+      "previous_status": "开发中",
+      "status": "开发中",
+      "note": "OBS001-007及RT/SEC/EVA接口核对、官方对标完成；既有专项188通过/2弃用告警，3只读Trace边界探针发现待修复缺口。开始编写G-OBS专属设计；不改生产代码、正式测试或其他任务文件。",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T12:49:44.068979+00:00",
+      "task": "R-EVENT",
+      "action": "claim",
+      "actor": "cursor-revent-20261029-7c3e91",
+      "previous_status": "待开发",
+      "status": "开发中",
+      "note": "",
+      "evidence": ""
+    },
+    {
+      "at": "2026-10-29T13:00:46.565975+00:00",
+      "task": "R-EVENT",
+      "action": "submit-design",
+      "actor": "cursor-revent-20261029-7c3e91",
+      "previous_status": "开发中",
+      "status": "待确认",
+      "note": "设计已提交，待用户确认实施基线与Q1-Q5",
+      "evidence": "docs/review/R-EVENT-design-2026-10-29.md"
+    },
+    {
+      "at": "2026-10-29T13:01:29.978449+00:00",
+      "task": "R-EVENT",
+      "action": "approve-design",
+      "actor": "cursor-revent-20261029-7c3e91",
+      "previous_status": "待确认",
+      "status": "待开发",
+      "note": "baseline approved, Q1-Q5 per recommendations",
+      "evidence": "user-confirmed 2026-10-29 21:01 chat reply: 确认 (approves docs/review/R-EVENT-design-2026-10-29.md baseline, Q1-Q5 as recommended)"
+    }
+  ]
+}

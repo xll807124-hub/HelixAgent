@@ -4,6 +4,7 @@
 对齐: REQ-RT-001 (Action/Evidence 追踪) + REQ-OPS-001 (可观测性)
 """
 import asyncio
+
 import pytest
 
 from src.workers.coder.worker import _git

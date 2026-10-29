@@ -96,6 +96,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.default_organization_id = "00000000-0000-0000-0000-000000000001"
     app.state.default_project_id = "00000000-0000-0000-0000-000000000002"
     app.state.default_repository_id = "00000000-0000-0000-0000-000000000003"
+    app.state.tool_allowed_paths = list(settings.tool_allowed_paths)
 
     # 工具注册表（用全局单例，确保与现有 ActionExecutor 行为一致）
     reset_global_registry()

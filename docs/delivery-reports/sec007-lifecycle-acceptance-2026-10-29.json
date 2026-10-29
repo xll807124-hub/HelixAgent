@@ -1,0 +1,78 @@
+{
+  "task": "阶段 0 / 步骤 2 / SEC-007 生命周期发现与调用一致拒绝（含依赖升级与扫描配置）",
+  "status": "✅ 已完成",
+  "completed_on": "2026-10-29",
+  "timezone": "Asia/Shanghai",
+  "user_acceptance": true,
+  "task_complete": true,
+  "acceptance_instruction": "将已完成的任务标记✅",
+  "test_date": "2026-10-28",
+  "test_results": {
+    "passed": 2100,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 3,
+    "duration_seconds": 53.412,
+    "new_gate_tests": 53,
+    "lifecycle_tests": 46,
+    "warnings": 2126,
+    "skip_reason": "Existing real Docker tests require a running daemon"
+  },
+  "security": {
+    "sast": {
+      "blocked": false,
+      "high": 0,
+      "medium": 0,
+      "low": 44,
+      "files": 199,
+      "lines": 30105
+    },
+    "sca": {
+      "blocked": false,
+      "vulnerabilities": 0,
+      "dependencies": 92,
+      "skipped": [
+        "ai-agent-platform"
+      ]
+    },
+    "secret-worktree": {
+      "blocked": false,
+      "raw_findings": 20,
+      "reviewed_fixtures": 20,
+      "unreviewed": 0,
+      "files": 660
+    },
+    "secret-history": {
+      "blocked": false,
+      "raw_findings": 19,
+      "reviewed_fixtures": 19,
+      "unreviewed": 0
+    }
+  },
+  "static_checks": {
+    "ruff_repository_exit": 0,
+    "ruff_new_scripts_exit": 0,
+    "mypy_exit": 0,
+    "mypy_files": 196,
+    "pip_check_exit": 0
+  },
+  "original_evidence": {
+    "path": "docs/test-reports/sec007-security-gate-2026-10-28.json",
+    "sha256": "a21301e110bc0ec6eb58c22a6addac1267a1291d22f35424a4d59e2e82d609f3",
+    "preserved_as_delivery_snapshot": true
+  },
+  "remaining_scope_limits": [
+    "3 Docker integration tests not executed",
+    "Linux/Python 3.12 CI not executed remotely",
+    "44 low-severity SAST findings retained; zero high/medium",
+    "Full HAR-006 / REL-009 and remaining SEC-007 features outside this slice",
+    "Secret scan covers repository-managed/non-ignored files and local Git history; not local ignored .env, external submodule history or entire machine"
+  ],
+  "sec007_overall_complete": false,
+  "stage0_overall_complete": false,
+  "next_task_started": false,
+  "acceptance_update": {
+    "documents_only": true,
+    "software_tests_rerun": false
+  }
+}

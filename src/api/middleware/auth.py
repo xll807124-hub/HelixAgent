@@ -1,11 +1,11 @@
 """
 Bearer Token 鉴权中间件（src/api/middleware/auth.py）。
 
-MVP 占位实现：
-- 期望 `Authorization: Bearer <token>` 头；非空 token 视为有效
+单组织部署的令牌鉴权：
+- 期望 `Authorization: Bearer <token>` 头；仅接受配置中的令牌
 - 仅在 settings.auth_required=True 时启用（默认 True）
-- 真正的 OAuth/JWT/Scope 校验留给 SEC-002 RBAC 接入时实现
-- 不校验 token 签名/有效期（占位）；生产环境必须替换为 JWKS + RBAC
+- AI_API_AUTH_TOKENS 是 token 到 principal ID 的 JSON 映射
+- 未配置令牌时业务端点返回 503，健康检查仍可用
 
 失败模式（AGENTS.md §7 Fail Secure）：
 - 缺失 Authorization 头 → 401
@@ -14,10 +14,11 @@ MVP 占位实现：
 - 所有 401 走 envelope 错误（不回 WWW-Authenticate 之外的任何细节）
 
 存放在 request.state 的字段：
-- principal_id: str（占位：取自 token 的派生标识）
-- token: str（原始 token，便于审计/日志；不回客户端）
+- principal_id: str（配置中可信的主体标识；不保存原始令牌）
 """
 from __future__ import annotations
+
+import hmac
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -44,23 +45,19 @@ STATE_TOKEN = "auth_token"
 
 
 class BearerTokenAuthMiddleware(BaseHTTPMiddleware):
-    """占位版 Bearer Token 鉴权。"""
+    """校验显式配置的 Bearer Token。"""
 
     def __init__(self, app: object, settings: APISettings) -> None:
         super().__init__(app)  # type: ignore[arg-type]
         self._enabled = settings.auth_required
+        self._tokens = dict(settings.auth_tokens)
 
-    async def _resolve_principal(self, request: Request) -> str:
-        """将 bearer token 派生为稳定 principal_id（占位）。
-
-        MVP：使用 token 派生确定 UUID（同一 token 同一 principal）。
-        真正 RBAC（SEC-002）接入后改为从 JWT claims 提取。
-        """
-        import uuid
-
-        token = getattr(request.state, "auth_token", "")
-        # 占位：用 token 的 UUID5 命名空间生成稳定 UUID
-        return str(uuid.uuid5(uuid.NAMESPACE_DNS, token or "anonymous"))
+    def _resolve_principal(self, token: str) -> str | None:
+        """只从服务端配置中取得身份，使用恒定时间比较令牌。"""
+        for expected, principal in self._tokens.items():
+            if hmac.compare_digest(token.encode(), expected.encode()):
+                return principal
+        return None
 
     async def dispatch(  # type: ignore[no-untyped-def, override]
         self, request: Request, call_next
@@ -76,15 +73,25 @@ class BearerTokenAuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         raw = request.headers.get(AUTH_HEADER, "")
-        if not raw or not raw.startswith(BEARER_PREFIX):
+        if not raw or not raw.lower().startswith(BEARER_PREFIX.lower()):
             return self._reject(request, "missing bearer token")
         token = raw[len(BEARER_PREFIX) :].strip()
         if not token:
             return self._reject(request, "empty bearer token")
 
-        # 占位：principal_id 取 UUID5(token) 稳定映射
-        request.state.principal_id = await self._resolve_principal(request)
-        request.state.auth_token = token  # 仅服务端使用
+        if not self._tokens:
+            return JSONResponse(
+                status_code=503,
+                content=error_response(
+                    APIErrorCode.UPSTREAM_UNAVAILABLE,
+                    "authentication is not configured",
+                    trace_id=get_trace_id(request),
+                ),
+            )
+        principal = self._resolve_principal(token)
+        if principal is None:
+            return self._reject(request, "invalid bearer token")
+        request.state.principal_id = principal
         return await call_next(request)
 
     def _reject(self, request: Request, message: str) -> JSONResponse:

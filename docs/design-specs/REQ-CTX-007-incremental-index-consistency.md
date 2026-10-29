@@ -1,11 +1,26 @@
 # REQ-CTX-007 增量索引一致性 详细设计
 
-> 版本：v0.1-designed  
+> 版本：v0.2-designed
 > 优先级：P1  
 > 状态：详细设计已完成，待跨模块评审与冻结  
 > 所属模块：上下文管理（CTX）  
 > 前置依赖：REQ-CTX-001（索引实体和关系 Schema）、REQ-RT-001（核心运行时实体）  
 > 下游依赖：REQ-CTX-008（上下文压缩与分层加载）、REQ-CTX-009（检索评测）
+
+
+## G-CTX 2026-10-29 批准修订
+
+版本：v0.2-designed；限定基线：`gctx-review-20261029-r2`；批准依据：[G-CTX 确认记录及完整方案](../development/contracts/context.md) §9～14。用户先确认四项原则，再确认完整 r2 方案；未批准本需求全项冻结或生产实现。
+
+每个 index_version 只绑定一个不可变 source_revision；同一 SHA 可因重建产生不同 index_version。任务固定完整坐标，不因回退或 latest 发生漂移。Merkle 子节点按稳定路径标识比较，新增/删除/改名/重排必须与全量索引等价；旧数组下标遍历示例不是可直接实施的完整算法。
+
+本节为上述涉及内容的现行修订，原文算法/存储/厂商示例不构成生产已实现或新依赖授权。其余未涉及契约保持原要求。
+
+### 变更记录
+
+| 版本 | 日期 | 原因与影响 |
+|---|---|---|
+| v0.2-designed | 2026-10-29 | 用户确认 r2 后同步跨模块契约，保留源 DTO 和 Runtime 冻结字段；更新内容与验证见 G-CTX §15 |
 
 ---
 
@@ -228,7 +243,7 @@ function detectChanges(
 
 ### 3.2 索引版本绑定协议
 
-**决策**：index_version 与 source_revision 一对一绑定
+**决策**：每个 index_version 唯一绑定一个 source_revision；同一 source_revision 可有多个重建版本（v0.2 澄清）
 
 **理由**：
 1. GitHub Copilot 和 Sourcegraph 均采用版本绑定

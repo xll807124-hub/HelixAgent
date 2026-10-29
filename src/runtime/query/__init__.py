@@ -8,10 +8,10 @@ RT-008 的实现，负责：
 4. 留存策略定义
 """
 
-from .access_control import AccessLevel, AccessController
+from .access_control import AccessController, AccessLevel
 from .event_query import EventQueryService
 from .redaction_engine import RedactionEngine, RedactionInfo
-from .retention_policy import RetentionPolicy, RetentionPolicies
+from .retention_policy import RetentionPolicies, RetentionPolicy
 
 __all__ = [
     "AccessLevel",

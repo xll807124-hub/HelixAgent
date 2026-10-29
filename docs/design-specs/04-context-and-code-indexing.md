@@ -6,14 +6,14 @@
 > 阻塞：代码理解、准确率提升
 
 **已完成专项设计**：
-- ✅ [REQ-CTX-001 索引实体和关系 Schema](./REQ-CTX-001-index-entities-schema.md)（v0.1-designed）
+- ✅ [REQ-CTX-001 索引实体和关系 Schema](./REQ-CTX-001-index-entities-schema.md)（v0.2-designed）
 - ✅ [REQ-CTX-002 语言、仓库规模和基准集](./REQ-CTX-002-language-repository-scale-benchmark.md)（v0.1-designed）
 - ✅ [REQ-CTX-003 AST/LSP/依赖解析](./REQ-CTX-003-ast-lsp-dependency-parsing.md)（v0.1-designed）
-- ✅ [REQ-CTX-004 混合检索与排序](./REQ-CTX-004-hybrid-retrieval-ranking.md)（v0.1-designed）
-- ✅ [REQ-CTX-005 检索权限与敏感路径](./REQ-CTX-005-retrieval-permissions-sensitive-paths.md)（v1.0-designed）
-- ✅ [REQ-CTX-006 Context Selector 与预算](./REQ-CTX-006-context-selector-budget.md)（v0.1-designed）
-- ✅ [REQ-CTX-007 增量索引一致性](./REQ-CTX-007-incremental-index-consistency.md)（v0.1-designed）
-- ✅ [REQ-CTX-008 上下文压缩与分层加载](./REQ-CTX-008-context-compression-tiered-loading.md)（v0.1-designed）
+- ✅ [REQ-CTX-004 混合检索与排序](./REQ-CTX-004-hybrid-retrieval-ranking.md)（v0.2-designed）
+- ✅ [REQ-CTX-005 检索权限与敏感路径](./REQ-CTX-005-retrieval-permissions-sensitive-paths.md)（v1.1-designed）
+- ✅ [REQ-CTX-006 Context Selector 与预算](./REQ-CTX-006-context-selector-budget.md)（v0.2-designed）
+- ✅ [REQ-CTX-007 增量索引一致性](./REQ-CTX-007-incremental-index-consistency.md)（v0.2-designed）
+- ✅ [REQ-CTX-008 上下文压缩与分层加载](./REQ-CTX-008-context-compression-tiered-loading.md)（v0.2-designed）
 
 **待设计专项**：
 - REQ-CTX-009 检索评测
@@ -655,7 +655,7 @@ def select_context(
 **2. Fail-Secure 策略**：
 - 权限服务超时 → **DENY**
 - Redis 缓存失效 → **降级查询权限服务**
-- 敏感路径规则加载失败 → **仅应用 Level 1 基线**
+- 敏感路径规则加载失败 → **DENY**（不得仅用基线或旧缓存放行）
 - 多租户 ID 缺失 → **DENY**
 
 **3. 多租户数据隔离**（集成 SEC-008）：
@@ -1146,3 +1146,10 @@ def weighted_tokens(context: Context, relevance_scores: Dict[str, float]) -> flo
 9. 验证权限过滤
 10. 执行 A/B 测试
 11. 冻结推荐基线并发布
+
+
+## G-CTX 2026-10-29 引用同步记录
+
+用户已确认 `gctx-review-20261029-r2`，见 [契约与交付记录](../development/contracts/context.md) §9～15。CTX-001/004/006/007/008 与 HAR-002 为 v0.2-designed，CTX-005 为 v1.1-designed；规则加载失败为 DENY；CTX-008 缺失章节为批准重建，并非历史原稿恢复。以上仅为限定文档基线，不代表整项 REQ 冻结、生产实现或 G-CTX 用户验收。原历史统计和未涉及模块状态不由本记录更新。
+
+变更：G-CTX 引用修订 r1；日期 2026-10-29；仅同步上述版本、完整性和安全语义，不改变正式需求总数。
